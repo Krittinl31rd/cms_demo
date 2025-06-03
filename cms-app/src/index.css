@@ -1,0 +1,82 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap");
+
+@theme {
+  --color-primary: #0088cc;
+  --color-gray1: #eeeeee;
+  --color-gray2: #979797;
+  --color-gray3: #666666;
+}
+
+/* scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-gray-300 rounded-md;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-md;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 rounded-md;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0.5rem;
+  height: 2.5rem;
+  background-color: #ffffff;
+  border-radius: 0.125rem;
+  cursor: pointer;
+  border: none;
+  box-shadow: none;
+  position: relative;
+}
+
+input[type="range"]::-moz-range-thumb {
+  appearance: none;
+  width: 0.5rem;
+  height: 2.5rem;
+  background-color: #ffffff;
+  border-radius: 0.125rem;
+  cursor: pointer;
+  border: none;
+  box-shadow: none;
+}
+
+input.range-thumb-gray::-webkit-slider-thumb {
+  background-color: #d1d5db; /* gray-300 */
+}
+input.range-thumb-gray::-moz-range-thumb {
+  background-color: #d1d5db;
+}
+
+input.range-thumb-orange::-webkit-slider-thumb {
+  background-color: #ff8904; /* orange-400 */
+}
+input.range-thumb-orange::-moz-range-thumb {
+  background-color: #ff8904;
+}
+
+input.range-thumb-blue::-webkit-slider-thumb {
+  background-color: #51a2ff; /* blue-400 */
+}
+input.range-thumb-blue::-moz-range-thumb {
+  background-color: #51a2ff;
+}
+
+.range-container {
+  position: relative;
+}
+
+.thumb-indicator {
+  position: absolute;
+  top: -1rem;
+  transform: translateX(-50%);
+  color: #6a7282;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
