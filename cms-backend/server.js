@@ -14,6 +14,8 @@ app.use(
 app.use(morgan("dev"));
 app.use(express.json());
 
+app.use("/uploads", express.static("uploads"));
+
 readdirSync("./routes/").map((c) => {
   app.use(require("./routes/" + c));
 });

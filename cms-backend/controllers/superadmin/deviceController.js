@@ -356,3 +356,47 @@ exports.UpdateDevice = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+exports.DeleteDevice = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { room_id, device_id } = req.params;
+
+    const device = await sequelize.query(
+      `SELECT * FROM devices WHERE id = :device_id AND room_id = :room_id`,
+      {
+        replacements: { device_id, room_id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (device.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Device not found in this room." });
+    }
+
+    await sequelize.query(
+      `DELETE FROM device_control WHERE device_id = :device_id`,
+      {
+        replacements: { device_id },
+        transaction: t,
+      }
+    );
+
+    await sequelize.query(
+      `DELETE FROM devices WHERE id = :device_id AND room_id = :room_id`,
+      {
+        replacements: { device_id, room_id },
+        transaction: t,
+      }
+    );
+
+    await t.commit();
+    return res.status(200).json({ message: "Device deleted successfully." });
+  } catch (err) {
+    await t.rollback();
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

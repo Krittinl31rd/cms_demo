@@ -20,6 +20,7 @@ const {
 const {
   CreateDevice,
   UpdateDevice,
+  DeleteDevice,
 } = require("../controllers/superadmin/deviceController");
 
 // Users
@@ -81,11 +82,17 @@ router.post(
   RoleCheck([member_role.SUPER_ADMIN]),
   CreateDevice
 );
-router.post(
+router.put(
   "/api/update-device/:room_id/:device_id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   UpdateDevice
+);
+router.delete(
+  "/api/delete-device/:room_id/:device_id",
+  AuthCheck,
+  RoleCheck([member_role.SUPER_ADMIN]),
+  DeleteDevice
 );
 
 module.exports = router;
