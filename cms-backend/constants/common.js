@@ -103,6 +103,11 @@ module.exports = {
   cleaning_status,
 };
 
+const image_report = {
+  before: [{ path: "" }],
+  after: [{ path: "" }],
+};
+
 const example_data = [
   {
     room_id: 5,

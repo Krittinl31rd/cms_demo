@@ -5,15 +5,26 @@ const { RoleCheck } = require("../middleware/roleMiddleware");
 const { PermissionCheck } = require("../middleware/permissionMiddleware");
 const { Login, Current } = require("../controllers/authController");
 const { member_role } = require("../constants/common");
+const {
+  CreateMaintenanceTask,
+  UpdateMaintenanceTask,
+} = require("../controllers/technicianlead/maintenanceController");
 
-// Technician Lead-only
-router.get(
-  "/api/techlead-area",
+router.post(
+  "/api/create-maintenancetask",
   AuthCheck,
-  RoleCheck([member_role.TECHNICIAN_LEAD]),
-  (req, res) => {
-    res.json({ message: "Welcome Technician Lead" });
-  }
+  RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
+  CreateMaintenanceTask
+);
+router.put(
+  "/api/update-maintenancetask/:task_id",
+  AuthCheck,
+  RoleCheck([
+    member_role.SUPER_ADMIN,
+    member_role.TECHNICIAN_LEAD,
+    member_role.TECHNICIAN,
+  ]),
+  UpdateMaintenanceTask
 );
 
 //view_reports permission

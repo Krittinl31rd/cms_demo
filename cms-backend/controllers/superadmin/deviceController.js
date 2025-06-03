@@ -1,4 +1,5 @@
 const sequelize = require("../../config/db");
+
 const {
   cleaning_status,
   guest_presence_status,
@@ -277,6 +278,9 @@ exports.UpdateDevice = async (req, res) => {
       return controls.length > 0 ? controls.map((c) => c.value) : false;
     };
 
+    // if (!(await checkExists(sequelize, "rooms", room_id))) {
+    //   return res.status(403).json({ message: "Room not found." });
+    // }
     if (!(await checkRoomExists(room_id))) {
       return res.status(404).json({ message: "Room not found." });
     }
