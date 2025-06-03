@@ -9,13 +9,18 @@ const {
   CreateRoom,
   GetRooms,
   GetRoomByID,
-  CreateDevice,
+  UpdateRoom,
+  DeleteRoom,
 } = require("../controllers/superadmin/roomController");
 const {
   GetUsers,
   GetInvitationTokens,
   GetPendingUsers,
 } = require("../controllers/superadmin/userController");
+const {
+  CreateDevice,
+  UpdateDevice,
+} = require("../controllers/superadmin/deviceController");
 
 // Users
 router.get(
@@ -56,6 +61,18 @@ router.get(
   RoleCheck([member_role.SUPER_ADMIN]),
   GetRoomByID
 );
+router.put(
+  "/api/update-room/:room_id",
+  AuthCheck,
+  RoleCheck([member_role.SUPER_ADMIN]),
+  UpdateRoom
+);
+router.delete(
+  "/api/delete-room/:room_id",
+  AuthCheck,
+  RoleCheck([member_role.SUPER_ADMIN]),
+  DeleteRoom
+);
 
 // Devices
 router.post(
@@ -63,6 +80,12 @@ router.post(
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   CreateDevice
+);
+router.post(
+  "/api/update-device/:room_id/:device_id",
+  AuthCheck,
+  RoleCheck([member_role.SUPER_ADMIN]),
+  UpdateDevice
 );
 
 module.exports = router;
