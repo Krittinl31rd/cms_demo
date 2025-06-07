@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 const App = () => {
   return (
     <>
-      <ToastContainer />
+      <ToastContainer autoClose={2000} closeOnClick />
       <AppRoutes />
     </>
   );

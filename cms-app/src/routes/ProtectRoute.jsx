@@ -48,6 +48,7 @@ const ProtectRoute = ({
     }
   }, [user, token]);
 
+
   if (checking) return <LoadingToRedirect />;
 
   if (!status) return <Navigate to="/login" />;

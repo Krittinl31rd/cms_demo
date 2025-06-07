@@ -1,25 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import classNames from "classnames";
-import { User, CircleUser, LogOut, Settings } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { User, CircleUser, LogOut, Settings, Bell } from "lucide-react";
 import { PanelLeftOpen } from "lucide-react";
 import { getDateNow } from "@/utilities/date";
 import { sidebarItems } from "@/constant/sidebarItems";
 import avatar from "@/assets/images/avatar/oasis.jpg";
 import { role_id_to_name } from "@/constant/common";
 import useStore from "@/store/store";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink, useLocation, matchPath } from "react-router-dom";
 
 const Navbar = ({ toggleSidebar, isOpen, user }) => {
   const navigate = useNavigate();
   const { actionLogout } = useStore((state) => state);
   const [isOpenProfile, setIsOpenProfile] = useState(false);
   const dropdownRef = useRef(null);
-  const location = useLocation();
-  const currentPath = location.pathname;
-  const items = sidebarItems[user?.role_id] || [];
-  const activeItem = items.find((item) => item.path == currentPath);
-  const pageTitle = activeItem ? activeItem.label : "Unknow";
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -57,11 +51,19 @@ const Navbar = ({ toggleSidebar, isOpen, user }) => {
         ""
       )}
 
-      <div className="flex-1 flex flex-row items-center justify-between">
-        <div className="flex-1 flex flex-col justify-center">
-          <h1 className="text-sm text-gray2 font-semibold">{getDateNow()}</h1>
-          <h1 className="text-xl font-semibold">{pageTitle}</h1>
+      <div className="flex-1 flex flex-row items-center justify-between gap-4 ">
+        <div className="flex-1 flex flex-col justify-center ">
+          <h1 className="text-xl  font-semibold">{getDateNow()}</h1>
+          {/* <h1 className="text-xs  text-gray3 font-semibold">09:50:59</h1> */}
+          {/* <h1 className="text-xl font-semibold">{pageTitle}</h1> */}
         </div>
+
+        <button className="relative flex items-center transition p-2 rounded-full bg-gray-300  cursor-pointer">
+          <span className="text-[8px] font-semibold  absolute -right-2 -top-1 rounded-full py-0.5 px-1 bg-primary text-white">
+            99
+          </span>
+          <Bell size={18} />
+        </button>
 
         <div className="relative inline-block text-left" ref={dropdownRef}>
           <button

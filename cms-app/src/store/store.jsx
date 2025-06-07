@@ -19,6 +19,8 @@ const store = (set) => ({
       token: null,
     });
   },
+  breadcrumb: [],
+  setBreadcrumb: (segments) => set({ breadcrumb: segments }),
 });
 
 const usePersist = {

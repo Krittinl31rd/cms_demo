@@ -13,9 +13,9 @@ exports.CreateRoom = async (req, res) => {
       `SELECT * FROM rooms WHERE room_number = :room_number AND floor = :floor`,
       {
         replacements: { room_number, floor },
-        type: sequelize.QueryTypes.INSERT,
       }
     );
+
     if (isRoom.length > 0) {
       return res.status(403).json({ message: "This room is already exists." });
     }

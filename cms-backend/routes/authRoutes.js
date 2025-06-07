@@ -14,6 +14,8 @@ const {
   RegisterWithToken,
   ValiDateToken,
   CreateUser,
+  IsActiveUser,
+  DeleteUser,
 } = require("../controllers/authController");
 
 router.post("/api/login", Login);
@@ -22,6 +24,18 @@ router.post(
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   CreateUser
+);
+router.put(
+  "/api/isactive-user/:user_id",
+  AuthCheck,
+  RoleCheck([member_role.SUPER_ADMIN]),
+  IsActiveUser
+);
+router.delete(
+  "/api/delete-user/:user_id",
+  AuthCheck,
+  RoleCheck([member_role.SUPER_ADMIN]),
+  DeleteUser
 );
 
 // Get current user (any logged in user)

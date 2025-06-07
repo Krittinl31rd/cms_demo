@@ -22,7 +22,7 @@ exports.AuthCheck = async (req, res, next) => {
     );
 
     if (!user.length || user[0].is_active == 0) {
-      return res.status(403).json({ message: "User is not active" });
+      return res.status(401).json({ message: "User is not active" });
     }
 
     req.user = decoded;

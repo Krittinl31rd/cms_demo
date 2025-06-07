@@ -16,8 +16,8 @@ const User = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Tabs for desktop */}
-      <div className="hidden md:flex space-x-2 border-b border-gray-300 mb-2">
+      <AllUsers />
+      {/* <div className="hidden md:flex space-x-2 border-b border-gray-300 mb-2">
         {tabs.map((tab, i) => (
           <button
             key={i}
@@ -33,10 +33,7 @@ const User = () => {
         ))}
       </div>
 
-      {/* Tab content for desktop */}
       <div className="hidden md:block">{tabs[activeTab].component}</div>
-
-      {/* Accordion for mobile */}
       <div className="md:hidden space-y-2">
         {tabs.map((tab, i) => (
           <div key={i} className="">
@@ -53,7 +50,7 @@ const User = () => {
             )}
           </div>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 };

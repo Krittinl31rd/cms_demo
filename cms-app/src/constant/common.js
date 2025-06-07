@@ -53,7 +53,7 @@ const maintenance_status = {
   UNRESOLVED: 4, //Cannot resolve, Then Add new claim report list
 };
 
-const device_type = {
+export const device_type = {
   AIR: 1,
   CURTAIN: 2,
   DIMMER: 3,
@@ -97,3 +97,42 @@ const notification_type = {
   CLEANING: 1, //To Maid
   MAINTENANCE: 2, //To Technician
 };
+
+// [
+//     {
+//         "control_id": 1,
+//         "name": "status",
+//         "value": null,
+//         "last_update": "2025-06-02T10:45:43.000Z"
+//     },
+//     {
+//         "control_id": 2,
+//         "name": "fanspeed",
+//         "value": null,
+//         "last_update": "2025-06-02T10:45:43.000Z"
+//     },
+//     {
+//         "control_id": 3,
+//         "name": "temp",
+//         "value": null,
+//         "last_update": "2025-06-02T10:45:43.000Z"
+//     },
+//     {
+//         "control_id": 101,
+//         "name": "status",
+//         "value": 30001,
+//         "last_update": "2025-06-02T10:45:43.000Z"
+//     },
+//     {
+//         "control_id": 102,
+//         "name": "fanspeed",
+//         "value": 30002,
+//         "last_update": "2025-06-02T10:45:43.000Z"
+//     },
+//     {
+//         "control_id": 103,
+//         "name": "temp",
+//         "value": 30003,
+//         "last_update": "2025-06-02T10:45:43.000Z"
+//     }
+// ]

@@ -285,7 +285,8 @@ exports.Login = async (req, res) => {
 
 exports.CreateUser = async (req, res) => {
   try {
-    const { email, password, full_name, role_id } = req.body;
+    const { email, full_name, role_id } = req.body;
+    const password = process.env.DEFAULT_PASSWORD;
 
     const [isUser] = await sequelize.query(
       `SELECT * FROM users WHERE email = :email`,
@@ -302,13 +303,12 @@ exports.CreateUser = async (req, res) => {
 
     const password_hash = await bcrypt.hash(password, 10);
 
-    // Insert into users
     await sequelize.query(
       `
     INSERT INTO users
-      (username, email, password_hash, full_name, role_id, valid_date)
+      (username, email, password_hash, full_name, role_id)
     VALUES
-      (:username, :email, :password_hash, :full_name, :role_id, NOW())
+      (:username, :email, :password_hash, :full_name, :role_id)
     `,
       {
         replacements: {
@@ -321,6 +321,71 @@ exports.CreateUser = async (req, res) => {
       }
     );
     res.status(200).json({ message: "Created user successful" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.IsActiveUser = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    const { is_active } = req.body;
+
+    await sequelize.query(
+      `
+      UPDATE users
+      SET is_active = :is_active, valid_date = NOW()
+      WHERE id = :id;
+      `,
+      {
+        replacements: { id: user_id, is_active },
+        type: sequelize.QueryTypes.UPDATE,
+      }
+    );
+    res.status(200).json({
+      message: `UserID ${user_id} ${
+        is_active == 0 ? "Deactivate" : "Active"
+      } Successfully.`,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.DeleteUser = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    const [isUser] = await sequelize.query(
+      `
+      SELECT * FROM users where id = :id
+      `,
+      {
+        replacements: { id: user_id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (!isUser) {
+      return res.status(404).json({
+        message: `UserID ${user_id} not found.`,
+      });
+    }
+
+    await sequelize.query(
+      `
+      DELETE FROM users WHERE id = :id;
+      `,
+      {
+        replacements: { id: user_id },
+        type: sequelize.QueryTypes.DELETE,
+      }
+    );
+    res.status(200).json({
+      message: `UserID ${user_id} delete successfully.`,
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Internal server error" });

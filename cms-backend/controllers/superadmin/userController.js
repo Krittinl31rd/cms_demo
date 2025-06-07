@@ -3,11 +3,16 @@ const { member_role } = require("../../constants/common");
 
 exports.GetUsers = async (req, res) => {
   try {
-    const query = `SELECT * FROM users WHERE role_id != ${member_role.SUPER_ADMIN}`;
+    const query = `SELECT
+    users.*,
+    roles.name AS role_name
+    FROM users
+    JOIN roles ON roles.id = users.role_id
+    WHERE role_id != ${member_role.SUPER_ADMIN}`;
     const [result] = await sequelize.query(query, {
       replacements: {},
     });
-    res.status(200).json({ message: true, data: result });
+    res.status(200).json(result);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Internal server error" });

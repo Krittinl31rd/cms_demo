@@ -5,12 +5,13 @@ import useViewportHeight from "@/hooks/useViewportHeight";
 import Sidebar from "@/components/shared/Sidebar";
 import Navbar from "@/components/shared/Navbar";
 import ScrollToTopButton from "@/components/ui/ScrollToTopButton";
+import PageHeader from "@/components/ui/PageHeader";
 import useStore from "@/store/store";
 
 export default function MainLayout() {
   useViewportHeight();
 
-  const { user } = useStore((state) => state);
+  const { user, breadcrumb } = useStore((state) => state);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const mainRef = useRef(null);
 
@@ -43,10 +44,11 @@ export default function MainLayout() {
         />
         <main
           ref={mainRef}
-          className={classNames("flex-1 overflow-auto p-4", {
+          className={classNames("flex-1 gap-2  overflow-auto p-4 ", {
             "lg:pl-[276px]": isSidebarOpen,
           })}
         >
+          <PageHeader segments={breadcrumb} />
           <Outlet />
           <ScrollToTopButton scrollContainerRef={mainRef} />
         </main>

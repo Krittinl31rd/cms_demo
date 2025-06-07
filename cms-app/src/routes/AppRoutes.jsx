@@ -7,6 +7,8 @@ import DashboardTechLead from "@/pages/technicianLead/Dashboard";
 import DashboardTech from "@/pages/technician/Dashboard";
 import DashboardAdmin from "@/pages/superadmin/Dashboard";
 import UserAdmin from "@/pages/superadmin/User";
+import RoomAdmin from "@/pages/superadmin/Room";
+import RoomIDAdmin from "@/pages/superadmin/RoomID";
 import NotFound from "@/pages/NotFound";
 import Rooms from "@/pages/technicianLead/Rooms";
 import RepairWork from "@/pages/technicianLead/RepairWork";
@@ -49,6 +51,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardAdmin /> },
       { path: "user", element: <UserAdmin /> },
+      { path: "room", element: <RoomAdmin /> },
+      { path: "room/:room_id", element: <RoomIDAdmin /> },
     ],
   },
   {

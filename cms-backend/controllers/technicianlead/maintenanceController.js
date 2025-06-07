@@ -1,23 +1,10 @@
 const sequelize = require("../../config/db");
 const upload = require("../../middleware/uploadImage");
-const { checkExists } = require("../../utils/dbHelpers");
+const {
+  checkExists,
+  getMaintenanceTaskBaseQuery,
+} = require("../../utils/dbHelpers");
 const { maintenance_status, member_role } = require("../../constants/common");
-
-// app.post('/upload-multiple', upload.array('images', 10), (req, res) => {
-//   if (!req.files || req.files.length === 0) {
-//     return res.status(400).json({ error: 'No files uploaded or invalid file type' });
-//   }
-
-//   const uploadedFiles = req.files.map(file => ({
-//     filename: file.filename,
-//     path: `/uploads/${file.filename}`
-//   }));
-
-//   res.json({
-//     message: 'Upload success!',
-//     files: uploadedFiles
-//   });
-// });
 
 exports.CreateMaintenanceTask = async (req, res) => {
   try {
@@ -71,6 +58,59 @@ exports.CreateMaintenanceTask = async (req, res) => {
   }
 };
 
+exports.GetMaintenanceTask = async (req, res) => {
+  try {
+    const query = getMaintenanceTaskBaseQuery();
+    const result = await sequelize.query(query, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+    const parsedResults = result.map((item) => ({
+      ...item,
+      image_report: item.image_report ? JSON.parse(item.image_report) : null,
+    }));
+    res.status(200).json(parsedResults);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.GetMaintenanceTaskByID = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = getMaintenanceTaskBaseQuery();
+    const [result] = await sequelize.query(
+      `${query} WHERE maintenance_tasks.id = :id`,
+      {
+        replacements: { id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.GetMaintenanceTaskByUserID = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    const query = getMaintenanceTaskBaseQuery();
+    const result = await sequelize.query(
+      `${query} WHERE maintenance_tasks.assigned_to = :user_id`,
+      {
+        replacements: { user_id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 exports.UpdateMaintenanceTask = async (req, res) => {
   try {
     const { task_id } = req.params;
@@ -81,7 +121,6 @@ exports.UpdateMaintenanceTask = async (req, res) => {
       status_id,
     } = req.body;
     const { id, role_id } = req.user;
-    console.log(id, role_id);
 
     if (role_id == member_role.TECHNICIAN) {
       const [taskResult] = await sequelize.query(
@@ -113,6 +152,14 @@ exports.UpdateMaintenanceTask = async (req, res) => {
       return res.status(403).json({ message: "Invalid status ID." });
     }
 
+    const image_before = req.files?.before
+      ? req.files.before.map((file) => file.filename)
+      : null;
+
+    const image_after = req.files?.after
+      ? req.files.after.map((file) => file.filename)
+      : null;
+
     const updates = [];
     const replacements = { task_id, status_id };
 
@@ -129,6 +176,16 @@ exports.UpdateMaintenanceTask = async (req, res) => {
     if (ended_at != null) {
       updates.push("ended_at = :ended_at");
       replacements.ended_at = ended_at;
+    }
+
+    if (image_before != null) {
+      updates.push("image_before = :image_before");
+      replacements.image_before = JSON.stringify(image_before);
+    }
+
+    if (image_after != null) {
+      updates.push("image_after = :image_after");
+      replacements.image_after = JSON.stringify(image_after);
     }
 
     updates.push("status_id = :status_id");
