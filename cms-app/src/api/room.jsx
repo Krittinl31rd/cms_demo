@@ -28,8 +28,22 @@ export const GetRoomByID = async (token, id) =>
     },
   });
 
+export const GetRoomWithConfig = async (token) =>
+  await axios.get(import.meta.env.VITE_API_URL + `/get-room-config`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
 export const DeleteRoom = async (token, id) =>
   await axios.delete(import.meta.env.VITE_API_URL + `/delete-room/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+export const GetRoomDevicesLog = async (token) =>
+  await axios.get(import.meta.env.VITE_API_URL + `/get-room-logs`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

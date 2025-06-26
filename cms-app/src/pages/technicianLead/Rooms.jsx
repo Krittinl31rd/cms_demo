@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import DataTable from "@/components/table/DataTable";
 import CardSummary from "@/components/ui/CardSummary";
 import CardRoom from "@/components/ui/CardRoom";
@@ -6,12 +6,15 @@ import ModalPopup from "@/components/ui/ModalPopup";
 import ElementDevices from "@/components/ui/ElementDevices";
 import { Wifi, WifiOff, Globe, ListFilter, Check } from "lucide-react";
 import { data } from "@/constant/data";
+import { GetRooms } from "@/api/room";
+import useStore from "@/store/store";
 const stats = data.stats;
-const rooms = data.rooms;
 
 const Rooms = () => {
+  const { token } = useStore((state) => state);
+  const [roomList, setRoomList] = useState([]);
   const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState([]);
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
   const filterLabels = {
     status_online: "Online",
@@ -27,86 +30,242 @@ const Rooms = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isModalRoomOpen, setIsModalRoomOpen] = useState(false);
 
+  const [isWsReady, setIsWsReady] = useState(false);
+  const ws = useRef(null);
+
+  const fetchRoomList = async () => {
+    try {
+      const response = await GetRooms(token);
+      setRoomList(response?.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoomList();
+  }, []);
+
   const toggleFilter = (filterKey) => {
     setFilters((prev) => {
-      const updated = { ...prev };
-      const isChecked = !prev[filterKey];
-      updated[filterKey] = isChecked;
+      let updated = prev.includes(filterKey)
+        ? prev.filter((f) => f !== filterKey)
+        : [...prev, filterKey];
 
-      if (filterKey == "status_online" && isChecked) {
-        updated["status_offline"] = false;
-      }
+      const mutuallyExclusive = {
+        status_1: "status_0",
+        status_0: "status_1",
+        check_1: "check_0",
+        check_0: "check_1",
+        gi_1: "gi_0",
+        gi_0: "gi_1",
+        dnd_1: ["mur_1", "noservice"],
+        mur_1: ["dnd_1", "noservice"],
+        noservice: ["dnd_1", "mur_1"],
+      };
 
-      if (filterKey == "status_offline" && isChecked) {
-        updated["status_online"] = false;
-      }
-
-      if (filterKey == "check_1" && isChecked) {
-        updated["check_0"] = false;
-      }
-
-      if (filterKey == "check_0" && isChecked) {
-        updated["check_1"] = false;
-      }
-
-      if (filterKey == "gi_1" && isChecked) {
-        updated["gi_0"] = false;
-      }
-
-      if (filterKey == "gi_0" && isChecked) {
-        updated["gi_1"] = false;
-      }
-
-      if (filterKey == "dnd_1" && isChecked) {
-        updated["mur_1"] = false;
-        updated["noservice"] = false;
-      }
-
-      if (filterKey == "mur_1" && isChecked) {
-        updated["dnd_1"] = false;
-        updated["noservice"] = false;
-      }
-
-      if (filterKey == "noservice" && isChecked) {
-        updated["dnd_1"] = false;
-        updated["mur_1"] = false;
+      const conflicts = mutuallyExclusive[filterKey];
+      if (conflicts) {
+        const conflictArray = Array.isArray(conflicts)
+          ? conflicts
+          : [conflicts];
+        updated = updated.filter((f) => !conflictArray.includes(f));
       }
 
       return updated;
     });
   };
 
-  const filteredRooms = rooms.filter((room) => {
-    const matchesSearch = room.name
+  const filteredRooms = roomList.filter((room) => {
+    const matchesSearch = room.room_number
       .toLowerCase()
       .includes(search.toLowerCase());
 
-    const activeFilters = Object.entries(filters).filter(([_, value]) => value);
+    if (filters.length == 0) return matchesSearch;
 
-    if (activeFilters.length == 0) return matchesSearch;
-
-    const matchAnyFilter = activeFilters.every(([filterKey]) => {
-      if (filterKey === "noservice") {
-        return room.devices.dnd == 0 && room.devices.mur == 0;
+    const matchAll = filters.every((filterKey) => {
+      if (filterKey == "noservice") {
+        return room.dnd_status == 0 && room.mur_status == 0;
       }
 
       const [key, rawValue] = filterKey.split("_");
       const value = isNaN(rawValue) ? rawValue : Number(rawValue);
 
-      if (key == "status") return room.status == value;
-      if (["check", "dnd", "mur", "gi"].includes(key))
-        return room.devices[key] == value;
+      if (key == "status") return room.is_online == value;
+      if (key == "check") return room.guest_check_id == value;
+      if (key == "gi") return room.guest_status_id == value;
+      if (key == "dnd") return room.dnd_status == value;
+      if (key == "mur") return room.mur_status == value;
 
       return false;
     });
 
-    return matchesSearch && matchAnyFilter;
+    return matchesSearch && matchAll;
   });
 
-  const activeFilterLabels = Object.entries(filters)
-    .filter(([_, value]) => value)
-    .map(([key]) => filterLabels[key])
+  const activeFilterLabels = filters
+    .map((key) => filterLabels[key])
     .filter(Boolean);
+
+  useEffect(() => {
+    ws.current = new WebSocket(import.meta.env.VITE_WS_URL);
+
+    ws.current.onopen = () => {
+      console.log("WebSocket Connected");
+      setIsWsReady(true);
+    };
+
+    ws.current.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      handleCommand(msg);
+    };
+
+    ws.current.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+    };
+
+    ws.current.onclose = () => {
+      // console.log('WebSocket Disconnected');
+      setIsWsReady(false);
+    };
+
+    return () => {
+      ws.current.close();
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (isWsReady && token) {
+      sendWebSocketMessage({ cmd: "login", param: { token } });
+    }
+  }, [isWsReady, token]);
+
+  const sendWebSocketMessage = (message) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(message));
+    } else {
+      // console.warn('WebSocket not open, retrying...');
+      setTimeout(() => sendWebSocketMessage(message), 500);
+    }
+  };
+
+  const handleCommand = (msg) => {
+    const { cmd, param } = msg;
+    switch (cmd) {
+      case "login":
+        if (param.status === "success") {
+          console.log("Login success");
+        }
+        break;
+
+      case "modbus_status": {
+        if (Array.isArray(param.data)) {
+          setRoomList((prevRooms) =>
+            prevRooms.map((room) => {
+              const match = param.data.find(
+                (item) => item.ip == room.ip_address
+              );
+              return match ? { ...room, is_online: match.status } : room;
+            })
+          );
+        } else if (param.ip) {
+          setRoomList((prevRooms) =>
+            prevRooms.map((room) =>
+              room.ip_address === param.ip
+                ? { ...room, is_online: param.status }
+                : room
+            )
+          );
+        }
+        break;
+      }
+
+      case "room_status_update": {
+        if (param.data) {
+          const roomStatus = param.data;
+
+          setRoomList((prevRooms) =>
+            prevRooms.map((room) => {
+              if (room.ip_address == roomStatus.ip) {
+                return {
+                  ...room,
+                  ...(roomStatus.guest_status_id != undefined && {
+                    guest_status_id: roomStatus.guest_status_id,
+                  }),
+                  ...(roomStatus.dnd_status != undefined && {
+                    dnd_status: roomStatus.dnd_status,
+                  }),
+                  ...(roomStatus.mur_status != undefined && {
+                    mur_status: roomStatus.mur_status,
+                  }),
+                  ...(roomStatus.guest_check_id != undefined && {
+                    guest_check_id: roomStatus.guest_check_id,
+                  }),
+                };
+              }
+              return room;
+            })
+          );
+        }
+        break;
+      }
+
+      case "forward_update": {
+        const { data } = param;
+        if (!Array.isArray(data) || data.length === 0) return;
+
+        setRoomList((prevRooms) => {
+          const newRooms = prevRooms.map((room) => {
+            const updatedDevices = room.devices.map((device) => {
+              let deviceChanged = false;
+              const newControls = device.controls.map((control) => {
+                const updateItem = data.find(
+                  (item) =>
+                    item.room_id == room.room_id &&
+                    item.device_id == device.device_id &&
+                    item.control_id == control.control_id
+                );
+                if (updateItem) {
+                  deviceChanged = true;
+                  return {
+                    ...control,
+                    value: updateItem.value,
+                    // last_update: new Date().toISOString(),
+                  };
+                }
+                return control;
+              });
+
+              if (deviceChanged) {
+                return { ...device, controls: newControls };
+              }
+              return device;
+            });
+
+            return { ...room, devices: updatedDevices };
+          });
+
+          return newRooms;
+        });
+
+        break;
+      }
+
+      default:
+        break;
+    }
+  };
+
+  useEffect(() => {
+    if (selectedRoom) {
+      const updatedRoom = roomList.find(
+        (room) => room.room_id == selectedRoom.room_id
+      );
+      if (updatedRoom) {
+        setSelectedRoom(updatedRoom);
+      }
+    }
+  }, [roomList]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -142,22 +301,22 @@ const Rooms = () => {
       </div>
       <h1 className="text-sm">
         Filter by:{" "}
-        {activeFilterLabels.length > 0 ? (
-          <span className="font-semibold">{activeFilterLabels.join(", ")}</span>
-        ) : (
-          <span className="font-semibold">None</span>
-        )}
+        <span className="font-semibold">
+          {activeFilterLabels.length > 0
+            ? activeFilterLabels.join(", ")
+            : "None"}
+        </span>
       </h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
         {filteredRooms.length > 0 ? (
-          filteredRooms.map((room) => (
+          filteredRooms.map((room, index) => (
             <CardRoom
               onClick={() => {
                 setSelectedRoom(room);
                 setIsModalRoomOpen(true);
               }}
-              key={room.id}
+              key={index}
               room={room}
             />
           ))
@@ -178,7 +337,7 @@ const Rooms = () => {
             className="absolute top-12 right-6 text-primary font-semibold hover:underline cursor-pointer"
             onClick={() => {
               setSearch("");
-              setFilters({});
+              setFilters([]);
             }}
           >
             Reset
@@ -186,8 +345,8 @@ const Rooms = () => {
           <h1 className=" font-semibold">General</h1>
           <div className="w-full flex items-center flex-wrap gap-2 pb-2 border-b border-gray-300">
             {[
-              { key: "status", value: "online", label: "Online" },
-              { key: "status", value: "offline", label: "Offline" },
+              { key: "status", value: 1, label: "Online" },
+              { key: "status", value: 0, label: "Offline" },
               { key: "check", value: 1, label: "Check-IN" },
               { key: "check", value: 0, label: "Check-OUT" },
               { key: "gi", value: 1, label: "Guest In" },
@@ -201,7 +360,8 @@ const Rooms = () => {
                 >
                   <input
                     type="checkbox"
-                    checked={!!filters[filterKey]}
+                    // checked={!!filters[filterKey]}
+                    checked={filters.includes(filterKey)}
                     className="peer hidden"
                     onChange={() => toggleFilter(filterKey)}
                   />
@@ -232,7 +392,8 @@ const Rooms = () => {
                 >
                   <input
                     type="checkbox"
-                    checked={!!filters[filterKey]}
+                    // checked={!!filters[filterKey]}
+                    checked={filters.includes(filterKey)}
                     className="peer hidden"
                     onChange={() => toggleFilter(filterKey)}
                   />
@@ -253,9 +414,12 @@ const Rooms = () => {
       <ModalPopup
         isOpen={isModalRoomOpen}
         onClose={() => setIsModalRoomOpen(false)}
-        title={`${selectedRoom?.name}`}
+        title={`Room ${selectedRoom?.room_number}`}
       >
-        <ElementDevices room={selectedRoom || {}} />
+        <ElementDevices
+          room={selectedRoom || {}}
+          sendWebSocketMessage={sendWebSocketMessage}
+        />
       </ModalPopup>
     </div>
   );

@@ -13,7 +13,8 @@ const store = (set) => ({
     });
     return res;
   },
-  actionLogout: async () => {
+  actionLogout: async (form) => {
+    await axios.post(import.meta.env.VITE_API_URL + "/logout", form);
     set({
       user: null,
       token: null,
@@ -21,6 +22,8 @@ const store = (set) => ({
   },
   breadcrumb: [],
   setBreadcrumb: (segments) => set({ breadcrumb: segments }),
+  subscribeId: null,
+  setSubscribeId: (id) => set({ subscribeId: id }),
 });
 
 const usePersist = {

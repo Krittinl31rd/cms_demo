@@ -61,6 +61,8 @@ const device_type = {
   AIR_QAULITY: 21,
   TEMPERATURE: 22, //Archi Temp sensor
   LOSSNAY: 23,
+  CONFIG: 24,
+  OTHER: 25,
 };
 
 const device_status = {

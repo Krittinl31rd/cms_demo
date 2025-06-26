@@ -1,9 +1,12 @@
 import React from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
+import NoneSidebarLayout from "@/layouts/NoneSidebarLayout";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
+import DashboardFrontDesk from "@/pages/frontdesk/Dashboard";
 import DashboardTechLead from "@/pages/technicianLead/Dashboard";
+import RoomDevicesLog from "@/pages/technicianLead/RoomDevicesLog";
 import DashboardTech from "@/pages/technician/Dashboard";
 import DashboardAdmin from "@/pages/superadmin/Dashboard";
 import UserAdmin from "@/pages/superadmin/User";
@@ -24,7 +27,7 @@ import { member_role } from "@/constant/common";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Home />,
+    element: <Login />,
   },
   {
     path: "/login",
@@ -53,7 +56,19 @@ const router = createBrowserRouter([
       { path: "user", element: <UserAdmin /> },
       { path: "room", element: <RoomAdmin /> },
       { path: "room/:room_id", element: <RoomIDAdmin /> },
+      { path: "log", element: <RoomDevicesLog /> },
     ],
+  },
+  {
+    path: "/frontdesk",
+    element: (
+      <ProtectRoute
+        element={NoneSidebarLayout}
+        allowedRoles={[member_role.FRONT_DESK]}
+        // requiredPermission="VIEW_TECH_PANEL"
+      />
+    ),
+    children: [{ index: true, element: <DashboardFrontDesk /> }],
   },
   {
     path: "/techlead",
@@ -69,7 +84,8 @@ const router = createBrowserRouter([
       { path: "rooms", element: <Rooms /> },
       { path: "repair", element: <RepairWork /> },
       { path: "history", element: <History /> },
-      { path: "setting", element: <Setting /> },
+      { path: "config", element: <Setting /> },
+      { path: "log", element: <RoomDevicesLog /> },
     ],
   },
   {

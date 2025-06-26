@@ -6,6 +6,7 @@ import {
   History,
   Users,
   Settings,
+  NotepadText,
 } from "lucide-react";
 import { member_role } from "./common";
 
@@ -14,6 +15,14 @@ export const sidebarItems = {
     { label: "Dashboard", path: "/admin", icon: <LayoutDashboard /> },
     { label: "User", path: "/admin/user", icon: <Users /> },
     { label: "Rooms", path: "/admin/room", icon: <House /> },
+    {
+      label: "Log",
+      path: "/techlead/log",
+      icon: <NotepadText />,
+    },
+  ],
+  [member_role.FRONT_DESK]: [
+    { label: "Dashboard", path: "/frontdesk", icon: <LayoutDashboard /> },
   ],
   [member_role.TECHNICIAN_LEAD]: [
     { label: "Dashboard", path: "/techlead", icon: <LayoutDashboard /> },
@@ -30,9 +39,14 @@ export const sidebarItems = {
       icon: <History />,
     },
     {
-      label: "Setting",
-      path: "/techlead/setting",
+      label: "Config",
+      path: "/techlead/config",
       icon: <Settings />,
+    },
+    {
+      label: "Log",
+      path: "/techlead/log",
+      icon: <NotepadText />,
     },
   ],
   [member_role.TECHNICIAN]: [

@@ -4,6 +4,8 @@ export function getRoleRedirectPath(role_id) {
   switch (role_id) {
     case member_role.SUPER_ADMIN:
       return "/admin";
+    case member_role.FRONT_DESK:
+      return "/frontdesk";
     case member_role.TECHNICIAN_LEAD:
       return "/techlead";
     case member_role.TECHNICIAN:

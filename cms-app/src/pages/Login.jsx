@@ -5,10 +5,14 @@ import { Eye, EyeOff, Lock, User, Hotel } from "lucide-react";
 import { toast } from "react-toastify";
 
 const Login = () => {
-  const { user, actionLogin } = useStore((state) => state);
+  const { user, actionLogin, subscribeId } = useStore((state) => state);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+    subscribe_id: subscribeId,
+  });
   const redirectByRole = useRoleRedirect();
 
   const handelOnChage = (e) => {

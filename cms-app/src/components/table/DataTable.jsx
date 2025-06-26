@@ -22,7 +22,7 @@ export default function DataTable({
   //  (filter by any column that is string or number)
   const filteredData = useMemo(() => {
     if (!filterText) return data;
-    const lowercasedFilter = filterText.toLowerCase();
+    const lowercasedFilter = filterText?.toLowerCase();
 
     return data.filter((item) =>
       columns.some(({ accessor }) => {

@@ -38,19 +38,24 @@ exports.CreateRoom = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // READ ROOM
 exports.GetRooms = async (req, res) => {
   try {
-    const rooms = await sequelize.query(`SELECT * FROM rooms;`, {
-      type: sequelize.QueryTypes.SELECT,
-    });
+    const rooms = await sequelize.query(
+      `SELECT * FROM rooms ORDER BY room_number ASC;`,
+      {
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
 
     const roomList = await Promise.all(
       rooms.map(async (room) => {
         const devices = await sequelize.query(
           `SELECT d.id, d.type_id, d.name, d.status_id, d.last_online, d.config
                     FROM devices d
-                    WHERE d.room_id = :room_id`,
+                    WHERE d.room_id = :room_id
+                    ORDER BY d.type_id ASC`,
           {
             replacements: { room_id: room.id },
             type: sequelize.QueryTypes.SELECT,
@@ -98,6 +103,9 @@ exports.GetRooms = async (req, res) => {
           dnd_status: room.dnd_status,
           mur_status: room.mur_status,
           guest_check_id: room.guest_check_id,
+          is_online: room.is_online,
+          ip_address: room.ip_address,
+          mac_address: room.mac_address,
           devices: deviceList,
         };
       })
@@ -109,6 +117,26 @@ exports.GetRooms = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+exports.GetRoomWithConfig = async (req, res) => {
+  try {
+    const rooms = await sequelize.query(
+      `  
+    SELECT r.id, r.room_number, r.floor, r.is_online, r.ip_address, r.mac_address, c.config
+    FROM rooms r
+    LEFT JOIN rcu_config c ON r.id = c.room_id
+`,
+      {
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    res.status(200).json(rooms);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 exports.GetRoomByID = async (req, res) => {
   try {
     const { room_id } = req.params;
@@ -129,7 +157,8 @@ exports.GetRoomByID = async (req, res) => {
         const devices = await sequelize.query(
           `SELECT d.id, d.type_id, d.name, d.status_id, d.last_online, d.config
                     FROM devices d
-                    WHERE d.room_id = :room_id`,
+                    WHERE d.room_id = :room_id
+                    ORDER BY d.type_id ASC`,
           {
             replacements: { room_id: room.id },
             type: sequelize.QueryTypes.SELECT,
@@ -141,7 +170,8 @@ exports.GetRoomByID = async (req, res) => {
             const controls = await sequelize.query(
               `SELECT ctrl.control_id, ctrl.name, ctrl.value, ctrl.last_update
                         FROM device_control ctrl
-                        WHERE ctrl.device_id = :device_id AND ctrl.room_id = :room_id`,
+                        WHERE ctrl.device_id = :device_id AND ctrl.room_id = :room_id
+                        ORDER BY ctrl.value ASC`,
               {
                 replacements: {
                   device_id: device.id,
@@ -177,6 +207,9 @@ exports.GetRoomByID = async (req, res) => {
           dnd_status: room.dnd_status,
           mur_status: room.mur_status,
           guest_check_id: room.guest_check_id,
+          is_online: room.is_online,
+          ip_address: room.ip_address,
+          mac_address: room.mac_address,
           devices: deviceList,
         };
       })

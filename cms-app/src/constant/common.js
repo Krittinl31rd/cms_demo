@@ -1,4 +1,3 @@
-//Users Role
 export const member_role = {
   SUPER_ADMIN: 1,
   FRONT_DESK: 2,
@@ -17,13 +16,14 @@ export const role_id_to_name = {
   6: "Maid",
 };
 
-const guest_check_status = {
+export const guest_check_status = {
   CHECK_OUT: 0,
   CHECK_IN: 1,
 };
-const guest_presence_status = {
-  GUEST_OUT: 0, //Guest_Absent
-  GUEST_IN: 1, //Guest_Present
+
+export const guest_presence_status = {
+  GUEST_OUT: 0,
+  GUEST_IN: 1,
 };
 
 const cleaning_status = {
@@ -64,14 +64,212 @@ export const device_type = {
   SCENE: 10, //Scene, Master
   URLBUTTON: 11, //Webhook Button
   ACCESS: 12, //Key-card, Maid, Guest
-  DNDMUR: 13, //Room serices
+  DNDMUR: 13, //Room services
   POWER: 20, //Power consumption
   AIR_QAULITY: 21,
   TEMPERATURE: 22, //Archi Temp sensor
   LOSSNAY: 23,
+  CONFIG: 24, //Config RCU
+  OTHER: 25, //Other
 };
 
-const device_status = {
+export const deviceTypeTemplates = {
+  [device_type.AIR]: [
+    {
+      id: 101,
+      name: "status",
+      addr: "",
+    },
+    {
+      id: 102,
+      name: "fanspeed",
+      addr: "",
+    },
+    {
+      id: 103,
+      name: "temp",
+      addr: "",
+    },
+  ],
+  [device_type.DIMMER]: [
+    {
+      id: 101,
+      name: "status",
+      addr: "",
+    },
+    {
+      id: 102,
+      name: "brightness",
+      addr: "",
+    },
+  ],
+  [device_type.LIGHTING]: [
+    {
+      id: 101,
+      name: "status",
+      addr: "",
+    },
+  ],
+  [device_type.SCENE]: [
+    {
+      id: 101,
+      name: "master",
+      addr: "",
+    },
+  ],
+  [device_type.ACCESS]: [
+    {
+      id: 101,
+      name: "access",
+      addr: "",
+    },
+  ],
+  [device_type.DNDMUR]: [
+    {
+      id: 101,
+      name: "dndmur",
+      addr: "",
+    },
+  ],
+  [device_type.POWER]: [
+    {
+      id: 101,
+      name: "voltage",
+      addr: "",
+    },
+    {
+      id: 102,
+      name: "current",
+      addr: "",
+    },
+    {
+      id: 103,
+      name: "power",
+      addr: "",
+    },
+    {
+      id: 104,
+      name: "pf",
+      addr: "",
+    },
+    {
+      id: 105,
+      name: "energy",
+      addr: "",
+    },
+    {
+      id: 106,
+      name: "freq",
+      addr: "",
+    },
+  ],
+  [device_type.AIR_QAULITY]: [
+    {
+      id: 101,
+      name: "pm25",
+      addr: "",
+    },
+    {
+      id: 102,
+      name: "co2",
+      addr: "",
+    },
+    {
+      id: 103,
+      name: "tvoc",
+      addr: "",
+    },
+    {
+      id: 104,
+      name: "hcho",
+      addr: "",
+    },
+    {
+      id: 105,
+      name: "temp",
+      addr: "",
+    },
+    {
+      id: 106,
+      name: "hum",
+      addr: "",
+    },
+  ],
+  [device_type.TEMPERATURE]: [
+    {
+      id: 101,
+      name: "sensor",
+      addr: "",
+    },
+  ],
+  [device_type.MOTION]: [
+    {
+      id: 101,
+      name: "motion",
+      addr: "",
+    },
+  ],
+  [device_type.CONFIG]: [
+    { id: 101, name: "sleep_start_hour", addr: 21 },
+    { id: 102, name: "sleep_start_min", addr: 22 },
+    { id: 103, name: "energysaving_time", addr: 23 },
+    { id: 104, name: "sleep_max_temp", addr: 24 },
+    { id: 105, name: "sleep_reverse_hour", addr: 25 },
+    { id: 106, name: "sleep_reverse_min", addr: 26 },
+    { id: 107, name: "fan_set_checkin", addr: 37 },
+    { id: 108, name: "temp_set_checkin", addr: 38 },
+    { id: 109, name: "fan_set_checkout", addr: 39 },
+    { id: 110, name: "temp_set_checkout", addr: 40 },
+    { id: 111, name: "fan_set_esm03", addr: 41 },
+    { id: 112, name: "temp_set_esm03", addr: 42 },
+    { id: 113, name: "timedelay_esm03", addr: 43 },
+    { id: 114, name: "timeset_keycard", addr: 44 },
+    { id: 115, name: "fanset_on_keycard", addr: 45 },
+    { id: 116, name: "tempset_on_keycard", addr: 46 },
+    { id: 117, name: "fan_set_off_keycard", addr: 47 },
+    { id: 118, name: "temp_set_off_keycard", addr: 48 },
+    { id: 119, name: "recheck_config_op", addr: 49 },
+    { id: 120, name: "hour", addr: 50 },
+    { id: 121, name: "min", addr: 51 },
+    { id: 122, name: "sec", addr: 52 },
+    { id: 123, name: "date", addr: 53 },
+    { id: 124, name: "month", addr: 54 },
+    { id: 125, name: "year", addr: 55 },
+    { id: 126, name: "fan_set_esm04", addr: 81 },
+    { id: 127, name: "temp_set_esm04", addr: 82 },
+    { id: 128, name: "time_delay_esm04", addr: 83 },
+    { id: 129, name: "fan_set_esm05", addr: 84 },
+    { id: 130, name: "temp_set_esm05", addr: 85 },
+    { id: 131, name: "time_delay_esm05", addr: 86 },
+  ],
+  [device_type.OTHER]: [
+    {
+      id: 101,
+      name: "other",
+      addr: "",
+    },
+  ],
+};
+
+const deviceTypeColors = {
+  1: "bg-blue-500 text-white", // AIR
+  2: "bg-purple-500 text-white", // CURTAIN
+  3: "bg-yellow-400 text-black", // DIMMER
+  4: "bg-orange-400 text-white", // LIGHTING
+  5: "bg-pink-500 text-white", // RGB
+  6: "bg-cyan-600 text-white", // THERMOSTAT
+  7: "bg-green-600 text-white", // MOTION
+  10: "bg-indigo-700 text-white", // SCENE
+  11: "bg-red-500 text-white", // URLBUTTON
+  12: "bg-teal-600 text-white", // ACCESS
+  13: "bg-rose-500 text-white", // DNDMUR
+  20: "bg-amber-600 text-white", // POWER
+  21: "bg-lime-600 text-white", // AIR_QUALITY
+  22: "bg-sky-600 text-white", // TEMPERATURE
+  23: "bg-neutral-500 text-white", // LOSSNAY
+};
+
+export const device_status = {
   //RCU Status
   OK: 1, //Everything fine
   FAULT: 2, //Fault with any reason
@@ -98,41 +296,25 @@ const notification_type = {
   MAINTENANCE: 2, //To Technician
 };
 
-// [
-//     {
-//         "control_id": 1,
-//         "name": "status",
-//         "value": null,
-//         "last_update": "2025-06-02T10:45:43.000Z"
-//     },
-//     {
-//         "control_id": 2,
-//         "name": "fanspeed",
-//         "value": null,
-//         "last_update": "2025-06-02T10:45:43.000Z"
-//     },
-//     {
-//         "control_id": 3,
-//         "name": "temp",
-//         "value": null,
-//         "last_update": "2025-06-02T10:45:43.000Z"
-//     },
-//     {
-//         "control_id": 101,
-//         "name": "status",
-//         "value": 30001,
-//         "last_update": "2025-06-02T10:45:43.000Z"
-//     },
-//     {
-//         "control_id": 102,
-//         "name": "fanspeed",
-//         "value": 30002,
-//         "last_update": "2025-06-02T10:45:43.000Z"
-//     },
-//     {
-//         "control_id": 103,
-//         "name": "temp",
-//         "value": 30003,
-//         "last_update": "2025-06-02T10:45:43.000Z"
-//     }
-// ]
+export const modbus_funct = {
+  10000: "COIL_STATUS",
+  20000: "INPUT_STATUS",
+  30000: "HOLDING_REGISTER",
+  40000: "INPUT_REGISTER",
+};
+
+// [{"name":"date_time","data":[{"name":"Date & Time","type":"date","hour_address":50,"hour_value":0,"min_address":51,"min_value":0,"sec_address":52,"sec_value":0,"date_address":53,"date_value":0,"month_address":54,"month_value":0,"year_address":55,"year_value":0}]},{"name":"night_shift","data":[{"name":"sleep_start_hour","type":"number","address":21,"value":0},{"name":"sleep_start_min","type":"number","address":22,"value":0},{"name":"sleep_reverse_hr","type":"number","address":25,"value":0},{"name":"sleep_reverse_m","type":"number","address":26,"value":0},{"name":"sleep_max_temp","type":"number","address":24,"value":0}]},{"name":"esm","data":[{"name":"energysaving_time","type":"time","address":23,"value":0},{"name":"fan_set_checkin","type":"number","address":37,"value":0},{"name":"temp_set_checkin","type":"number","address":38,"value":0},{"name":"fan_set_checkout","type":"number","address":39,"value":0},{"name":"temp_set_checkout","type":"number","address":40,"value":0},{"name":"fan_set_esm03","type":"number","address":41,"value":0},{"name":"temp_set_esm03","type":"number","address":42,"value":0},{"name":"timedelay_esm03","type":"time","address":43,"value":0},{"name":"timeset_keycard","type":"time","address":44,"value":0},{"name":"fanset_on_keycard","type":"number","address":45,"value":0},{"name":"tempset_on_keycard","type":"number","address":46,"value":0},{"name":"fan_set_off_keycard","type":"number","address":47,"value":0},{"name":"temp_set_off_keycard","type":"number","address":48,"value":0},{"name":"recheck_config_op","type":"not_use","address":49,"value":0},{"name":"fan_set_esm04","type":"number","address":81,"value":0},{"name":"temp_set_esm04","type":"number","address":82,"value":0},{"name":"time_delay_esm04","type":"time","address":83,"value":0},{"name":"fan_set_esm05","type":"number","address":84,"value":0},{"name":"temp_set_esm05","type":"number","address":85,"value":0},{"name":"time_delay_esm05","type":"time","address":86,"value":0}]}]
+
+// {
+//     "cmd": "forward_update",
+//     "param": {
+//         "ip": "192.168.1.30",
+//         "data": [
+//             {
+//                 "room_id": 5,
+//                 "device_id": 73,
+//                 "control_id": 1,
+//                 "value": 250
+//             }
+//         ]
+//       }

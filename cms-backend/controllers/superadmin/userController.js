@@ -8,7 +8,8 @@ exports.GetUsers = async (req, res) => {
     roles.name AS role_name
     FROM users
     JOIN roles ON roles.id = users.role_id
-    WHERE role_id != ${member_role.SUPER_ADMIN}`;
+    WHERE role_id != ${member_role.SUPER_ADMIN}
+    ORDER BY roles.id ASC`;
     const [result] = await sequelize.query(query, {
       replacements: {},
     });

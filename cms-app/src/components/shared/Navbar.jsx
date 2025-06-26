@@ -11,7 +11,7 @@ import { useNavigate, NavLink, useLocation, matchPath } from "react-router-dom";
 
 const Navbar = ({ toggleSidebar, isOpen, user }) => {
   const navigate = useNavigate();
-  const { actionLogout } = useStore((state) => state);
+  const { actionLogout, subscribeId } = useStore((state) => state);
   const [isOpenProfile, setIsOpenProfile] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -26,8 +26,8 @@ const Navbar = ({ toggleSidebar, isOpen, user }) => {
   }, []);
 
   const handleLogout = () => {
-    actionLogout();
-    navigate(import.meta.env.VITE_BASE_URL + "/login");
+    actionLogout({ user_id: user.id, subscribe_id: subscribeId });
+    navigate("/");
   };
 
   return (
@@ -36,10 +36,11 @@ const Navbar = ({ toggleSidebar, isOpen, user }) => {
         "h-[80px] w-full flex flex-row bg-gray1 shadow-xl gap-2 p-4 items-center",
         {
           "lg:pl-[276px]": isOpen,
+          "": !isOpen,
         }
       )}
     >
-      {!isOpen ? (
+      {!isOpen && toggleSidebar && (
         <button
           type="button"
           onClick={toggleSidebar}
@@ -47,8 +48,6 @@ const Navbar = ({ toggleSidebar, isOpen, user }) => {
         >
           <PanelLeftOpen />
         </button>
-      ) : (
-        ""
       )}
 
       <div className="flex-1 flex flex-row items-center justify-between gap-4 ">

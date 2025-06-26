@@ -2,6 +2,7 @@ const sequelize = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const dayjs = require("dayjs");
 
 exports.CreateInvite = async (req, res) => {
   try {
@@ -226,7 +227,7 @@ exports.ValiDateToken = async (req, res) => {
 
 exports.Login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, device_id, subscribe_id } = req.body;
     const querySearch = `SELECT * FROM users WHERE username=:username AND is_active = 1`;
     const results = await sequelize.query(querySearch, {
       replacements: { username },
@@ -256,6 +257,62 @@ exports.Login = async (req, res) => {
 
     //   const permissions = perms.map((p) => p.name);
 
+    if (subscribe_id) {
+      const expires_at = dayjs().add(1, "day").format("YYYY-MM-DD HH:mm:ss");
+      if (device_id) {
+        // login by phone device
+        const user_id = results[0].id;
+        const existingDevice = await sequelize.query(
+          `SELECT * FROM onesignal WHERE device_id = :device_id`,
+          {
+            replacements: { device_id },
+            type: sequelize.QueryTypes.SELECT,
+          }
+        );
+
+        if (existingDevice.length > 0) {
+          await sequelize.query(
+            `DELETE FROM onesignal WHERE device_id = :device_id`,
+            {
+              replacements: { device_id },
+              type: sequelize.QueryTypes.DELETE,
+            }
+          );
+        }
+
+        await sequelize.query(
+          `INSERT INTO onesignal (user_id, device_id, subscribe_id, type, expires_at)
+      VALUES (:user_id, :device_id, :subscribe_id, :type, :expires_at)`,
+          {
+            replacements: {
+              user_id,
+              device_id,
+              subscribe_id,
+              type: 1,
+              expires_at,
+            },
+            type: sequelize.QueryTypes.INSERT,
+          }
+        );
+      } else {
+        // login by web
+        const user_id = results[0].id;
+        await sequelize.query(
+          `INSERT INTO onesignal (user_id, subscribe_id, type, expires_at)
+      VALUES (:user_id, :subscribe_id, :type, :expires_at)`,
+          {
+            replacements: {
+              user_id,
+              subscribe_id,
+              type: 2,
+              expires_at,
+            },
+            type: sequelize.QueryTypes.INSERT,
+          }
+        );
+      }
+    }
+
     const payload = {
       id: results[0].id,
       username: results[0].username,
@@ -274,9 +331,30 @@ exports.Login = async (req, res) => {
         if (err) {
           return res.status(500).json({ message: "Internal server error" });
         }
-        res.status(200).json({ message: "Login successful", payload, token });
+        res.status(200).json({
+          message: "Login successful",
+          payload,
+          token,
+        });
       }
     );
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.Logout = async (req, res) => {
+  const { user_id, subscribe_id } = req.body;
+  try {
+    await sequelize.query(
+      `UPDATE onesignal SET is_login = 0 WHERE (user_id = :user_id AND subscribe_id = :subscribe_id) OR is_login = 1`,
+      {
+        replacements: { user_id, subscribe_id },
+        type: sequelize.QueryTypes.DELETE,
+      }
+    );
+    res.status(200).json({ message: "Logout successful" });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Internal server error" });

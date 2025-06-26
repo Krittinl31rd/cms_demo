@@ -16,9 +16,12 @@ const {
   CreateUser,
   IsActiveUser,
   DeleteUser,
+  Logout,
 } = require("../controllers/authController");
 
 router.post("/api/login", Login);
+router.post("/api/logout", Logout);
+
 router.post(
   "/api/create-user",
   AuthCheck,
