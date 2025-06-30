@@ -43,7 +43,7 @@ exports.CreateRoom = async (req, res) => {
 exports.GetRooms = async (req, res) => {
   try {
     const rooms = await sequelize.query(
-      `SELECT * FROM rooms ORDER BY room_number ASC;`,
+      `SELECT * FROM smarthotel.rooms ORDER BY floor OR room_number ASC`,
       {
         type: sequelize.QueryTypes.SELECT,
       }
@@ -102,7 +102,7 @@ exports.GetRooms = async (req, res) => {
           cleaning_status_id: room.cleaning_status_id,
           dnd_status: room.dnd_status,
           mur_status: room.mur_status,
-          guest_check_id: room.guest_check_id,
+          room_check_status: room.room_check_status,
           is_online: room.is_online,
           ip_address: room.ip_address,
           mac_address: room.mac_address,
@@ -206,7 +206,7 @@ exports.GetRoomByID = async (req, res) => {
           cleaning_status_id: room.cleaning_status_id,
           dnd_status: room.dnd_status,
           mur_status: room.mur_status,
-          guest_check_id: room.guest_check_id,
+          room_check_status: room.room_check_status,
           is_online: room.is_online,
           ip_address: room.ip_address,
           mac_address: room.mac_address,

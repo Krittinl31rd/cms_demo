@@ -5,100 +5,18 @@ import { data, dataDashboard } from "@/constant/data";
 import DataTable from "@/components/table/DataTable";
 import ModalPopup from "@/components/ui/ModalPopup";
 import Button from "@/components/ui/Button";
-const repairs = data.repairs;
+import { maintenance_status } from "@/constant/common";
 
 export default function AssignWorkForm({ technicians = [] }) {
   const [isCancel, setIsCancel] = useState(false);
   const [selectCancel, setSelectCancel] = useState(null);
-  const columns = [
-    {
-      header: "Assigned At",
-      accessor: "assignedAt",
-      cell: (row) =>
-        row.assignedAt ? (
-          dayjs(row.assignedAt).format("DD/MM/YYYY HH.mm")
-        ) : (
-          <span className="text-red-500">Not assigned</span>
-        ),
-    },
-    {
-      header: "Started At",
-      accessor: "startedAt",
-      cell: (row) =>
-        row.startedAt ? (
-          dayjs(row.assignedAt).format("DD/MM/YYYY HH.mm")
-        ) : (
-          <span className="text-red-500">Not started</span>
-        ),
-    },
-    {
-      header: "Room",
-      accessor: "roomName",
-    },
-    {
-      header: "Technician",
-      accessor: "technician",
-      cell: (row) =>
-        row.technician || (
-          <div className="flex items-center gap-2">
-            <span className="text-red-500">Unassigned</span>
-            <button
-              onClick={() =>
-                setFormData((prev) => ({ ...prev, room: row.roomName }))
-              }
-              className="px-2 py-1 rounded-full text-sm bg-primary text-white cursor-pointer"
-            >
-              <UserPlus size={14} />
-            </button>
-          </div>
-        ),
-    },
-    {
-      header: "Status",
-      accessor: "status",
-      cell: (row) => {
-        const statusColor = {
-          pending: "bg-yellow-200 text-yellow-800",
-          in_progress: "bg-blue-200 text-blue-800",
-        };
-        const statusLabel = {
-          pending: "Pending",
-          in_progress: "In Progress",
-        };
-        return (
-          <span
-            className={`px-2 py-1 rounded-full text-sm ${
-              statusColor[row.status] || "bg-gray-200"
-            }`}
-          >
-            {statusLabel[row.status]}
-          </span>
-        );
-      },
-    },
-    {
-      header: "Action",
-      accessor: "action",
-      cell: (row) => (
-        <button
-          onClick={() => {
-            setSelectCancel(row);
-            setIsCancel(true);
-          }}
-          className="text-red-500 hover:underline"
-        >
-          Cancel
-        </button>
-      ),
-    },
-  ];
 
   const [formData, setFormData] = useState({
     room: "",
     detail: "",
     technicianId: "",
     technician: "",
-    status: "pending",
+    status: maintenance_status.ASSIGNED,
   });
 
   const handleChange = (e) => {
@@ -124,8 +42,7 @@ export default function AssignWorkForm({ technicians = [] }) {
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <DataTable columns={columns} data={repairs} />
+    <>
       <form
         onSubmit={handleSubmit}
         className="w-full mx-auto p-4 bg-white shadow-xl rounded-2xl space-y-4"
@@ -244,6 +161,6 @@ export default function AssignWorkForm({ technicians = [] }) {
           <p>No data available</p>
         )}
       </ModalPopup>
-    </div>
+    </>
   );
 }

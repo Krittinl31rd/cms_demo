@@ -16,7 +16,7 @@ const ElementDevices = ({ room, sendWebSocketMessage }) => {
   const {
     is_online,
     devices,
-    guest_check_id,
+    room_check_status,
     guest_status_id,
     dnd_status,
     mur_status,
@@ -80,12 +80,12 @@ const ElementDevices = ({ room, sendWebSocketMessage }) => {
       <h3 className="font-semibold">Room Status</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 border-b border-gray-300 pb-2">
         {deviceIndicator(
-          guest_check_id === guest_check_status.CHECK_IN
+          room_check_status === guest_check_status.CHECK_IN
             ? "Check-IN"
-            : guest_check_id === guest_check_status.CHECK_OUT
+            : room_check_status === guest_check_status.CHECK_OUT
             ? "Check-OUT"
             : "N/A",
-          guest_check_id
+          room_check_status
         )}
         {deviceIndicator(
           guest_status_id == 0

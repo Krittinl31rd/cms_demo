@@ -15,13 +15,11 @@ const getMaintenanceTaskBaseQuery = () => `
     rooms.room_number,
     rooms.floor,
     assigned_user.full_name AS assigned_to_name,
-    created_by_user.full_name AS created_by_name,
-    maintenance_statuses.name AS status_name
+    created_by_user.full_name AS created_by_name
   FROM maintenance_tasks
-  JOIN rooms ON rooms.id = maintenance_tasks.room_id
+  JOIN  rooms ON rooms.id = maintenance_tasks.room_id
   LEFT JOIN users AS assigned_user ON assigned_user.id = maintenance_tasks.assigned_to
-  JOIN users AS created_by_user ON created_by_user.id = maintenance_tasks.created_by
-  JOIN maintenance_statuses ON maintenance_statuses.id = maintenance_tasks.status_id
+  LEFT JOIN users AS created_by_user ON created_by_user.id = maintenance_tasks.created_by
 `;
 
 module.exports = { checkExists, getMaintenanceTaskBaseQuery };

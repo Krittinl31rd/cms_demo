@@ -6,6 +6,25 @@ const {
 } = require("../../utils/dbHelpers");
 const { maintenance_status, member_role } = require("../../constants/common");
 
+exports.GetTechnicians = async (req, res) => {
+  try {
+    const query = `
+      SELECT u.id, u.full_name, u.email, u.role_id, t.type_id
+      FROM users u
+      JOIN technician t ON u.id = t.user_id
+      WHERE u.role_id = :role_id
+    `;
+    const technicians = await sequelize.query(query, {
+      replacements: { role_id: member_role.TECHNICIAN },
+      type: sequelize.QueryTypes.SELECT,
+    });
+    return res.status(200).json(technicians);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 exports.CreateMaintenanceTask = async (req, res) => {
   try {
     const { room_id, assigned_to, problem_description } = req.body;
@@ -14,27 +33,22 @@ exports.CreateMaintenanceTask = async (req, res) => {
       assigned_to == null
         ? maintenance_status.PENDING
         : maintenance_status.ASSIGNED;
-
     if (!(await checkExists(sequelize, "rooms", room_id))) {
       return res.status(403).json({ message: "Room not found." });
     }
-
     if (assigned_to != null) {
       if (!(await checkExists(sequelize, "users", assigned_to))) {
         return res.status(403).json({ message: "Assigned user not found." });
       }
     }
-
     if (!(await checkExists(sequelize, "maintenance_statuses", status_id))) {
       return res.status(403).json({ message: "Invalid status ID." });
     }
-
     if (!(await checkExists(sequelize, "users", created_by))) {
       return res.status(403).json({ message: "Creator not found." });
     }
-
     await sequelize.query(
-      `INSERT INTO maintenance_tasks 
+      `INSERT INTO maintenance_tasks
         (room_id, assigned_to, problem_description, status_id, created_by)
         VALUES (:room_id, :assigned_to, :problem_description, :status_id, :created_by)`,
       {
@@ -48,7 +62,6 @@ exports.CreateMaintenanceTask = async (req, res) => {
         type: sequelize.QueryTypes.INSERT,
       }
     );
-
     return res
       .status(201)
       .json({ message: "Maintenance task created successfully." });

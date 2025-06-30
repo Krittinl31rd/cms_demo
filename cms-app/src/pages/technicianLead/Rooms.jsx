@@ -92,7 +92,7 @@ const Rooms = () => {
       const value = isNaN(rawValue) ? rawValue : Number(rawValue);
 
       if (key == "status") return room.is_online == value;
-      if (key == "check") return room.guest_check_id == value;
+      if (key == "check") return room.room_check_status == value;
       if (key == "gi") return room.guest_status_id == value;
       if (key == "dnd") return room.dnd_status == value;
       if (key == "mur") return room.mur_status == value;
@@ -177,6 +177,7 @@ const Rooms = () => {
             )
           );
         }
+
         break;
       }
 
@@ -198,8 +199,8 @@ const Rooms = () => {
                   ...(roomStatus.mur_status != undefined && {
                     mur_status: roomStatus.mur_status,
                   }),
-                  ...(roomStatus.guest_check_id != undefined && {
-                    guest_check_id: roomStatus.guest_check_id,
+                  ...(roomStatus.room_check_status != undefined && {
+                    room_check_status: roomStatus.room_check_status,
                   }),
                 };
               }

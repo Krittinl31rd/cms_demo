@@ -98,13 +98,13 @@ const RoomDevicesLog = () => {
 
   const handleCommand = (msg) => {
     const { cmd, param } = msg;
-
     switch (cmd) {
       case "log_update":
         if (param && param.data) {
           const newLog = param.data;
+          // console.log("New log received:", newLog);
           setLoglist((prevLogs) => {
-            const isDuplicate = prevLogs.some((log) => log.id === newLog.id);
+            const isDuplicate = prevLogs.some((log) => log.id == newLog.id);
             if (isDuplicate) {
               return prevLogs.map((log) =>
                 log.id === newLog.id ? newLog : log

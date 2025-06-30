@@ -12,7 +12,15 @@ const {
   GetMaintenanceTask,
   GetMaintenanceTaskByUserID,
   GetMaintenanceTaskByID,
+  GetTechnicians,
 } = require("../controllers/technicianlead/maintenanceController");
+
+router.get(
+  "/api/get-technicians",
+  AuthCheck,
+  RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
+  GetTechnicians
+);
 
 router.post(
   "/api/create-maintenancetask",

@@ -38,11 +38,11 @@ const task_status = {
 
 const maintenance_status = {
   //For Technician Task
-  PENDING: 0, //Waiting For Assigning
-  ASSIGNED: 1, //has been assigned, waiting For queue
-  IN_PROGRESS: 2, //Technician repairing
-  FIXED: 3, //Problem has been resolve, Finish Task
-  UNRESOLVED: 4, //Cannot resolve, Then Add new claim report list
+  PENDING: 1, //Waiting For Assigning
+  ASSIGNED: 2, //has been assigned, waiting For queue
+  IN_PROGRESS: 3, //Technician repairing
+  FIXED: 4, //Problem has been resolve, Finish Task
+  UNRESOLVED: 5, //Cannot resolve, Then Add new claim report list
 };
 
 const device_type = {

@@ -5,5 +5,10 @@ const { RoleCheck } = require("../middleware/roleMiddleware");
 const { PermissionCheck } = require("../middleware/permissionMiddleware");
 const { Login, Current } = require("../controllers/authController");
 const { member_role } = require("../constants/common");
+const {
+  CreateMaintenanceTaskByType,
+} = require("../controllers/technician/maintenanceController");
+
+router.post("/api/task", CreateMaintenanceTaskByType);
 
 module.exports = router;

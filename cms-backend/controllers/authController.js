@@ -348,7 +348,7 @@ exports.Logout = async (req, res) => {
   const { user_id, subscribe_id } = req.body;
   try {
     await sequelize.query(
-      `UPDATE onesignal SET is_login = 0 WHERE (user_id = :user_id AND subscribe_id = :subscribe_id) OR is_login = 1`,
+      `UPDATE onesignal SET is_login = 0 WHERE (subscribe_id = :subscribe_id) AND is_login = 1`,
       {
         replacements: { user_id, subscribe_id },
         type: sequelize.QueryTypes.DELETE,

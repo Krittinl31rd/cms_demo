@@ -7,6 +7,12 @@ export const member_role = {
   MAID: 6,
 };
 
+export const technician_type = {
+  RCU: 1,
+  ELECTRICAL: 2,
+  OTHER: 3,
+};
+
 export const role_id_to_name = {
   1: "Super Admin",
   2: "Front Desk",
@@ -44,13 +50,13 @@ const task_status = {
   INSPECTED: 4, //Just check and look around
 };
 
-const maintenance_status = {
+export const maintenance_status = {
   //For Technician Task
-  PENDING: 0, //Waiting For Assigning
-  ASSIGNED: 1, //has been assigned, waiting For queue
-  IN_PROGRESS: 2, //Technician repairing
-  FIXED: 3, //Problem has been resolve, Finish Task
-  UNRESOLVED: 4, //Cannot resolve, Then Add new claim report list
+  PENDING: 1, //Waiting For Assigning
+  ASSIGNED: 2, //has been assigned, waiting For queue
+  IN_PROGRESS: 3, //Technician repairing
+  FIXED: 4, //Problem has been resolve, Finish Task
+  UNRESOLVED: 5, //Cannot resolve, Then Add new claim report list
 };
 
 export const device_type = {

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import Button from "@/components/ui/button";
+import Spinner from "@/components/ui/Spinner";
 import { GetRooms } from "@/api/room";
 import useStore from "@/store/store";
 import { device_type } from "../../constant/common";
@@ -12,6 +13,7 @@ const CONTROL_ID_TEMP = 3;
 const Dashboard = () => {
   const { token } = useStore((state) => state);
   const [roomList, setRoomList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedRooms, setSelectedRooms] = useState([]);
   const [isWsReady, setIsWsReady] = useState(false);
   const ws = useRef(null);
@@ -29,15 +31,19 @@ const Dashboard = () => {
     2: "bg-clean",
   };
 
+  const fetchRoomList = async () => {
+    setLoading(true);
+    try {
+      const response = await GetRooms(token);
+      setRoomList(response?.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchRoomList = async () => {
-      try {
-        const response = await GetRooms(token);
-        setRoomList(response?.data || []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
     fetchRoomList();
   }, [token]);
 
@@ -213,8 +219,8 @@ const Dashboard = () => {
                   ...(roomStatus.mur_status != undefined && {
                     mur_status: roomStatus.mur_status,
                   }),
-                  ...(roomStatus.guest_check_id != undefined && {
-                    guest_check_id: roomStatus.guest_check_id,
+                  ...(roomStatus.room_check_status != undefined && {
+                    room_check_status: roomStatus.room_check_status,
                   }),
                 };
               }
@@ -228,7 +234,6 @@ const Dashboard = () => {
       case "forward_update": {
         const { data } = param;
         if (!Array.isArray(data) || data.length === 0) return;
-
         setRoomList((prevRooms) => {
           const newRooms = prevRooms.map((room) => {
             const updatedDevices = room.devices.map((device) => {
@@ -271,7 +276,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleChekIn = (type) => {
+  const handleChekIn = (status) => {
     if (selectedRooms.length == 0) return;
     selectedRooms.forEach((roomId) => {
       const room = roomList.find((r) => r.room_id === roomId);
@@ -281,13 +286,18 @@ const Dashboard = () => {
           d.type_id == device_type.DNDMUR && d.device_name == "Check-IN/OUT"
       );
       if (!device) return;
-      const ctrlStatus = device.controls.find((d) => d.control_id == 101);
-      const { address, funct } = CheckFunctionModbus(ctrlStatus.value);
+      const ctrlStatus = device.controls.find((d) => d.control_id == 1);
+      const addressStatus = device.controls.find((d) => d.control_id == 101);
+
+      if (ctrlStatus.value == status) return;
+
+      const { address, funct } = CheckFunctionModbus(addressStatus.value);
+
       sendWebSocketMessage({
         cmd: "write_register",
         param: {
           address: address,
-          value: type == "checkin" ? 1 : 0,
+          value: status,
           slaveId: 1,
           ip: room.ip_address,
           fc: funct == 30000 ? 6 : funct == 10000 ? 5 : 0,
@@ -407,7 +417,7 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => handleChekIn("checkin")}
+              onClick={() => handleChekIn(1)}
               disabled={selectedRooms.length == 0}
               className={`inline-flex items-center justify-center px-4 py-2 text-sm rounded-xl transition  bg-check_in ${
                 selectedRooms.length === 0
@@ -418,7 +428,7 @@ const Dashboard = () => {
               Check-IN
             </button>
             <button
-              onClick={() => handleChekIn("checkout")}
+              onClick={() => handleChekIn(0)}
               className={`inline-flex items-center justify-center px-4 py-2 text-sm rounded-xl transition  bg-check_out ${
                 selectedRooms.length === 0
                   ? "opacity-50 cursor-not-allowed"
@@ -442,105 +452,150 @@ const Dashboard = () => {
           </div>
         </div>
         <div className="w-full h-full bg-white rounded-lg shadow-lg flex flex-col overflow-auto gap-2 p-2">
-          <div className="grid gap-2 grid-cols-[repeat(auto-fill,_minmax(200px,_1fr))]">
-            {roomList.map((item) => (
-              <div
-                key={item.room_id}
-                onClick={() => toggleRoom(item.room_id)}
-                className={`h-[125px] rounded-xl flex flex-col cursor-pointer ${
-                  item.dnd_status == 1
-                    ? "bg-dnd/20"
-                    : item.mur_status == 1
-                    ? "bg-mur/20"
-                    : "bg-gray-50"
-                } ${
-                  selectedRooms.includes(item.room_id)
-                    ? "border-4 border-black"
-                    : "border border-gray-200"
-                }`}
-              >
-                <div className="flex items-center px-2 pt-2 shrink-0">
-                  <div
-                    className={`w-12 h-12 inline-flex items-center justify-center ${
-                      cleanBgColor[item.cleaning_status_id]
-                    } rounded-full`}
-                  >
-                    {item.cleaning_status_id === 1 ? (
-                      <Bubbles className="text-white" />
-                    ) : item.cleaning_status_id == 2 ? (
-                      <BrushCleaning className="text-white" />
-                    ) : null}
-                  </div>
-                  <div className="flex-1 text-center">
-                    <span
-                      className={`font-semibold text-xl ${
-                        item.is_online === 0 ? "text-red-500" : "text-black"
-                      }`}
+          {loading ? (
+            <div className="text-center py-10">
+              <Spinner size="lg" />
+              <p className="mt-2 text-gray-500 text-sm">Loading rooms...</p>
+            </div>
+          ) : (
+            <div className="grid gap-2 grid-cols-[repeat(auto-fill,_minmax(200px,_1fr))]">
+              {roomList.map((item) => (
+                <div
+                  key={item.room_id}
+                  onClick={() => toggleRoom(item.room_id)}
+                  className={`h-[125px] rounded-xl flex flex-col cursor-pointer ${
+                    item.dnd_status == 1
+                      ? "bg-dnd/20"
+                      : item.mur_status == 1
+                      ? "bg-mur/20"
+                      : "bg-gray-50"
+                  } ${
+                    selectedRooms.includes(item.room_id)
+                      ? "border-4 border-black"
+                      : "border border-gray-200"
+                  }`}
+                >
+                  <div className="flex items-center px-2 pt-2 shrink-0">
+                    <div
+                      className={`w-12 h-12 inline-flex items-center justify-center ${
+                        cleanBgColor[item.cleaning_status_id]
+                      } rounded-full`}
                     >
-                      {item.floor}
-                      {String(item.room_number).padStart(2, "0")}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex-1 overflow-auto px-2 py-1 max-h-[125px]">
-                  <div className="w-full flex items-start gap-1">
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-1">
-                        <span
-                          className={`w-4 h-4 rounded-full ${
-                            checkBgColor[item.guest_check_id]
-                          }`}
-                        ></span>
-                        <span className="font-semibold">
-                          {item.guest_check_id === 1
-                            ? "Check-IN"
-                            : item.guest_check_id === 0
-                            ? "Check-OUT"
-                            : "N/A"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span
-                          className={`w-4 h-4 rounded-full ${
-                            guestBgColor[item.guest_status_id]
-                          }`}
-                        ></span>
-                        <span className="font-semibold">
-                          {item.guest_status_id === 1
-                            ? "Guest-IN"
-                            : item.guest_status_id === 0
-                            ? "Guest-OUT"
-                            : "N/A"}
-                        </span>
-                      </div>
+                      {item.cleaning_status_id === 1 ? (
+                        <Bubbles className="text-white" />
+                      ) : item.cleaning_status_id == 2 ? (
+                        <BrushCleaning className="text-white" />
+                      ) : null}
                     </div>
-                    {item.devices &&
-                      item.devices
-                        .filter((d) => d.type_id == device_type.AIR)
-                        .map((dev) => {
-                          const speedControl = dev.controls.find(
-                            (c) => c.control_id == CONTROL_ID_FAN
-                          );
-                          const tempControl = dev.controls.find(
-                            (c) => c.control_id == CONTROL_ID_TEMP
-                          );
-                          return (
-                            <div
-                              className="text-sm font-semibold"
-                              key={dev.device_id}
-                            >
-                              <span>
-                                {getFanSpeedLabel(Number(speedControl?.value))}{" "}
-                              </span>
-                              <span>{tempControl?.value || "N/A"} °C</span>
-                            </div>
-                          );
-                        })}
+                    <div className="flex-1 text-center">
+                      <span
+                        className={`font-semibold text-xl ${
+                          item.is_online === 0 ? "text-red-500" : "text-black"
+                        }`}
+                      >
+                        {item.floor}
+                        {String(item.room_number).padStart(2, "0")}
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => {
+                          sendWebSocketMessage({
+                            cmd: "write_register",
+                            param: {
+                              address: 6,
+                              value: item.dnd_status == 0 ? 1 : 0,
+                              slaveId: 1,
+                              ip: item.ip_address,
+                              fc: 6,
+                            },
+                          });
+                        }}
+                        className={`border p-0.5`}
+                      >
+                        DND
+                      </button>
+                      <button
+                        onClick={() => {
+                          sendWebSocketMessage({
+                            cmd: "write_register",
+                            param: {
+                              address: 5,
+                              value: item.mur_status == 0 ? 1 : 0,
+                              slaveId: 1,
+                              ip: item.ip_address,
+                              fc: 6,
+                            },
+                          });
+                        }}
+                        className={`border p-0.5`}
+                      >
+                        MUR
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-auto px-2 py-1 max-h-[125px]">
+                    <div className="w-full flex items-start gap-1">
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={`w-4 h-4 rounded-full ${
+                              checkBgColor[item.room_check_status]
+                            }`}
+                          ></span>
+                          <span className="font-semibold">
+                            {item.room_check_status === 1
+                              ? "Check-IN"
+                              : item.room_check_status === 0
+                              ? "Check-OUT"
+                              : "N/A"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={`w-4 h-4 rounded-full ${
+                              guestBgColor[item.guest_status_id]
+                            }`}
+                          ></span>
+                          <span className="font-semibold">
+                            {item.guest_status_id === 1
+                              ? "Guest-IN"
+                              : item.guest_status_id === 0
+                              ? "Guest-OUT"
+                              : "N/A"}
+                          </span>
+                        </div>
+                      </div>
+                      {item.devices &&
+                        item.devices
+                          .filter((d) => d.type_id == device_type.AIR)
+                          .map((dev) => {
+                            const speedControl = dev.controls.find(
+                              (c) => c.control_id == CONTROL_ID_FAN
+                            );
+                            const tempControl = dev.controls.find(
+                              (c) => c.control_id == CONTROL_ID_TEMP
+                            );
+                            return (
+                              <div
+                                className="text-sm font-semibold"
+                                key={dev.device_id}
+                              >
+                                <span>
+                                  {getFanSpeedLabel(
+                                    Number(speedControl?.value)
+                                  )}{" "}
+                                </span>
+                                <span>{tempControl?.value || "N/A"} °C</span>
+                              </div>
+                            );
+                          })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -14,7 +14,7 @@ const CardRoom = ({ room, onClick }) => {
   const {
     dnd_status,
     floor,
-    guest_check_id,
+    room_check_status,
     guest_status_id,
     mur_status,
     room_number,
@@ -68,12 +68,12 @@ const CardRoom = ({ room, onClick }) => {
 
       <div className="flex-1 grid grid-cols-2 gap-2">
         {deviceIndicator(
-          guest_check_id == guest_check_status.CHECK_IN
+          room_check_status == guest_check_status.CHECK_IN
             ? "Check-IN"
-            : guest_check_id == guest_check_status.CHECK_OUT
+            : room_check_status == guest_check_status.CHECK_OUT
             ? "Check-OUT"
             : "N/A",
-          guest_check_id
+          room_check_status
         )}
         {deviceIndicator(
           guest_status_id == 0

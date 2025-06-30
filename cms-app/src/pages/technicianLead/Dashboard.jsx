@@ -113,12 +113,14 @@ const Dashboard = () => {
           value={stats.onlineRooms}
           icon={Globe}
           iconColor="text-green-500"
+          borderColor="border-green-500"
         />
         <CardSummary
           title="Offline"
           value={stats.offlineRooms}
           icon={Globe}
           iconColor="text-red-500"
+          borderColor="border-red-500"
         />
       </div>
       <h1 className="text-2xl font-semibold">Repair Work</h1>
@@ -128,18 +130,21 @@ const Dashboard = () => {
           value={stats.new}
           icon={NotepadText}
           iconColor="text-gray-500"
+          borderColor="border-gray-500"
         />
         <CardSummary
           title="Pending"
           value={stats.pending}
           icon={CircleCheck}
           iconColor="text-yellow-500"
+          borderColor="border-yellow-500"
         />
         <CardSummary
           title="In Progress"
           value={stats.in_progress}
           icon={Loader}
           iconColor="text-blue-500"
+          borderColor="border-blue-500"
         />
       </div>
 
