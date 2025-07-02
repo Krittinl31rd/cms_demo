@@ -16,20 +16,20 @@ const {
 } = require("../controllers/technicianlead/maintenanceController");
 
 router.get(
-  "/api/get-technicians",
+  "/get-technicians",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
   GetTechnicians
 );
 
 router.post(
-  "/api/create-maintenancetask",
+  "/create-maintenancetask",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
   CreateMaintenanceTask
 );
 router.get(
-  "/api/get-maintenancetask",
+  "/get-maintenancetask",
   AuthCheck,
   RoleCheck([
     member_role.SUPER_ADMIN,
@@ -39,7 +39,7 @@ router.get(
   GetMaintenanceTask
 );
 router.get(
-  "/api/get-maintenancetask/:id",
+  "/get-maintenancetask/:id",
   AuthCheck,
   RoleCheck([
     member_role.SUPER_ADMIN,
@@ -49,7 +49,7 @@ router.get(
   GetMaintenanceTaskByID
 );
 router.get(
-  "/api/get-maintenancetask/user/:user_id",
+  "/get-maintenancetask/user/:user_id",
   AuthCheck,
   RoleCheck([
     member_role.SUPER_ADMIN,
@@ -59,7 +59,7 @@ router.get(
   GetMaintenanceTaskByUserID
 );
 router.put(
-  "/api/update-maintenancetask/:task_id",
+  "/update-maintenancetask/:task_id",
   AuthCheck,
   RoleCheck([
     member_role.SUPER_ADMIN,

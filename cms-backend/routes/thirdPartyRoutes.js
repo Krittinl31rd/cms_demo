@@ -4,6 +4,6 @@ const {
 } = require("../controllers/thirdPartyController");
 const router = express.Router();
 
-router.post("/api/send-notification", boardcastNotification);
+router.post("/send-notification", boardcastNotification);
 
 module.exports = router;

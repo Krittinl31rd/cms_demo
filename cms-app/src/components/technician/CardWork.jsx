@@ -2,24 +2,9 @@ import React from "react";
 import ModalPopup from "@/components/ui/ModalPopup";
 import dayjs from "dayjs";
 import { Pencil, Search, Trash } from "lucide-react";
+import { nameStatusId, colorBadge } from "@/utilities/helpers";
 
-const colorBadge = {
-  1: "bg-gray-300/80 text-gray-950",
-  2: "bg-yellow-300/80 text-yellow-950",
-  3: "bg-blue-300/80 text-blue-950",
-  4: "bg-green-300/80 text-green-950",
-  5: "bg-red-300/80 text-red-950",
-};
-
-const nameStatusId = {
-  1: "PENDING",
-  2: "ASSIGNED",
-  3: "IN_PROGRESS",
-  4: "COMPLETED",
-  5: "UNRESOLVED",
-};
-
-const CardWork = ({ task }) => {
+const CardWork = ({ task, onSelect, onView, onEdit, onDelete }) => {
   const date = dayjs(task?.created_at);
 
   return (
@@ -56,7 +41,7 @@ const CardWork = ({ task }) => {
         </div>
         <div className="w-full md:flex md:items-center md:justify-between text-sm text-gray-600">
           <h3>
-            By: {task?.assigned_to_name ? task?.assigned_to_name : "System"}
+            By: {task?.created_by_name ? task?.created_by_name : "System"}
           </h3>
 
           <h3>{date ? date.format("DD MMMM YYYY HH:mm:ss") : "Not set"}</h3>
@@ -64,15 +49,33 @@ const CardWork = ({ task }) => {
       </div>
       {/* footer */}
       <div className="w-full flex items-center justify-center gap-2">
-        <button className="w-full flex items-center justify-center gap-1 bg-blue-300/80 hover:bg-blue-500 text-blue-950 font-semibold text-sm py-2 px-4 rounded-lg transition-colors duration-300 cursor-pointer">
+        <button
+          onClick={() => {
+            onSelect(task);
+            onView();
+          }}
+          className="w-full flex items-center justify-center gap-1 bg-blue-300/80 hover:bg-blue-500 text-blue-950 font-semibold text-sm py-2 px-4 rounded-lg transition-colors duration-300 cursor-pointer"
+        >
           <Search size={16} />
           View
         </button>
-        <button className="w-full flex items-center justify-center gap-1 bg-yellow-300/80 hover:bg-yellow-500 text-yellow-950 font-semibold text-sm py-2 px-4 rounded-lg transition-colors duration-300 cursor-pointer">
+        <button
+          onClick={() => {
+            onSelect(task);
+            onEdit();
+          }}
+          className="w-full flex items-center justify-center gap-1 bg-yellow-300/80 hover:bg-yellow-500 text-yellow-950 font-semibold text-sm py-2 px-4 rounded-lg transition-colors duration-300 cursor-pointer"
+        >
           <Pencil size={16} />
           Edit
         </button>
-        <button className="w-full flex items-center justify-center gap-1 bg-red-300/80 hover:bg-red-500 text-red-950 font-semibold text-sm py-2 px-4 rounded-lg transition-colors duration-300 cursor-pointer">
+        <button
+          onClick={() => {
+            onSelect(task);
+            onDelete();
+          }}
+          className="w-full flex items-center justify-center gap-1 bg-red-300/80 hover:bg-red-500 text-red-950 font-semibold text-sm py-2 px-4 rounded-lg transition-colors duration-300 cursor-pointer"
+        >
           <Trash size={16} />
           Delete
         </button>

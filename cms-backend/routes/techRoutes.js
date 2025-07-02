@@ -9,6 +9,6 @@ const {
   CreateMaintenanceTaskByType,
 } = require("../controllers/technician/maintenanceController");
 
-router.post("/api/task", CreateMaintenanceTaskByType);
+router.post("/task", CreateMaintenanceTaskByType);
 
 module.exports = router;

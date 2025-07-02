@@ -19,41 +19,41 @@ const {
   Logout,
 } = require("../controllers/authController");
 
-router.post("/api/login", Login);
-router.post("/api/logout", Logout);
+router.post("/login", Login);
+router.post("/logout", Logout);
 
 router.post(
-  "/api/create-user",
+  "/create-user",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   CreateUser
 );
 router.put(
-  "/api/isactive-user/:user_id",
+  "/isactive-user/:user_id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   IsActiveUser
 );
 router.delete(
-  "/api/delete-user/:user_id",
+  "/delete-user/:user_id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   DeleteUser
 );
 
 // Get current user (any logged in user)
-router.get("/api/me", AuthCheck, Current);
+router.get("/me", AuthCheck, Current);
 
 // Superadmin generates invite link
 router.post(
-  "/api/invites",
+  "/invites",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   CreateInvite
 );
 // Superadmin revoke invite link
 router.get(
-  "/api/revoke/:token",
+  "/revoke/:token",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   RevokeInvite
@@ -61,21 +61,21 @@ router.get(
 
 // Superadmin approves/rejects Users
 router.get(
-  "/api/approves/:id",
+  "/approves/:id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   Approve
 );
 router.get(
-  "/api/reject/:id",
+  "/reject/:id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   Reject
 );
 
 // Apply via token link
-router.post("/api/register/:token", RegisterWithToken);
+router.post("/register/:token", RegisterWithToken);
 // validate token
-router.get("/api/register/:token/validate", ValiDateToken);
+router.get("/register/:token/validate", ValiDateToken);
 
 module.exports = router;

@@ -27,19 +27,19 @@ const {
 
 // Users
 router.get(
-  "/api/get-users",
+  "/get-users",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   GetUsers
 );
 router.get(
-  "/api/get-invite-tokens",
+  "/get-invite-tokens",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   GetInvitationTokens
 );
 router.get(
-  "/api/get-pending-users",
+  "/get-pending-users",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   GetPendingUsers
@@ -47,13 +47,13 @@ router.get(
 
 // Rooms
 router.post(
-  "/api/create-room",
+  "/create-room",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   CreateRoom
 );
 router.get(
-  "/api/get-rooms",
+  "/get-rooms",
   AuthCheck,
   RoleCheck([
     member_role.SUPER_ADMIN,
@@ -63,25 +63,25 @@ router.get(
   GetRooms
 );
 router.get(
-  "/api/get-room/:room_id",
+  "/get-room/:room_id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   GetRoomByID
 );
 router.get(
-  "/api/get-room-config",
+  "/get-room-config",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
   GetRoomWithConfig
 );
 router.put(
-  "/api/update-room/:room_id",
+  "/update-room/:room_id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   UpdateRoom
 );
 router.delete(
-  "/api/delete-room/:room_id",
+  "/delete-room/:room_id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   DeleteRoom
@@ -89,26 +89,26 @@ router.delete(
 
 // Devices
 router.post(
-  "/api/create-device",
+  "/create-device",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   CreateDevice
 );
 router.put(
-  "/api/update-device/:room_id/:device_id",
+  "/update-device/:room_id/:device_id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   UpdateDevice
 );
 router.delete(
-  "/api/delete-device/:room_id/:device_id",
+  "/delete-device/:room_id/:device_id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   DeleteDevice
 );
 
 router.get(
-  "/api/get-room-logs",
+  "/get-room-logs",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
   GetRoomDevicesLog

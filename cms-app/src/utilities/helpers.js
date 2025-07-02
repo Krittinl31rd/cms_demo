@@ -1,3 +1,19 @@
+export const colorBadge = {
+  1: "bg-gray-300/80 text-gray-950",
+  2: "bg-yellow-300/80 text-yellow-950",
+  3: "bg-blue-300/80 text-blue-950",
+  4: "bg-green-300/80 text-green-950",
+  5: "bg-red-300/80 text-red-950",
+};
+
+export const nameStatusId = {
+  1: "PENDING",
+  2: "ASSIGNED",
+  3: "IN_PROGRESS",
+  4: "COMPLETED",
+  5: "UNRESOLVED",
+};
+
 export const CheckFunctionModbus = (value) => {
   if (!value || typeof value !== "number") return null;
 
