@@ -69,14 +69,19 @@ const Navbar = ({ toggleSidebar, isOpen, user }) => {
             onClick={() => setIsOpenProfile(!isOpenProfile)}
             className="flex items-center gap-2 transition p-1 rounded-full hover:bg-gray-300  cursor-pointer"
           >
-            {/* <img
-              src={avatar}
-              alt="avatar"
-              className="w-10 h-10 rounded-full object-contain border border-gray-300"
-            /> */}
-            <span className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-semibold">
-              {user?.full_name?.charAt(0)}
-            </span>
+            {user?.img_profile ? (
+              <img
+                src={`${import.meta.env.VITE_BASE_PROFILE_PATH}/${
+                  user.img_profile
+                }`}
+                alt="avatar"
+                className="w-10 h-10 rounded-full object-contain border border-gray-300"
+              />
+            ) : (
+              <span className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-semibold">
+                {user?.full_name?.charAt(0)}
+              </span>
+            )}
           </button>
 
           {isOpenProfile && (

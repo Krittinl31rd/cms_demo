@@ -75,6 +75,23 @@ router.put(
   UpdateMaintenanceTask
 );
 
+router.put("/upload-profile-image", upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  const file = req.file;
+  const response = {
+    filename: file.filename,
+  };
+  response.path = `${process.env.PATH_UPLOAD_PROFILE}/${file.filename}`;
+  // response.path = file.path.replace(/\\/g, "/");
+  res.status(200).json({
+    message: "Upload successful",
+    file: response,
+  });
+});
+
 router.put(
   "/upload-multiple",
   upload.fields([

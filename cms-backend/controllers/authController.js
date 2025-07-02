@@ -320,6 +320,7 @@ exports.Login = async (req, res) => {
       full_name: results[0].full_name,
       role_id: results[0].role_id,
       is_active: results[0].is_active,
+      img_profile: results[0].img_profile,
       permissions: [],
     };
 
