@@ -31,25 +31,42 @@ router.post(
 router.get(
   "/api/get-maintenancetask",
   AuthCheck,
-  RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
+  RoleCheck([
+    member_role.SUPER_ADMIN,
+    member_role.TECHNICIAN_LEAD,
+    member_role.TECHNICIAN,
+  ]),
   GetMaintenanceTask
 );
 router.get(
   "/api/get-maintenancetask/:id",
   AuthCheck,
-  RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
+  RoleCheck([
+    member_role.SUPER_ADMIN,
+    member_role.TECHNICIAN_LEAD,
+    member_role.TECHNICIAN,
+  ]),
   GetMaintenanceTaskByID
 );
 router.get(
   "/api/get-maintenancetask/user/:user_id",
   AuthCheck,
-  RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
+  RoleCheck([
+    member_role.SUPER_ADMIN,
+    member_role.TECHNICIAN_LEAD,
+    member_role.TECHNICIAN,
+  ]),
   GetMaintenanceTaskByUserID
 );
 router.put(
   "/api/update-maintenancetask/:task_id",
   AuthCheck,
-  RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
+  RoleCheck([
+    member_role.SUPER_ADMIN,
+    member_role.TECHNICIAN_LEAD,
+    ,
+    member_role.TECHNICIAN,
+  ]),
   upload.fields([
     { name: "before", maxCount: 5 },
     { name: "after", maxCount: 5 },
