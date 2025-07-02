@@ -285,6 +285,9 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
       maintenance_tasks.*,
       rooms.room_number,
       rooms.floor,
+      rooms.guest_status_id,
+      rooms.dnd_status,
+      rooms.room_check_status,
       rooms.is_online,
       assigned_user.full_name AS assigned_to_name,
       created_by_user.full_name AS created_by_name
