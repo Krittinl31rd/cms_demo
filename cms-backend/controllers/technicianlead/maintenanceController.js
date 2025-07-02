@@ -1,10 +1,15 @@
 const sequelize = require("../../config/db");
 const upload = require("../../middleware/uploadImage");
+const dayjs = require("dayjs");
 const {
   checkExists,
   getMaintenanceTaskBaseQuery,
 } = require("../../utils/dbHelpers");
-const { maintenance_status, member_role } = require("../../constants/common");
+const {
+  maintenance_status,
+  statusNameMap,
+  member_role,
+} = require("../../constants/common");
 
 exports.GetTechnicians = async (req, res) => {
   try {
@@ -73,14 +78,92 @@ exports.CreateMaintenanceTask = async (req, res) => {
 
 exports.GetMaintenanceTask = async (req, res) => {
   try {
-    const query = getMaintenanceTaskBaseQuery();
+    const {
+      room_id,
+      assigned_to,
+      status_id,
+      started_at,
+      ended_at,
+      created_by,
+    } = req.query;
+
+    const baseQuery = getMaintenanceTaskBaseQuery();
+    const whereClauses = [];
+    const replacements = {};
+
+    if (room_id) {
+      whereClauses.push("maintenance_tasks.room_id = :room_id");
+      replacements.room_id = room_id;
+    }
+
+    if (assigned_to) {
+      whereClauses.push("maintenance_tasks.assigned_to = :assigned_to");
+      replacements.assigned_to = assigned_to;
+    }
+
+    if (status_id) {
+      const statusIds = Array.isArray(status_id)
+        ? status_id
+        : status_id.split(",").map((id) => Number(id.trim()));
+      if (statusIds.length > 1) {
+        whereClauses.push(`maintenance_tasks.status_id IN (:status_ids)`);
+        replacements.status_ids = statusIds;
+      } else {
+        whereClauses.push("maintenance_tasks.status_id = :status_id");
+        replacements.status_id = statusIds[0];
+      }
+    }
+
+    if (created_by) {
+      whereClauses.push("maintenance_tasks.created_by = :created_by");
+      replacements.created_by = created_by;
+    }
+
+    if (started_at && ended_at) {
+      whereClauses.push(
+        "maintenance_tasks.ended_at BETWEEN :started_at AND :ended_at"
+      );
+      replacements.started_at = `${started_at} 00:00:00`;
+      replacements.ended_at = `${ended_at} 23:59:59`;
+    } else if (started_at) {
+      whereClauses.push(
+        "maintenance_tasks.ended_at BETWEEN :started_at AND :ended_at"
+      );
+      replacements.started_at = `${started_at} 00:00:00`;
+      replacements.ended_at = `${started_at} 23:59:59`;
+      // whereClauses.push("maintenance_tasks.ended_at >= :started_at");
+      // replacements.started_at = `${started_at} 00:00:00`;
+    } else if (ended_at) {
+      whereClauses.push(
+        "maintenance_tasks.ended_at BETWEEN :started_at AND :ended_at"
+      );
+      replacements.started_at = `${ended_at} 00:00:00`;
+      replacements.ended_at = `${ended_at} 23:59:59`;
+      // whereClauses.push("maintenance_tasks.ended_at <= :ended_at");
+      // replacements.ended_at = `${ended_at} 23:59:59`;
+    }
+
+    let query = baseQuery;
+    if (whereClauses.length > 0) {
+      query += " WHERE " + whereClauses.join(" AND ");
+    }
+
+    query += " ORDER BY maintenance_tasks.created_at DESC";
+
     const result = await sequelize.query(query, {
+      replacements,
       type: sequelize.QueryTypes.SELECT,
     });
+
     const parsedResults = result.map((item) => ({
       ...item,
       image_report: item.image_report ? JSON.parse(item.image_report) : null,
     }));
+
+    if (parsedResults.length == 0) {
+      return res.status(404).json({ message: "No maintenance tasks found." });
+    }
+
     res.status(200).json(parsedResults);
   } catch (err) {
     console.error(err);
@@ -91,15 +174,103 @@ exports.GetMaintenanceTask = async (req, res) => {
 exports.GetMaintenanceTaskByID = async (req, res) => {
   try {
     const { id } = req.params;
-    const query = getMaintenanceTaskBaseQuery();
     const [result] = await sequelize.query(
-      `${query} WHERE maintenance_tasks.id = :id`,
+      `SELECT
+      maintenance_tasks.*,
+      rooms.room_number,
+      rooms.floor,
+      assigned_user.full_name AS assigned_to_name,
+      created_by_user.full_name AS created_by_name
+    FROM maintenance_tasks
+    JOIN rooms ON rooms.id = maintenance_tasks.room_id
+    LEFT JOIN users AS assigned_user ON assigned_user.id = maintenance_tasks.assigned_to
+    LEFT JOIN users AS created_by_user ON created_by_user.id = maintenance_tasks.created_by
+    WHERE maintenance_tasks.id = :id
+    ORDER BY maintenance_tasks.created_at DESC`,
       {
         replacements: { id },
         type: sequelize.QueryTypes.SELECT,
       }
     );
-    res.status(200).json(result);
+
+    // If no result found, return 404
+    if (!result) {
+      return res.status(404).json({ message: "Maintenance task not found." });
+    }
+
+    let room = null;
+    // Only fetch room_control if status is IN_PROGRESS
+    if (result.status_id === maintenance_status.IN_PROGRESS) {
+      const rooms = await sequelize.query(
+        `SELECT * FROM smarthotel.rooms WHERE id = :id`,
+        {
+          replacements: { id: result.room_id },
+          type: sequelize.QueryTypes.SELECT,
+        }
+      );
+      [room] = await Promise.all(
+        rooms.map(async (room) => {
+          const devices = await sequelize.query(
+            `SELECT d.id, d.type_id, d.name, d.status_id, d.last_online, d.config
+             FROM devices d
+             WHERE d.room_id = :room_id
+             ORDER BY d.type_id ASC`,
+            {
+              replacements: { room_id: room.id },
+              type: sequelize.QueryTypes.SELECT,
+            }
+          );
+
+          const deviceList = await Promise.all(
+            devices.map(async (device) => {
+              const controls = await sequelize.query(
+                `SELECT ctrl.control_id, ctrl.name, ctrl.value, ctrl.last_update
+                 FROM device_control ctrl
+                 WHERE ctrl.device_id = :device_id AND ctrl.room_id = :room_id`,
+                {
+                  replacements: {
+                    device_id: device.id,
+                    room_id: room.id,
+                  },
+                  type: sequelize.QueryTypes.SELECT,
+                }
+              );
+
+              return {
+                device_id: device.id,
+                type_id: device.type_id,
+                status_id: device.status_id,
+                device_name: device.name,
+                last_online: device.last_online,
+                config: device.config,
+                controls: controls.map((ctrl) => ({
+                  control_id: ctrl.control_id,
+                  name: ctrl.name,
+                  value: ctrl.value,
+                  last_update: ctrl.last_update,
+                })),
+              };
+            })
+          );
+
+          return {
+            guest_status_id: room.guest_status_id,
+            dnd_status: room.dnd_status,
+            mur_status: room.mur_status,
+            room_check_status: room.room_check_status,
+            is_online: room.is_online,
+            ip_address: room.ip_address,
+            mac_address: room.mac_address,
+            devices: deviceList,
+          };
+        })
+      );
+    }
+
+    res.status(200).json({
+      ...result,
+      room_control: room || [null],
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
@@ -109,15 +280,42 @@ exports.GetMaintenanceTaskByID = async (req, res) => {
 exports.GetMaintenanceTaskByUserID = async (req, res) => {
   try {
     const { user_id } = req.params;
-    const query = getMaintenanceTaskBaseQuery();
     const result = await sequelize.query(
-      `${query} WHERE maintenance_tasks.assigned_to = :user_id`,
+      `SELECT
+      maintenance_tasks.*,
+      rooms.room_number,
+      rooms.floor,
+      rooms.is_online,
+      assigned_user.full_name AS assigned_to_name,
+      created_by_user.full_name AS created_by_name
+    FROM maintenance_tasks
+    JOIN  rooms ON rooms.id = maintenance_tasks.room_id
+    LEFT JOIN users AS assigned_user ON assigned_user.id = maintenance_tasks.assigned_to
+    LEFT JOIN users AS created_by_user ON created_by_user.id = maintenance_tasks.created_by
+    WHERE maintenance_tasks.assigned_to = :user_id ORDER BY maintenance_tasks.created_at DESC`,
       {
         replacements: { user_id },
         type: sequelize.QueryTypes.SELECT,
       }
     );
-    res.status(200).json(result);
+
+    const statusCounts = {
+      pending: 0,
+      assigned: 0,
+      in_progress: 0,
+      completed: 0,
+      inspected: 0,
+    };
+
+    result.forEach((item) => {
+      const name = statusNameMap[item.status_id];
+      if (name) statusCounts[name] += 1;
+    });
+
+    res.status(200).json({
+      statusCounts,
+      tasks: result,
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });

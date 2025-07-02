@@ -41,8 +41,16 @@ const maintenance_status = {
   PENDING: 1, //Waiting For Assigning
   ASSIGNED: 2, //has been assigned, waiting For queue
   IN_PROGRESS: 3, //Technician repairing
-  FIXED: 4, //Problem has been resolve, Finish Task
+  COMPLETED: 4, //Problem has been resolve, Finish Task
   UNRESOLVED: 5, //Cannot resolve, Then Add new claim report list
+};
+
+const statusNameMap = {
+  1: "pending",
+  2: "assigned",
+  3: "in_progress",
+  4: "completed",
+  5: "inspected",
 };
 
 const device_type = {
@@ -103,65 +111,5 @@ module.exports = {
   maintenance_status,
   task_status,
   cleaning_status,
+  statusNameMap,
 };
-
-const example_data = [
-  {
-    room_id: 5,
-    room_number: 101,
-    floor: 1,
-    guest_status_id: 0,
-    cleaning_status_id: 1,
-    dnd_status: 0,
-    mur_status: 0,
-    guest_check_id: 0,
-    devices: [
-      {
-        device_id: 22,
-        type_id: 1,
-        status_id: null,
-        name: "Air 1",
-        last_online: null,
-        config: null,
-        controls: [
-          {
-            control_id: 1,
-            name: "status",
-            value: null,
-            last_update: "2025-06-02 10:45:43",
-          },
-          {
-            control_id: 2,
-            name: "fanspeed",
-            value: null,
-            last_update: "2025-06-02 10:45:43",
-          },
-          {
-            control_id: 3,
-            name: "temp",
-            value: null,
-            last_update: "2025-06-02 10:45:43",
-          },
-          {
-            control_id: 101,
-            name: "status",
-            value: 30001,
-            last_update: "2025-06-02 10:45:43",
-          },
-          {
-            control_id: 102,
-            name: "fanspeed",
-            value: 30002,
-            last_update: "2025-06-02 10:45:43",
-          },
-          {
-            control_id: 103,
-            name: "temp",
-            value: 30003,
-            last_update: "2025-06-02 10:45:43",
-          },
-        ],
-      },
-    ],
-  },
-];

@@ -20,6 +20,12 @@ const store = (set) => ({
       token: null,
     });
   },
+  actionLogout2: async () => {
+    set({
+      user: null,
+      token: null,
+    });
+  },
   breadcrumb: [],
   setBreadcrumb: (segments) => set({ breadcrumb: segments }),
   subscribeId: null,

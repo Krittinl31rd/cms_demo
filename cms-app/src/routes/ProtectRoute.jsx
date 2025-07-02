@@ -12,7 +12,7 @@ const ProtectRoute = ({
 }) => {
   const [status, setStatus] = useState(false);
   const [checking, setChecking] = useState(true);
-  const { user, token, actionLogout } = useStore((state) => state);
+  const { user, token, actionLogout2 } = useStore((state) => state);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,7 +36,7 @@ const ProtectRoute = ({
         })
         .catch((err) => {
           if (err.response?.status === 401) {
-            actionLogout();
+            actionLogout2();
             navigate("/login");
           }
           setStatus(false);
@@ -47,7 +47,6 @@ const ProtectRoute = ({
       setChecking(false);
     }
   }, [user, token]);
-
 
   if (checking) return <LoadingToRedirect />;
 

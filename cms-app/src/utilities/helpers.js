@@ -30,4 +30,55 @@ export const CheckFunctionModbus = (value) => {
   return { name, address, funct };
 };
 
+export const CheckRoleName = (value) => {
+  if (!value || typeof value !== "number") return null;
+
+  let name = "";
+  switch (value) {
+    case 1:
+      name = "Super Admin";
+      break;
+    case 2:
+      name = "Front Desk";
+      break;
+    case 3:
+      name = "Technician Lead";
+      break;
+    case 4:
+      name = "Technician";
+      break;
+    case 5:
+      name = "Maid Supervisor";
+      break;
+    case 6:
+      name = "Maid";
+      break;
+    default:
+      name = "Unknown Role";
+  }
+
+  return name;
+};
+
+export const CheckTypeTechnician = (value) => {
+  if (!value || typeof value !== "number") return null;
+
+  let name = "";
+  switch (value) {
+    case 1:
+      name = "RCU";
+      break;
+    case 2:
+      name = "Electrical";
+      break;
+    case 3:
+      name = "Other";
+      break;
+    default:
+      name = "Unknown Type";
+  }
+
+  return name;
+};
+
 // COIL STATUS, INPUT STATUS, HOLDING REGISTER,  INPUT REGISTER

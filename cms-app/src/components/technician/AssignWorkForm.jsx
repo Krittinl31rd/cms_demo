@@ -6,17 +6,17 @@ import DataTable from "@/components/table/DataTable";
 import ModalPopup from "@/components/ui/ModalPopup";
 import Button from "@/components/ui/Button";
 import { maintenance_status } from "@/constant/common";
+import { CheckRoleName, CheckTypeTechnician } from "@/utilities/helpers";
 
-export default function AssignWorkForm({ technicians = [] }) {
+export default function AssignWorkForm({ technicianList }) {
   const [isCancel, setIsCancel] = useState(false);
   const [selectCancel, setSelectCancel] = useState(null);
 
   const [formData, setFormData] = useState({
-    room: "",
-    detail: "",
-    technicianId: "",
-    technician: "",
-    status: maintenance_status.ASSIGNED,
+    room_id: "",
+    problem_description: "",
+    assigned_to: "",
+    status_id: maintenance_status.ASSIGNED,
   });
 
   const handleChange = (e) => {
@@ -29,33 +29,23 @@ export default function AssignWorkForm({ technicians = [] }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert(
-      `${formData.room} | ${formData.detail} | [${formData.technicianId}]${formData.technician}`
-    );
+    console.log(formData);
     setFormData({
-      room: "",
-      detail: "",
-      technicianId: "",
-      technician: "",
-      status: "pending",
+      room_id: "",
+      problem_description: "",
+      assigned_to: "",
+      status_id: maintenance_status.ASSIGNED,
     });
   };
 
   return (
     <>
-      <form
-        onSubmit={handleSubmit}
-        className="w-full mx-auto p-4 bg-white shadow-xl rounded-2xl space-y-4"
-      >
-        <h2 className="text-xl font-semibold border-gray-300 border-b pb-2">
-          Assign Work
-        </h2>
-
+      <form onSubmit={handleSubmit} className="w-full mx-auto space-y-4">
         <div>
           <label className="block text-sm font-semibold">Room</label>
           <input
             type="text"
-            name="room"
+            name="room_id"
             value={formData.room}
             onChange={handleChange}
             className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -64,10 +54,12 @@ export default function AssignWorkForm({ technicians = [] }) {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold">Detail</label>
+          <label className="block text-sm font-semibold">
+            Problem Description
+          </label>
           <textarea
-            name="detail"
-            value={formData.detail}
+            name="problem_description"
+            value={formData.problem_description}
             onChange={handleChange}
             rows="3"
             className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -76,9 +68,11 @@ export default function AssignWorkForm({ technicians = [] }) {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium">Assign Technician</label>
-          <div className="max-h-40 overflow-y-scroll  grid grid-cols-2 md:grid-cols-3 gap-2 pr-2">
-            {technicians.map((tech) => (
+          <label className="block text-sm font-semibold">
+            Assign Technician
+          </label>
+          <div className="max-h-48 overflow-y-auto  grid grid-cols-2 md:grid-cols-3 gap-2 pr-2">
+            {technicianList.map((tech) => (
               <div
                 key={tech.id}
                 onClick={() =>
@@ -89,7 +83,7 @@ export default function AssignWorkForm({ technicians = [] }) {
                   }))
                 }
                 className={`cursor-pointer p-2 border  rounded-lg shadow-sm transition-all ${
-                  formData.technician == tech.name
+                  formData.technician == tech.id
                     ? "bg-blue-100 border-blue-500"
                     : "bg-white border-gray-300 hover:bg-gray-100"
                 }`}
@@ -103,12 +97,15 @@ export default function AssignWorkForm({ technicians = [] }) {
                     />
                   ) : (
                     <span className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-semibold">
-                      {tech?.name.charAt(0)}
+                      {tech?.full_name.charAt(0)}
                     </span>
                   )}
                   <div className="flex-1">
-                    <h4 className="font-semibold">{tech.name}</h4>
-                    <p className="text-sm text-gray-500">{tech.role}</p>
+                    <h4 className="font-semibold">{tech.full_name}</h4>
+                    <p className="text-xs">
+                      {CheckTypeTechnician(tech?.type_id)}{" "}
+                      {CheckRoleName(tech?.role_id)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -124,15 +121,15 @@ export default function AssignWorkForm({ technicians = [] }) {
           </p>
         </div>
 
-        <button
-          type="submit"
-          className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg"
-        >
-          Submit
-        </button>
+        <div className="w-full flex items-center justify-end gap-2">
+          <Button type="button" variant="gray">
+            Cancel
+          </Button>
+          <Button>Aassign Work</Button>
+        </div>
       </form>
 
-      <ModalPopup
+      {/* <ModalPopup
         isOpen={isCancel}
         onClose={() => setIsCancel(false)}
         title={`Are you sure?`}
@@ -160,7 +157,7 @@ export default function AssignWorkForm({ technicians = [] }) {
         ) : (
           <p>No data available</p>
         )}
-      </ModalPopup>
+      </ModalPopup> */}
     </>
   );
 }
