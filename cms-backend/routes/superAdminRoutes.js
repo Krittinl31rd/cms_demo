@@ -9,6 +9,7 @@ const {
   CreateRoom,
   GetRooms,
   GetRoomByID,
+  GetRoomByIDWithDevices,
   UpdateRoom,
   DeleteRoom,
   GetRoomWithConfig,
@@ -52,6 +53,7 @@ router.post(
   RoleCheck([member_role.SUPER_ADMIN]),
   CreateRoom
 );
+
 router.get(
   "/get-rooms",
   AuthCheck,
@@ -59,27 +61,49 @@ router.get(
     member_role.SUPER_ADMIN,
     member_role.FRONT_DESK,
     member_role.TECHNICIAN_LEAD,
+    member_role.TECHNICIAN,
   ]),
   GetRooms
 );
+
 router.get(
   "/get-room/:room_id",
   AuthCheck,
-  RoleCheck([member_role.SUPER_ADMIN]),
+  RoleCheck([
+    member_role.SUPER_ADMIN,
+    member_role.FRONT_DESK,
+    member_role.TECHNICIAN_LEAD,
+    member_role.TECHNICIAN,
+  ]),
   GetRoomByID
 );
+
+router.get(
+  "/get-room-devices/:room_id",
+  AuthCheck,
+  RoleCheck([
+    member_role.SUPER_ADMIN,
+    member_role.FRONT_DESK,
+    member_role.TECHNICIAN_LEAD,
+    member_role.TECHNICIAN,
+  ]),
+  GetRoomByIDWithDevices
+);
+
 router.get(
   "/get-room-config",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
   GetRoomWithConfig
 );
+
 router.put(
   "/update-room/:room_id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   UpdateRoom
 );
+
 router.delete(
   "/delete-room/:room_id",
   AuthCheck,
@@ -94,12 +118,14 @@ router.post(
   RoleCheck([member_role.SUPER_ADMIN]),
   CreateDevice
 );
+
 router.put(
   "/update-device/:room_id/:device_id",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN]),
   UpdateDevice
 );
+
 router.delete(
   "/delete-device/:room_id/:device_id",
   AuthCheck,

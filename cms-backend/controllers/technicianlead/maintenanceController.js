@@ -101,7 +101,7 @@ exports.CreateMaintenanceTask = async (req, res) => {
         type: [tech_type_id],
       };
       const result = await doBoardcastNotification(payloadNotify);
-      console.log(result);
+      console.log(result.response);
     } catch (err) {
       console.error("Error sending notification:", err);
     }

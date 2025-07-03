@@ -118,30 +118,12 @@ exports.GetRooms = async (req, res) => {
   }
 };
 
-exports.GetRoomWithConfig = async (req, res) => {
-  try {
-    const rooms = await sequelize.query(
-      `  
-    SELECT r.id, r.room_number, r.floor, r.is_online, r.ip_address, r.mac_address, c.config
-    FROM rooms r
-    LEFT JOIN rcu_config c ON r.id = c.room_id
-`,
-      {
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
-    res.status(200).json(rooms);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
 exports.GetRoomByID = async (req, res) => {
   try {
     const { room_id } = req.params;
     const rooms = await sequelize.query(
-      `SELECT * FROM rooms WHERE id = :room_id;`,
+      `SELECT id, room_number, floor, guest_status_id, cleaning_status_id, dnd_status, mur_status, room_check_status, is_online 
+      FROM rooms WHERE id = :room_id;`,
       {
         replacements: { room_id },
         type: sequelize.QueryTypes.SELECT,
@@ -149,7 +131,30 @@ exports.GetRoomByID = async (req, res) => {
     );
 
     if (rooms.length <= 0) {
-      res.status(400).json({ message: "Not found this room." });
+      return res.status(400).json({ message: "Not found this room." });
+    }
+
+    res.status(200).json(rooms);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.GetRoomByIDWithDevices = async (req, res) => {
+  try {
+    const { room_id } = req.params;
+    const rooms = await sequelize.query(
+      `SELECT id 
+      FROM rooms WHERE id = :room_id;`,
+      {
+        replacements: { room_id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (rooms.length <= 0) {
+      return res.status(400).json({ message: "Not found this room." });
     }
 
     const [roomList] = await Promise.all(
@@ -170,8 +175,7 @@ exports.GetRoomByID = async (req, res) => {
             const controls = await sequelize.query(
               `SELECT ctrl.control_id, ctrl.name, ctrl.value, ctrl.last_update
                         FROM device_control ctrl
-                        WHERE ctrl.device_id = :device_id AND ctrl.room_id = :room_id
-                        ORDER BY ctrl.value ASC`,
+                        WHERE ctrl.device_id = :device_id AND ctrl.room_id = :room_id`,
               {
                 replacements: {
                   device_id: device.id,
@@ -221,6 +225,26 @@ exports.GetRoomByID = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+exports.GetRoomWithConfig = async (req, res) => {
+  try {
+    const rooms = await sequelize.query(
+      `  
+    SELECT r.id, r.room_number, r.floor, r.is_online, r.ip_address, r.mac_address, c.config
+    FROM rooms r
+    LEFT JOIN rcu_config c ON r.id = c.room_id
+`,
+      {
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    res.status(200).json(rooms);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // UPDATE ROOM
 exports.UpdateRoom = async (req, res) => {
   try {
