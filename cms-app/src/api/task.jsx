@@ -34,8 +34,19 @@ export const CreateTask = async (formData, token) =>
 
 export const UpdateTask = async (formData, token) =>
   await axios.put(
-    import.meta.env.VITE_API_URL + "/update-maintenancetask",
+    import.meta.env.VITE_API_URL +
+      `/update-maintenancetask/${formData?.task_id}`,
     formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+export const DeleteTask = async (id, token) =>
+  await axios.delete(
+    import.meta.env.VITE_API_URL + `/delete-maintenancetask/${id}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

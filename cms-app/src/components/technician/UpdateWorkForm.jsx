@@ -6,7 +6,7 @@ import Button from "@/components/ui/Button";
 import { maintenance_status } from "@/constant/common";
 import { CheckRoleName, CheckTypeTechnician } from "@/utilities/helpers";
 import { toast } from "react-toastify";
-import { CreateTask } from "@/api/task";
+import { UpdateTask } from "@/api/task";
 import useStore from "@/store/store";
 
 const UpdateWorkForm = ({
@@ -16,8 +16,21 @@ const UpdateWorkForm = ({
   technicianList,
   rooms,
 }) => {
-  console.log(selectedTask);
   const [formData, setFormData] = useState({});
+  const { token } = useStore((state) => state);
+
+  // Set initial form data from selectedTask when it changes
+  useEffect(() => {
+    if (selectedTask) {
+      setFormData({
+        room_id: selectedTask.room_id || "",
+        problem_description: selectedTask.problem_description || "",
+        assigned_to: selectedTask.assigned_to || "",
+        tech_name: selectedTask.assigned_to_name || "",
+        tech_type_id: selectedTask.assigned_to_type || "",
+      });
+    }
+  }, [selectedTask]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,26 +42,23 @@ const UpdateWorkForm = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    // if (!formData.room_id) {
-    //   toast.error("Please select a room to assign the work.");
-    //   return;
-    // }
+    if (!formData.room_id) {
+      toast.error("Please select a room to assign the work.");
+      return;
+    }
 
-    // if (isSelectTech == false) {
-    //   toast.error("Please select a technician to assign the work.");
-    //   return;
-    // }
-
-    // try {
-    //   const response = await CreateTask(formData, token);
-    //   toast.success(response?.data?.message || "Work assigned successfully");
-    //   onAssign();
-    //   fetchTaskList();
-    // } catch (err) {
-    //   console.log(err);
-    //   toast.success(err.response?.data?.message || "Failed to assign work");
-    // }
+    try {
+      const response = await UpdateTask(
+        { ...formData, task_id: selectedTask?.id },
+        token
+      );
+      toast.success(response?.data?.message || "Work updated successfully");
+      onEdit();
+      fetchTaskList();
+    } catch (err) {
+      console.log(err);
+      toast.error(err.response?.data?.message || "Failed to update work");
+    }
   };
 
   return (
@@ -61,7 +71,7 @@ const UpdateWorkForm = ({
             onChange={handleChange}
             className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
-            defaultValue={selectedTask.room_id || ""}
+            value={formData.room_id || ""}
           >
             <option value="" disabled>
               Select Room
@@ -81,7 +91,7 @@ const UpdateWorkForm = ({
           </label>
           <textarea
             name="problem_description"
-            value={selectedTask.problem_description}
+            value={formData.problem_description}
             onChange={handleChange}
             rows="3"
             className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -98,19 +108,15 @@ const UpdateWorkForm = ({
               <div
                 key={tech.id}
                 onClick={() => {
-                  setFormData({
-                    ...formData,
+                  setFormData((prev) => ({
+                    ...prev,
                     assigned_to: tech.id,
                     tech_name: tech.full_name,
                     tech_type_id: tech.type_id,
-                  });
+                  }));
                 }}
                 className={`cursor-pointer p-2 border  rounded-lg shadow-sm transition-all ${
-                  formData?.assigned_to
-                    ? formData?.assigned_to == tech.id
-                      ? "bg-blue-100 border-blue-500"
-                      : "bg-white border-gray-300 hover:bg-gray-100"
-                    : selectedTask?.assigned_to == tech.id
+                  formData?.assigned_to == tech.id
                     ? "bg-blue-100 border-blue-500"
                     : "bg-white border-gray-300 hover:bg-gray-100"
                 }`}
@@ -145,50 +151,18 @@ const UpdateWorkForm = ({
                 ? `${formData?.tech_name} (${CheckTypeTechnician(
                     formData?.tech_type_id
                   )})`
-                : `${selectedTask?.assigned_to_name} (${CheckTypeTechnician(
-                    selectedTask?.assigned_to_type
-                  )})`}
+                : "No technician selected"}
             </span>
           </p>
         </div>
 
         <div className="w-full flex items-center justify-end gap-2">
-          <Button type="button" variant="gray">
+          <Button type="button" variant="gray" onClick={onEdit}>
             Cancel
           </Button>
-          <Button>Aassign Work</Button>
+          <Button type="submit">Update Work</Button>
         </div>
       </form>
-
-      {/* <ModalPopup
-        isOpen={isCancel}
-        onClose={() => setIsCancel(false)}
-        title={`Are you sure?`}
-      >
-        {selectCancel ? (
-          <div className="space-y-2 text-sm">
-            <p>
-              Cancle your work {selectCancel.id} | {selectCancel.roomName} |{" "}
-              {selectCancel.status}
-            </p>
-            <div className="w-full flex items-center justify-end gap-2">
-              <Button variant="gray" onClick={() => setIsCancel(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  alert(`Cancel success`);
-                  setIsCancel(false);
-                }}
-              >
-                Confirm
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <p>No data available</p>
-        )}
-      </ModalPopup> */}
     </>
   );
 };

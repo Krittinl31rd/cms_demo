@@ -14,6 +14,7 @@ const {
   GetMaintenanceTaskByID,
   GetTechnicians,
   GetRoomNumberAndFloor,
+  DeleteMaintenanceTask,
 } = require("../controllers/technicianlead/maintenanceController");
 
 router.get(
@@ -81,6 +82,18 @@ router.put(
     { name: "other", maxCount: 5 },
   ]),
   UpdateMaintenanceTask
+);
+
+router.delete(
+  "/delete-maintenancetask/:task_id",
+  AuthCheck,
+  RoleCheck([
+    member_role.SUPER_ADMIN,
+    member_role.TECHNICIAN_LEAD,
+    ,
+    member_role.TECHNICIAN,
+  ]),
+  DeleteMaintenanceTask
 );
 
 router.put("/upload-profile-image", upload.single("image"), (req, res) => {

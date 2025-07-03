@@ -368,6 +368,7 @@ exports.UpdateMaintenanceTask = async (req, res) => {
   try {
     const { task_id } = req.params;
     const {
+      room_id,
       fix_description = null,
       started_at = null,
       ended_at = null,
@@ -376,33 +377,41 @@ exports.UpdateMaintenanceTask = async (req, res) => {
     } = req.body;
     const { id, role_id } = req.user;
 
+    let taskResult;
     if (role_id == member_role.TECHNICIAN) {
-      const [taskResult] = await sequelize.query(
+      [taskResult] = await sequelize.query(
         `SELECT * FROM maintenance_tasks WHERE id = :task_id AND assigned_to = :assigned_to`,
         {
           replacements: { task_id, assigned_to: id },
           type: sequelize.QueryTypes.SELECT,
         }
       );
-      if (!taskResult) {
-        return res.status(404).json({ message: "Maintenance task not found." });
-      }
     } else {
-      const [taskResult] = await sequelize.query(
+      [taskResult] = await sequelize.query(
         `SELECT * FROM maintenance_tasks WHERE id = :task_id`,
         {
           replacements: { task_id },
           type: sequelize.QueryTypes.SELECT,
         }
       );
-      if (!taskResult) {
-        return res.status(404).json({ message: "Maintenance task not found." });
-      }
+    }
+    if (!taskResult) {
+      return res.status(404).json({ message: "Maintenance task not found." });
     }
 
-    // if (!(await checkExists(sequelize, "maintenance_statuses", status_id))) {
-    //   return res.status(403).json({ message: "Invalid status ID." });
-    // }
+    const isRoom = await sequelize.query(
+      `SELECT * FROM maintenance_tasks WHERE room_id = :room_id AND status_id IN (${maintenance_status.PENDING}, ${maintenance_status.ASSIGNED}, ${maintenance_status.IN_PROGRESS}) AND id != :task_id`,
+      {
+        replacements: { room_id, task_id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    if (isRoom.length > 0) {
+      return res.status(403).json({
+        message:
+          "#" + room_id + " This room has an unfinished maintenance task.",
+      });
+    }
 
     const image_before = req.files?.before
       ? req.files.before.map((file) => file.filename)
@@ -414,6 +423,11 @@ exports.UpdateMaintenanceTask = async (req, res) => {
 
     const updates = [];
     const replacements = { task_id };
+
+    if (room_id) {
+      updates.push("room_id = :room_id");
+      replacements.room_id = room_id;
+    }
 
     if (status_id) {
       updates.push("status_id = :status_id");
@@ -452,7 +466,9 @@ exports.UpdateMaintenanceTask = async (req, res) => {
       replacements.image_after = JSON.stringify(image_after);
     }
 
-    // updates.push("status_id = :status_id");
+    if (updates.length === 0) {
+      return res.status(400).json({ message: "No fields to update." });
+    }
 
     const updateQuery = `
       UPDATE maintenance_tasks
@@ -470,6 +486,20 @@ exports.UpdateMaintenanceTask = async (req, res) => {
       .json({ message: "Maintenance task updated successfully." });
   } catch (err) {
     console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.DeleteMaintenanceTask = async (req, res) => {
+  try {
+    const { task_id } = req.params;
+    await sequelize.query(`DELETE FROM maintenance_tasks WHERE id = :task_id`, {
+      replacements: { task_id },
+      type: sequelize.QueryTypes.DELETE,
+    });
+    res.status(200).json({ message: "Maintenance task deleted successfully." });
+  } catch (err) {
+    console.log(err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

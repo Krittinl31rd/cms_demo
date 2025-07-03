@@ -15,6 +15,8 @@ import CardWork from "@/components/technician/CardWork";
 import ModalPopup from "@/components/ui/ModalPopup";
 import { nameStatusId, colorBadge } from "@/utilities/helpers";
 import dayjs from "dayjs";
+import { DeleteTask } from "@/api/task";
+import { toast } from "react-toastify";
 
 const RepairWork = () => {
   const { token } = useStore((state) => state);
@@ -72,6 +74,46 @@ const RepairWork = () => {
     fetchRooms();
   }, [token]);
 
+  const handleDeleteTask = async (id) => {
+    try {
+      const response = await DeleteTask(id, token);
+      toast.success(response?.data?.message || "Delete task successfully");
+      setDeleteTask(false);
+      fetchTaskList();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to delete task");
+    }
+  };
+
+  const statusCounts = useMemo(() => {
+    const counts = {
+      assigned: 0,
+      in_progress: 0,
+      completed: 0,
+      unresolved: 0,
+    };
+    taskList.forEach((task) => {
+      switch (task.status_id) {
+        case 1:
+          counts.assigned += 1;
+          break;
+        case 2:
+          counts.in_progress += 1;
+          break;
+        case 3:
+          counts.completed += 1;
+          break;
+        case 4:
+          counts.unresolved += 1;
+          break;
+        default:
+          break;
+      }
+    });
+    return counts;
+  }, [taskList]);
+
   return (
     <div className="flex flex-col gap-2">
       <div className="w-full flex items-center justify-end mb-2">
@@ -83,28 +125,28 @@ const RepairWork = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
         <CardSummary
           title="Assigned"
-          value={9999}
+          value={statusCounts?.assigned}
           icon={UserCheck}
           iconColor="text-yellow-500"
           borderColor="border-yellow-500"
         />
         <CardSummary
           title="In Progress"
-          value={9999}
+          value={statusCounts?.in_progress}
           icon={Loader}
           iconColor="text-blue-500"
           borderColor="border-blue-500"
         />
         <CardSummary
           title="Completed"
-          value={9999}
+          value={statusCounts?.completed}
           icon={CheckCircle}
           iconColor="text-green-500"
           borderColor="border-green-500"
         />
         <CardSummary
           title="Unresolved"
-          value={9999}
+          value={statusCounts?.unresolved}
           icon={XCircle}
           iconColor="text-red-500"
           borderColor="border-red-500"
@@ -325,7 +367,7 @@ const RepairWork = () => {
             </Button>
             <Button
               type="button"
-              // onClick={() => handleDelete(selectDevice?.device_id)}
+              onClick={() => handleDeleteTask(selectedTask?.id)}
             >
               Delete
             </Button>
