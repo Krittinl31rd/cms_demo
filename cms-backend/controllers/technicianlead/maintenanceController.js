@@ -10,6 +10,11 @@ const {
   statusNameMap,
   member_role,
 } = require("../../constants/common");
+const {
+  CheckTypeTechnician,
+  doBoardcastNotification,
+  payloadNotify,
+} = require("../../utils/helpers");
 
 exports.GetTechnicians = async (req, res) => {
   try {
@@ -32,7 +37,23 @@ exports.GetTechnicians = async (req, res) => {
 
 exports.CreateMaintenanceTask = async (req, res) => {
   try {
-    const { room_id, assigned_to, problem_description } = req.body;
+    const { room_id, problem_description, assigned_to, tech_type_id } =
+      req.body;
+
+    const isRoom = await sequelize.query(
+      `SELECT * FROM maintenance_tasks WHERE room_id = :room_id AND status_id IN (${maintenance_status.PENDING}, ${maintenance_status.ASSIGNED}, ${maintenance_status.IN_PROGRESS})`,
+      {
+        replacements: { room_id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (isRoom.length > 0) {
+      return res
+        .status(403)
+        .json({ message: "This room not complete not created." });
+    }
+
     const created_by = req.user?.id || null;
     const status_id =
       assigned_to == null
@@ -60,13 +81,31 @@ exports.CreateMaintenanceTask = async (req, res) => {
         replacements: {
           room_id,
           assigned_to,
-          problem_description,
+          problem_description: `${CheckTypeTechnician(
+            tech_type_id
+          )} - ${problem_description}`,
           status_id,
           created_by,
         },
         type: sequelize.QueryTypes.INSERT,
       }
     );
+
+    try {
+      payloadNotify.data.room_id = room_id;
+      payloadNotify.data.message = `${CheckTypeTechnician(
+        tech_type_id
+      )} - ${problem_description}`;
+      payloadNotify.boardcast = {
+        role: [member_role.TECHNICIAN_LEAD],
+        type: [tech_type_id],
+      };
+      const result = await doBoardcastNotification(payloadNotify);
+      console.log(result);
+    } catch (err) {
+      console.error("Error sending notification:", err);
+    }
+
     return res
       .status(201)
       .json({ message: "Maintenance task created successfully." });
@@ -332,7 +371,8 @@ exports.UpdateMaintenanceTask = async (req, res) => {
       fix_description = null,
       started_at = null,
       ended_at = null,
-      status_id,
+      status_id = null,
+      assigned_to = null,
     } = req.body;
     const { id, role_id } = req.user;
 
@@ -344,7 +384,6 @@ exports.UpdateMaintenanceTask = async (req, res) => {
           type: sequelize.QueryTypes.SELECT,
         }
       );
-
       if (!taskResult) {
         return res.status(404).json({ message: "Maintenance task not found." });
       }
@@ -356,15 +395,14 @@ exports.UpdateMaintenanceTask = async (req, res) => {
           type: sequelize.QueryTypes.SELECT,
         }
       );
-
       if (!taskResult) {
         return res.status(404).json({ message: "Maintenance task not found." });
       }
     }
 
-    if (!(await checkExists(sequelize, "maintenance_statuses", status_id))) {
-      return res.status(403).json({ message: "Invalid status ID." });
-    }
+    // if (!(await checkExists(sequelize, "maintenance_statuses", status_id))) {
+    //   return res.status(403).json({ message: "Invalid status ID." });
+    // }
 
     const image_before = req.files?.before
       ? req.files.before.map((file) => file.filename)
@@ -375,34 +413,46 @@ exports.UpdateMaintenanceTask = async (req, res) => {
       : null;
 
     const updates = [];
-    const replacements = { task_id, status_id };
+    const replacements = { task_id };
 
-    if (fix_description != null) {
+    if (status_id) {
+      updates.push("status_id = :status_id");
+      replacements.status_id = status_id;
+    }
+
+    if (assigned_to) {
+      updates.push("assigned_to = :assigned_to");
+      replacements.assigned_to = assigned_to;
+      updates.push("created_by = :created_by");
+      replacements.created_by = id;
+    }
+
+    if (fix_description) {
       updates.push("fix_description = :fix_description");
       replacements.fix_description = fix_description;
     }
 
-    if (started_at != null) {
+    if (started_at) {
       updates.push("started_at = :started_at");
       replacements.started_at = started_at;
     }
 
-    if (ended_at != null) {
+    if (ended_at) {
       updates.push("ended_at = :ended_at");
       replacements.ended_at = ended_at;
     }
 
-    if (image_before != null) {
+    if (image_before) {
       updates.push("image_before = :image_before");
       replacements.image_before = JSON.stringify(image_before);
     }
 
-    if (image_after != null) {
+    if (image_after) {
       updates.push("image_after = :image_after");
       replacements.image_after = JSON.stringify(image_after);
     }
 
-    updates.push("status_id = :status_id");
+    // updates.push("status_id = :status_id");
 
     const updateQuery = `
       UPDATE maintenance_tasks
@@ -421,5 +471,23 @@ exports.UpdateMaintenanceTask = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.GetRoomNumberAndFloor = async (req, res) => {
+  try {
+    const rooms = await sequelize.query(
+      `SELECT id, room_number, floor FROM rooms ORDER BY floor, room_number ASC`,
+      {
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    if (rooms.length === 0) {
+      return res.status(404).json({ message: "No rooms found." });
+    }
+    res.status(200).json(rooms);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };

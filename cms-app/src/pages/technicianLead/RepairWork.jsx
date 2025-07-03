@@ -1,8 +1,13 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import Spinner from "@/components/ui/Spinner";
-import { GetMaintenanceTask, GetTechnician } from "@/api/task";
+import {
+  GetMaintenanceTask,
+  GetTechnician,
+  GetRoomNumberFloor,
+} from "@/api/task";
 import useStore from "@/store/store";
 import AssignWorkForm from "@/components/technician/AssignWorkForm";
+import UpdateWorkForm from "@/components/technician/UpdateWorkForm";
 import CardSummary from "@/components/ui/CardSummary";
 import Button from "@/components/ui/Button";
 import { Plus, CheckCircle, Loader, UserCheck, X, XCircle } from "lucide-react";
@@ -13,8 +18,9 @@ import dayjs from "dayjs";
 
 const RepairWork = () => {
   const { token } = useStore((state) => state);
-  const [roomList, setRoomList] = useState([]);
+  const [taskList, settaskList] = useState([]);
   const [technicianList, setTechnicianList] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAssignWork, setAssignWork] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -28,7 +34,7 @@ const RepairWork = () => {
     setLoading(true);
     try {
       const response = await GetMaintenanceTask(token);
-      setRoomList(response?.data || []);
+      settaskList(response?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -51,6 +57,19 @@ const RepairWork = () => {
 
   useEffect(() => {
     fetchTechnicianList();
+  }, [token]);
+
+  const fetchRooms = async () => {
+    try {
+      const response = await GetRoomNumberFloor(token);
+      setRooms(response?.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
   }, [token]);
 
   return (
@@ -97,8 +116,8 @@ const RepairWork = () => {
             <Spinner />
             Loading tasks...
           </div>
-        ) : (
-          roomList.map((task) => (
+        ) : taskList.length > 0 ? (
+          taskList.map((task) => (
             <CardWork
               key={task.id}
               task={task}
@@ -108,6 +127,10 @@ const RepairWork = () => {
               onDelete={() => setDeleteTask(true)}
             />
           ))
+        ) : (
+          <p className="col-span-1 sm:col-span-2 xl:col-span-3 text-center">
+            No maintenance tasks found.
+          </p>
         )}
       </div>
       <ModalPopup
@@ -115,7 +138,12 @@ const RepairWork = () => {
         onClose={() => setAssignWork(false)}
         title={"Assign New Work"}
       >
-        <AssignWorkForm technicianList={technicianList} />
+        <AssignWorkForm
+          fetchTaskList={fetchTaskList}
+          onAssign={() => setAssignWork(false)}
+          technicianList={technicianList}
+          rooms={rooms}
+        />
       </ModalPopup>
       <ModalPopup
         isOpen={isViewTask}
@@ -264,7 +292,45 @@ const RepairWork = () => {
         onClose={() => setEditTask(false)}
         title={`#${selectedTask?.id} Room ${selectedTask?.floor}${selectedTask?.room_number}`}
       >
-        <div className="space-y-2"> </div>
+        <UpdateWorkForm
+          selectedTask={selectedTask}
+          onEdit={() => setEditTask(false)}
+          fetchTaskList={fetchTaskList}
+          rooms={rooms}
+          technicianList={technicianList}
+        />
+      </ModalPopup>
+      <ModalPopup
+        isOpen={isDeleteTask}
+        onClose={() => setDeleteTask(false)}
+        title={`Delete Task #${selectedTask?.id}`}
+      >
+        <div className="text-sm space-y-2 ">
+          <p>
+            Are you sure you want to delete <strong>#{selectedTask?.id}</strong>{" "}
+            Room{" "}
+            <strong>
+              {selectedTask?.floor}
+              {selectedTask?.room_number}
+            </strong>{" "}
+            ?
+          </p>
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="gray"
+              onClick={() => setDeleteTask(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              // onClick={() => handleDelete(selectDevice?.device_id)}
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
       </ModalPopup>
       <ModalPopup
         isOpen={isFullScreen}
@@ -275,7 +341,6 @@ const RepairWork = () => {
       >
         <div className="w-full h-full">
           <img
-            // src={`${import.meta.env.VITE_BASE_AFTER_PATH}/${selectedImage}`}
             src={`${
               selectedImage?.type == "before"
                 ? `${import.meta.env.VITE_BASE_BEFORE_PATH}/${

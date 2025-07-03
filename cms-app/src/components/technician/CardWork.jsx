@@ -3,6 +3,7 @@ import ModalPopup from "@/components/ui/ModalPopup";
 import dayjs from "dayjs";
 import { Pencil, Search, Trash } from "lucide-react";
 import { nameStatusId, colorBadge } from "@/utilities/helpers";
+import { maintenance_status } from "@/constant/common";
 
 const CardWork = ({ task, onSelect, onView, onEdit, onDelete }) => {
   const date = dayjs(task?.created_at);
@@ -60,11 +61,22 @@ const CardWork = ({ task, onSelect, onView, onEdit, onDelete }) => {
           View
         </button>
         <button
+          disabled={
+            task?.status_id == maintenance_status.FIXED ||
+            task?.status_id == maintenance_status.UNRESOLVED
+              ? true
+              : false
+          }
           onClick={() => {
             onSelect(task);
             onEdit();
           }}
-          className="w-full flex items-center justify-center gap-1 bg-yellow-300/80 hover:bg-yellow-500 text-yellow-950 font-semibold text-sm py-2 px-4 rounded-lg transition-colors duration-300 cursor-pointer"
+          className={`w-full flex items-center justify-center gap-1 bg-yellow-300/80 hover:bg-yellow-500 text-yellow-950 font-semibold text-sm py-2 px-4 rounded-lg transition-colors duration-300 ${
+            task?.status_id == maintenance_status.FIXED ||
+            task?.status_id == maintenance_status.UNRESOLVED
+              ? "cursor-not-allowed bg-yellow-300/10"
+              : "cursor-pointer"
+          }`}
         >
           <Pencil size={16} />
           Edit

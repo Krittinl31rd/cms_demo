@@ -29,12 +29,12 @@ export default defineConfig({
     // },
     port: 3000,
     host: "0.0.0.0",
-    proxy: {
-      "/api": {
-        target: "http://192.168.1.66:5000",
-        changeOrigin: true,
-        // rewrite: (path) => path.replace(/^\/api/, "/api"),
-      },
-    },
+    // proxy: {
+    //   "/api": {
+    //     target: "http://192.168.1.66:5000",
+    //     changeOrigin: true,
+    //     // rewrite: (path) => path.replace(/^\/api/, "/api"),
+    //   },
+    // },
   },
 });

@@ -13,7 +13,15 @@ const {
   GetMaintenanceTaskByUserID,
   GetMaintenanceTaskByID,
   GetTechnicians,
+  GetRoomNumberAndFloor,
 } = require("../controllers/technicianlead/maintenanceController");
+
+router.get(
+  "/get-rooms-number-floor",
+  AuthCheck,
+  RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
+  GetRoomNumberAndFloor
+);
 
 router.get(
   "/get-technicians",

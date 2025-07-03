@@ -9,24 +9,15 @@ import { toast } from "react-toastify";
 import { CreateTask } from "@/api/task";
 import useStore from "@/store/store";
 
-export default function AssignWorkForm({
+const UpdateWorkForm = ({
+  selectedTask,
+  onEdit,
   fetchTaskList,
-  onAssign,
   technicianList,
   rooms,
-}) {
-  const { token } = useStore((state) => state);
-  const [isCancel, setIsCancel] = useState(false);
-  const [selectCancel, setSelectCancel] = useState(null);
-  const [isSelectTech, setIsSelectTech] = useState(false);
-
-  const [formData, setFormData] = useState({
-    room_id: "",
-    problem_description: "",
-    assigned_to: "",
-    tech_name: "",
-    tech_type_id: "",
-  });
+}) => {
+  console.log(selectedTask);
+  const [formData, setFormData] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,26 +29,26 @@ export default function AssignWorkForm({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(formData);
+    // if (!formData.room_id) {
+    //   toast.error("Please select a room to assign the work.");
+    //   return;
+    // }
 
-    if (!formData.room_id) {
-      toast.error("Please select a room to assign the work.");
-      return;
-    }
+    // if (isSelectTech == false) {
+    //   toast.error("Please select a technician to assign the work.");
+    //   return;
+    // }
 
-    if (isSelectTech == false) {
-      toast.error("Please select a technician to assign the work.");
-      return;
-    }
-
-    try {
-      const response = await CreateTask(formData, token);
-      toast.success(response?.data?.message || "Work assigned successfully");
-      onAssign();
-      fetchTaskList();
-    } catch (err) {
-      console.log(err);
-      toast.error(err.response?.data?.message || "Failed to assign work");
-    }
+    // try {
+    //   const response = await CreateTask(formData, token);
+    //   toast.success(response?.data?.message || "Work assigned successfully");
+    //   onAssign();
+    //   fetchTaskList();
+    // } catch (err) {
+    //   console.log(err);
+    //   toast.success(err.response?.data?.message || "Failed to assign work");
+    // }
   };
 
   return (
@@ -70,7 +61,7 @@ export default function AssignWorkForm({
             onChange={handleChange}
             className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
-            defaultValue={formData.room_id || ""}
+            defaultValue={selectedTask.room_id || ""}
           >
             <option value="" disabled>
               Select Room
@@ -82,14 +73,6 @@ export default function AssignWorkForm({
               </option>
             ))}
           </select>
-          {/* <input
-            type="text"
-            name="room_id"
-            // value={formData.room_id}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          /> */}
         </div>
 
         <div>
@@ -98,7 +81,7 @@ export default function AssignWorkForm({
           </label>
           <textarea
             name="problem_description"
-            // value={formData.problem_description}
+            value={selectedTask.problem_description}
             onChange={handleChange}
             rows="3"
             className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -121,10 +104,13 @@ export default function AssignWorkForm({
                     tech_name: tech.full_name,
                     tech_type_id: tech.type_id,
                   });
-                  setIsSelectTech(true);
                 }}
                 className={`cursor-pointer p-2 border  rounded-lg shadow-sm transition-all ${
-                  formData.assigned_to == tech.id
+                  formData?.assigned_to
+                    ? formData?.assigned_to == tech.id
+                      ? "bg-blue-100 border-blue-500"
+                      : "bg-white border-gray-300 hover:bg-gray-100"
+                    : selectedTask?.assigned_to == tech.id
                     ? "bg-blue-100 border-blue-500"
                     : "bg-white border-gray-300 hover:bg-gray-100"
                 }`}
@@ -155,13 +141,13 @@ export default function AssignWorkForm({
           <p className=" text-black text-sm">
             Selected:{" "}
             <span className="font-semibold">
-              {formData?.tech_name ? (
-                `${formData?.tech_name} (${CheckTypeTechnician(
-                  formData?.tech_type_id
-                )})`
-              ) : (
-                <span className="text-red-500">No technician selected</span>
-              )}
+              {formData?.tech_name
+                ? `${formData?.tech_name} (${CheckTypeTechnician(
+                    formData?.tech_type_id
+                  )})`
+                : `${selectedTask?.assigned_to_name} (${CheckTypeTechnician(
+                    selectedTask?.assigned_to_type
+                  )})`}
             </span>
           </p>
         </div>
@@ -205,4 +191,6 @@ export default function AssignWorkForm({
       </ModalPopup> */}
     </>
   );
-}
+};
+
+export default UpdateWorkForm;

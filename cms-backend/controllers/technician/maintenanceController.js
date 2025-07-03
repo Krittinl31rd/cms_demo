@@ -22,7 +22,7 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
       LEFT JOIN
         maintenance_tasks m ON t.user_id = m.assigned_to
         AND DATE(m.created_at) IN (CURDATE(), DATE_SUB(CURDATE(), INTERVAL 1 DAY))
-        AND m.status_id IN (${maintenance_status.ASSIGNED}, ${maintenance_status.IN_PROGRESS}, ${maintenance_status.FIXED}, ${maintenance_status.UNRESOLVED})
+        AND m.status_id IN (${maintenance_status.ASSIGNED}, ${maintenance_status.IN_PROGRESS}, ${maintenance_status.COMPLETED}, ${maintenance_status.UNRESOLVED})
       WHERE
         t.type_id = :type
       GROUP BY

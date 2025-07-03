@@ -15,9 +15,11 @@ const getMaintenanceTaskBaseQuery = () => `
     rooms.room_number,
     rooms.floor,
     assigned_user.full_name AS assigned_to_name,
+    technician.type_id AS assigned_to_type,
     created_by_user.full_name AS created_by_name
   FROM maintenance_tasks
   JOIN  rooms ON rooms.id = maintenance_tasks.room_id
+  JOIN  technician ON technician.user_id = maintenance_tasks.assigned_to
   LEFT JOIN users AS assigned_user ON assigned_user.id = maintenance_tasks.assigned_to
   LEFT JOIN users AS created_by_user ON created_by_user.id = maintenance_tasks.created_by
 `;
