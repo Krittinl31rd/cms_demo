@@ -64,7 +64,7 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
     await sequelize.query(
       `
       INSERT INTO maintenance_tasks (room_id, assigned_to, problem_description, status_id, created_by)
-      VALUES (:room_id, :assigned_to, :problem_description, 2, :created_by)
+      VALUES (:room_id, :assigned_to, :problem_description, ${maintenance_status.ASSIGNED}, :created_by)
       `,
       {
         replacements: {

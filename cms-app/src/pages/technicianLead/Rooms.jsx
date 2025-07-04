@@ -12,7 +12,6 @@ import { client } from "@/constant/wsCommand";
 const stats = data.stats;
 
 const Rooms = () => {
-  console.log(client);
   const { token } = useStore((state) => state);
   const [roomList, setRoomList] = useState([]);
   const [search, setSearch] = useState("");
@@ -153,6 +152,7 @@ const Rooms = () => {
 
   const handleCommand = (msg) => {
     const { cmd, param } = msg;
+
     switch (cmd) {
       case client.LOGIN:
         if (param.status === "success") {
@@ -161,6 +161,7 @@ const Rooms = () => {
         break;
 
       case client.MODBUS_STATUS: {
+        console.log(param);
         if (Array.isArray(param.data)) {
           setRoomList((prevRooms) =>
             prevRooms.map((room) => {

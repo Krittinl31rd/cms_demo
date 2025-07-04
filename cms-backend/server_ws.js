@@ -36,6 +36,7 @@ wss.on("connection", (ws) => {
   ws.on("message", async (message) => {
     try {
       const { cmd, param } = JSON.parse(message);
+      // console.log(cmd, param);
 
       if (cmd == ws_cmd.LOGIN_GATEWAY) {
         const { username, password } = param;
@@ -104,19 +105,19 @@ wss.on("connection", (ws) => {
               },
             })
           );
-          setTimeout(() => {
-            const wsModbusClient = getWsClients().find(
-              (client) => client?.user?.role == "gateway"
-            );
-            if (wsModbusClient != undefined) {
-              wsModbusClient.socket.send(
-                JSON.stringify({
-                  cmd: ws_cmd.MODBUS_STATUS,
-                  param: {},
-                })
-              );
-            }
-          }, 500);
+          // setTimeout(() => {
+          //   const wsModbusClient = getWsClients().find(
+          //     (client) => client?.user?.role == "gateway"
+          //   );
+          //   if (wsModbusClient != undefined) {
+          //     wsModbusClient.socket.send(
+          //       JSON.stringify({
+          //         cmd: ws_cmd.MODBUS_STATUS,
+          //         param: {},
+          //       })
+          //     );
+          //   }
+          // }, 500);
           return;
         } catch (err) {
           console.log(`Client ${infoClient.id} login failed: ${err.message}`);
@@ -142,8 +143,8 @@ wss.on("connection", (ws) => {
       }
 
       if (cmd == ws_cmd.MODBUS_STATUS) {
-        console.log(`Modbus Status from ${param.ip}: ${param.status}`);
-        if (param.ip && param.status) {
+        if (param.ip && typeof param.status !== "undefined") {
+          console.log(`ip ${param.ip} status ${param.status}`);
           await updateIsOnline(param.ip, param.status);
           broadcastToLoggedInClients(
             JSON.stringify({
