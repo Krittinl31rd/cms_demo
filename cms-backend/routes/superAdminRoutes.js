@@ -67,30 +67,6 @@ router.get(
 );
 
 router.get(
-  "/get-room/:room_id",
-  AuthCheck,
-  RoleCheck([
-    member_role.SUPER_ADMIN,
-    member_role.FRONT_DESK,
-    member_role.TECHNICIAN_LEAD,
-    member_role.TECHNICIAN,
-  ]),
-  GetRoomByID
-);
-
-router.get(
-  "/get-room-devices/:room_id",
-  AuthCheck,
-  RoleCheck([
-    member_role.SUPER_ADMIN,
-    member_role.FRONT_DESK,
-    member_role.TECHNICIAN_LEAD,
-    member_role.TECHNICIAN,
-  ]),
-  GetRoomByIDWithDevices
-);
-
-router.get(
   "/get-room-config",
   AuthCheck,
   RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),

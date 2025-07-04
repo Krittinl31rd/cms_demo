@@ -86,3 +86,104 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+exports.GetRooms = async (req, res) => {
+  try {
+    const rooms = await sequelize.query(
+      `SELECT id, room_number, floor, guest_status_id, cleaning_status_id, dnd_status, mur_status, room_check_status, is_online FROM rooms`,
+      {
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    res.status(200).json(rooms);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.GetRoomByIDWithDevices = async (req, res) => {
+  try {
+    const { room_id } = req.params;
+    const rooms = await sequelize.query(
+      `SELECT id 
+      FROM rooms WHERE id = :room_id;`,
+      {
+        replacements: { room_id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (rooms.length <= 0) {
+      return res.status(400).json({ message: "Not found this room." });
+    }
+
+    const [roomList] = await Promise.all(
+      rooms.map(async (room) => {
+        const devices = await sequelize.query(
+          `SELECT d.id, d.type_id, d.name, d.status_id, d.last_online, d.config
+                    FROM devices d
+                    WHERE d.room_id = :room_id
+                    ORDER BY d.type_id ASC`,
+          {
+            replacements: { room_id: room.id },
+            type: sequelize.QueryTypes.SELECT,
+          }
+        );
+
+        const deviceList = await Promise.all(
+          devices.map(async (device) => {
+            const controls = await sequelize.query(
+              `SELECT ctrl.control_id, ctrl.name, ctrl.value, ctrl.last_update
+                        FROM device_control ctrl
+                        WHERE ctrl.device_id = :device_id AND ctrl.room_id = :room_id`,
+              {
+                replacements: {
+                  device_id: device.id,
+                  room_id: room.id,
+                },
+                type: sequelize.QueryTypes.SELECT,
+              }
+            );
+
+            return {
+              device_id: device.id,
+              type_id: device.type_id,
+              status_id: device.status_id,
+              device_name: device.name,
+              last_online: device.last_online,
+              config: device.config,
+              controls: controls.map((ctrl) => ({
+                control_id: ctrl.control_id,
+                name: ctrl.name,
+                value: ctrl.value,
+                last_update: ctrl.last_update,
+              })),
+            };
+          })
+        );
+
+        return {
+          room_id: room.id,
+          room_number: room.room_number,
+          floor: room.floor,
+          guest_status_id: room.guest_status_id,
+          cleaning_status_id: room.cleaning_status_id,
+          dnd_status: room.dnd_status,
+          mur_status: room.mur_status,
+          room_check_status: room.room_check_status,
+          is_online: room.is_online,
+          ip_address: room.ip_address,
+          mac_address: room.mac_address,
+          devices: deviceList,
+        };
+      })
+    );
+
+    res.status(200).json(roomList);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

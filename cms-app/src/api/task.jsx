@@ -7,6 +7,16 @@ export const GetMaintenanceTask = async (token) =>
     },
   });
 
+export const GetMaintenanceTaskByUserID = async (id, token) =>
+  await axios.get(
+    import.meta.env.VITE_API_URL + `/get-maintenancetask/user/${id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
 export const GetTechnician = async (token) =>
   await axios.get(import.meta.env.VITE_API_URL + "/get-technicians", {
     headers: {

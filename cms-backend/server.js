@@ -3,6 +3,7 @@ const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
 const { readdirSync } = require("fs");
+const { testConnection } = require("./config/db");
 
 const app = express();
 app.use(
@@ -22,5 +23,5 @@ readdirSync("./routes/").map((c) => {
 
 const port = process.env.EXPRESS_PORT;
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server express running on port ${port}`);
 });
