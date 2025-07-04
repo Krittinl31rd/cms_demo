@@ -1,0 +1,55 @@
+
+  LOGIN: 2, // send to login  and receive success or failed
+{
+    "cmd": 2 ,
+    "param":{
+        "token" : " "
+    } 
+}
+
+  MODBUS_STATUS: 4, // receive status modbus
+{
+    "cmd": 4 ,
+    "param":{
+        ip: '192.168.1.30', status: 1 // 0 = offline, 1 = online
+    } 
+}
+
+  ROOM_STATUS_UPDATE: 7, // receive dnd mur guest check
+{
+    "cmd": 7 ,
+    "param":{
+        { data:  { 
+            ip: "192.168.1.30" 
+            // send one value 
+            guest_status_id: 0 / 1
+            dnd_status: 0 / 1
+            mur_status: 0 / 1
+            room_check_status: 0 / 1
+            } 
+        }
+    } 
+}
+
+  FORWARD_UPDATE: 8, // receive all data from modbus
+{
+    "cmd":8,
+    "param":{
+        "ip":"192.168.1.29",
+        "data":[
+            { "room_id":302,"device_id":102,"type_id":22,"control_id":1,"value":440,"system":0,"address":71 }
+         ]
+    }
+}
+
+  WRITE_REGISTER: 6, // send data to modbus
+  {
+    "cmd": 6,
+    "param": {
+        "ip": "192.168.1.30",
+        "address": 32,
+        "value": 70,
+        "slaveId": 1,
+        "fc": 6
+    }
+}

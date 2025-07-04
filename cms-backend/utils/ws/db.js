@@ -1,6 +1,7 @@
 const sequelize = require("../../config/db");
 const { shouldLog } = require("../ws/logCache");
 const { getWsClients } = require("../ws/wsClients");
+const { ws_cmd } = require("../../constants/wsCommand");
 
 const updatedToDB = async (data) => {
   try {
@@ -173,7 +174,7 @@ const insertToDB = async (data, source) => {
               if (wsModbusClient) {
                 wsModbusClient.socket.send(
                   JSON.stringify({
-                    cmd: "log_update",
+                    cmd: ws_cmd.LOG_UPDATE,
                     param: { data: latestLog },
                   })
                 );

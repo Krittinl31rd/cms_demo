@@ -6,6 +6,7 @@ import DataTable from "@/components/table/DataTable";
 import ModalPopup from "@/components/ui/ModalPopup";
 import Button from "@/components/ui/Button";
 import { device_type, member_role } from "../../constant/common";
+import { client } from "@/constant/wsCommand";
 import {
   Calendar,
   MapPin,
@@ -83,7 +84,7 @@ const RoomDevicesLog = () => {
 
   useEffect(() => {
     if (isWsReady && token) {
-      sendWebSocketMessage({ cmd: "login", param: { token } });
+      sendWebSocketMessage({ cmd: client.LOGIN, param: { token } });
     }
   }, [isWsReady, token]);
 
@@ -99,7 +100,7 @@ const RoomDevicesLog = () => {
   const handleCommand = (msg) => {
     const { cmd, param } = msg;
     switch (cmd) {
-      case "log_update":
+      case client.LOG_UPDATE:
         if (param && param.data) {
           const newLog = param.data;
           // console.log("New log received:", newLog);

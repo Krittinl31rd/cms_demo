@@ -11,11 +11,11 @@ const {
 const {
   mapChangedDataToDeviceControls,
   handleRoomStatusUpdate,
-  handleInitConfig,
 } = require("./utils/ws/helper");
 const { GatewayLogin } = require("./controllers/authController");
 const { addWsClient, getWsClients } = require("./utils/ws/wsClients");
-const { roomStatusCache } = require("./utils/ws/helper");
+// const { roomStatusCache } = require("./utils/ws/helper");
+const { ws_cmd } = require("./constants/wsCommand");
 
 const wss = new WebSocket.Server({ port: process.env.WS_PORT });
 console.log(`WebSocket server started on port ${process.env.WS_PORT}`);
@@ -34,17 +34,15 @@ wss.on("connection", (ws) => {
   addWsClient(infoClient);
 
   ws.on("message", async (message) => {
-    // console.log(JSON.parse(message));
     try {
       const { cmd, param } = JSON.parse(message);
 
-      if (cmd == "login_gateway") {
+      if (cmd == ws_cmd.LOGIN_GATEWAY) {
         const { username, password } = param;
-
         if (infoClient.isLogin) {
           return ws.send(
             JSON.stringify({
-              cmd: "login",
+              cmd: ws_cmd.LOGIN_GATEWAY,
               param: { status: "success", message: "Already logged in" },
             })
           );
@@ -52,13 +50,14 @@ wss.on("connection", (ws) => {
 
         try {
           const { token } = await GatewayLogin(username, password);
-          const decoded = await jwt.verify(token);
+          const decoded = await jwt.verify(token, process.env.JWT_SECRET);
           infoClient.isLogin = true;
           infoClient.user = decoded;
           console.log(`Client ${infoClient.id} login success`);
+
           ws.send(
             JSON.stringify({
-              cmd: "login",
+              cmd: ws_cmd.LOGIN_GATEWAY,
               param: {
                 status: "success",
                 message: "Login successful",
@@ -70,7 +69,7 @@ wss.on("connection", (ws) => {
         } catch (err) {
           ws.send(
             JSON.stringify({
-              cmd: "login_gateway",
+              cmd: ws_cmd.LOGIN_GATEWAY,
               param: {
                 status: "error",
                 message: err.message,
@@ -80,13 +79,12 @@ wss.on("connection", (ws) => {
         }
       }
 
-      if (cmd == "login") {
+      if (cmd == ws_cmd.LOGIN) {
         const { token } = param;
-
         if (infoClient.isLogin) {
           return ws.send(
             JSON.stringify({
-              cmd: "login",
+              cmd: ws_cmd.LOGIN,
               param: { status: "success", message: "Already logged in" },
             })
           );
@@ -98,7 +96,7 @@ wss.on("connection", (ws) => {
           console.log(`Client ${infoClient.id} login success`);
           ws.send(
             JSON.stringify({
-              cmd: "login",
+              cmd: ws_cmd.LOGIN,
               param: {
                 status: "success",
                 message: "Login successful",
@@ -113,7 +111,7 @@ wss.on("connection", (ws) => {
             if (wsModbusClient != undefined) {
               wsModbusClient.socket.send(
                 JSON.stringify({
-                  cmd: "modbus_status",
+                  cmd: ws_cmd.MODBUS_STATUS,
                   param: {},
                 })
               );
@@ -124,7 +122,7 @@ wss.on("connection", (ws) => {
           console.log(`Client ${infoClient.id} login failed: ${err.message}`);
           return ws.send(
             JSON.stringify({
-              cmd: "login",
+              cmd: ws_cmd.LOGIN,
               param: { status: "error", message: "Invalid token" },
             })
           );
@@ -134,7 +132,7 @@ wss.on("connection", (ws) => {
       if (infoClient.isLogin == false) {
         return ws.send(
           JSON.stringify({
-            cmd: "login",
+            cmd: ws_cmd.LOGIN,
             param: {
               status: "error",
               message: "Unauthorized. Please login first.",
@@ -143,21 +141,20 @@ wss.on("connection", (ws) => {
         );
       }
 
-      if (cmd == "modbus_status") {
+      if (cmd == ws_cmd.MODBUS_STATUS) {
         console.log(`Modbus Status from ${param.ip}: ${param.status}`);
-        // rcu offline = 3
         if (param.ip && param.status) {
-          // await updateIsOnline(param.ip, param.status);
+          await updateIsOnline(param.ip, param.status);
           broadcastToLoggedInClients(
             JSON.stringify({
-              cmd: "modbus_status",
+              cmd: ws_cmd.MODBUS_STATUS,
               param,
             })
           );
         }
       }
 
-      if (cmd == "data_init") {
+      if (cmd == ws_cmd.DATA_INIT) {
         const { ip, changedData } = param;
         const mappedData = await mapChangedDataToDeviceControls(
           ip,
@@ -170,7 +167,7 @@ wss.on("connection", (ws) => {
         }
       }
 
-      if (cmd == "data_update") {
+      if (cmd == ws_cmd.DATA_UPDATE) {
         const { ip, data: changedData, source } = param;
         // console.log(`Data from ${ip} by ${source}:`, changedData);
         const mappedData = await mapChangedDataToDeviceControls(
@@ -185,7 +182,7 @@ wss.on("connection", (ws) => {
           await updateRoomStatusInDB(roomStatus);
           broadcastToLoggedInClients(
             JSON.stringify({
-              cmd: "room_status_update",
+              cmd: ws_cmd.ROOM_STATUS_UPDATE,
               param: { data: roomStatus },
             })
           );
@@ -195,21 +192,21 @@ wss.on("connection", (ws) => {
 
         broadcastToLoggedInClients(
           JSON.stringify({
-            cmd: "forward_update",
+            cmd: ws_cmd.FORWARD_UPDATE,
             param: { ip, data: mappedData },
           })
         );
         return;
       }
 
-      if (cmd == "write_register") {
+      if (cmd == ws_cmd.WRITE_REGISTER) {
         const wsModbusClient = getWsClients().find(
           (client) => client.user.role == "gateway"
         );
         if (wsModbusClient == undefined) {
           return ws.send(
             JSON.stringify({
-              cmd: "write_register",
+              cmd: ws_cmd.WRITE_REGISTER,
               param: {
                 status: "error",
                 message: "Modbus client not connected",
@@ -219,7 +216,7 @@ wss.on("connection", (ws) => {
         }
         wsModbusClient.socket.send(
           JSON.stringify({
-            cmd: "write_register",
+            cmd: ws_cmd.WRITE_REGISTER,
             param: {
               ip: param.ip,
               address: param.address,

@@ -6,6 +6,7 @@ import useStore from "@/store/store";
 import { device_type } from "@/constant/common";
 import { CheckFunctionModbus } from "@/utilities/helpers";
 import { toast } from "react-toastify";
+import { client } from "@/constant/wsCommand";
 
 const Setting = () => {
   const [isWsReady, setIsWsReady] = useState(false);
@@ -158,7 +159,7 @@ const Setting = () => {
         if (value === undefined || value === null || isNaN(value)) continue;
 
         const payload = {
-          cmd: "write_register",
+          cmd: client.WRITE_REGISTER,
           param: {
             address,
             value,
@@ -171,16 +172,6 @@ const Setting = () => {
         sendWebSocketMessage(payload);
         await delay(250);
       }
-      // sendWebSocketMessage({
-      //   cmd: "write_register",
-      //   param: {
-      //     address: 49,
-      //     value: 1,
-      //     slaveId: 1,
-      //     ip: ip_address,
-      //     fc: 6,
-      //   },
-      // });
     } catch (err) {
       console.error("Save error", err);
     } finally {
@@ -426,7 +417,7 @@ const Setting = () => {
 
   useEffect(() => {
     if (isWsReady && token) {
-      sendWebSocketMessage({ cmd: "login", param: { token } });
+      sendWebSocketMessage({ cmd: client.LOGIN, param: { token } });
     }
   }, [isWsReady, token]);
 
@@ -442,13 +433,13 @@ const Setting = () => {
   const handleCommand = (msg) => {
     const { cmd, param } = msg;
     switch (cmd) {
-      case "login":
+      case client.LOGIN:
         if (param.status === "success") {
           console.log("Login success");
         }
         break;
 
-      case "modbus_status": {
+      case client.MODBUS_STATUS: {
         if (Array.isArray(param.data)) {
           setRoomList((prevRooms) =>
             prevRooms.map((room) => {
@@ -470,7 +461,7 @@ const Setting = () => {
         break;
       }
 
-      case "forward_update": {
+      case client.FORWARD_UPDATE: {
         const { data } = param;
         if (!Array.isArray(data) || data.length === 0) return;
 

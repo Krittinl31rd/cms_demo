@@ -8,9 +8,11 @@ import { Wifi, WifiOff, Globe, ListFilter, Check } from "lucide-react";
 import { data } from "@/constant/data";
 import { GetRooms } from "@/api/room";
 import useStore from "@/store/store";
+import { client } from "@/constant/wsCommand";
 const stats = data.stats;
 
 const Rooms = () => {
+  console.log(client);
   const { token } = useStore((state) => state);
   const [roomList, setRoomList] = useState([]);
   const [search, setSearch] = useState("");
@@ -136,7 +138,7 @@ const Rooms = () => {
 
   useEffect(() => {
     if (isWsReady && token) {
-      sendWebSocketMessage({ cmd: "login", param: { token } });
+      sendWebSocketMessage({ cmd: client.LOGIN, param: { token } });
     }
   }, [isWsReady, token]);
 
@@ -152,13 +154,13 @@ const Rooms = () => {
   const handleCommand = (msg) => {
     const { cmd, param } = msg;
     switch (cmd) {
-      case "login":
+      case client.LOGIN:
         if (param.status === "success") {
           console.log("Login success");
         }
         break;
 
-      case "modbus_status": {
+      case client.MODBUS_STATUS: {
         if (Array.isArray(param.data)) {
           setRoomList((prevRooms) =>
             prevRooms.map((room) => {
@@ -181,7 +183,7 @@ const Rooms = () => {
         break;
       }
 
-      case "room_status_update": {
+      case client.ROOM_STATUS_UPDATE: {
         if (param.data) {
           const roomStatus = param.data;
 
@@ -211,7 +213,7 @@ const Rooms = () => {
         break;
       }
 
-      case "forward_update": {
+      case client.FORWARD_UPDATE: {
         const { data } = param;
         if (!Array.isArray(data) || data.length === 0) return;
 

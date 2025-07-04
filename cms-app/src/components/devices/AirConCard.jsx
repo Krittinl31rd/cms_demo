@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { AirVent } from "lucide-react";
 import classNames from "classnames";
 import { CheckFunctionModbus } from "@/utilities/helpers";
+import { client } from "@/constant/wsCommand";
 
 const AirConCard = ({ devices, sendWebSocketMessage, ip_address }) => {
   const [tempValues, setTempValues] = useState({});
@@ -29,7 +30,7 @@ const AirConCard = ({ devices, sendWebSocketMessage, ip_address }) => {
       setCommittedTemps((prev) => ({ ...prev, [dev.device_id]: newValue }));
 
       sendWebSocketMessage({
-        cmd: "write_register",
+        cmd: client.WRITE_REGISTER,
         param: {
           address,
           value: newValue,
@@ -48,7 +49,7 @@ const AirConCard = ({ devices, sendWebSocketMessage, ip_address }) => {
       const { address, funct } = CheckFunctionModbus(ctrlSpeed?.value);
 
       sendWebSocketMessage({
-        cmd: "write_register",
+        cmd: client.WRITE_REGISTER,
         param: {
           address,
           value: level,

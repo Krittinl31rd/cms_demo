@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Lightbulb } from "lucide-react";
 import classNames from "classnames";
 import { CheckFunctionModbus } from "@/utilities/helpers";
+import { client } from "@/constant/wsCommand";
 
 const DimmerCard = ({ devices, sendWebSocketMessage, ip_address }) => {
   const [brightValues, setBrightValues] = useState({});
@@ -36,7 +37,7 @@ const DimmerCard = ({ devices, sendWebSocketMessage, ip_address }) => {
       }));
 
       sendWebSocketMessage({
-        cmd: "write_register",
+        cmd: client.WRITE_REGISTER,
         param: {
           address,
           value: newValue,

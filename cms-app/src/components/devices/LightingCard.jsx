@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Lightbulb } from "lucide-react";
 import classNames from "classnames";
 import { CheckFunctionModbus } from "@/utilities/helpers";
+import { client } from "@/constant/wsCommand";
 
 const LightingCard = ({ devices, sendWebSocketMessage, ip_address }) => {
   if (!devices.length) return null;
@@ -14,7 +15,7 @@ const LightingCard = ({ devices, sendWebSocketMessage, ip_address }) => {
     const { address, funct } = CheckFunctionModbus(ctrlStatus.value);
 
     sendWebSocketMessage({
-      cmd: "write_register",
+      cmd: client.WRITE_REGISTER,
       param: {
         address: address,
         value: newStatus ? 1 : 0,

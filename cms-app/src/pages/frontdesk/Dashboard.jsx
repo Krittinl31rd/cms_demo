@@ -6,6 +6,7 @@ import useStore from "@/store/store";
 import { device_type } from "../../constant/common";
 import { NotepadText, DoorClosed, BrushCleaning, Bubbles } from "lucide-react";
 import { CheckFunctionModbus } from "@/utilities/helpers";
+import { client } from "@/constant/wsCommand";
 
 const CONTROL_ID_FAN = 2;
 const CONTROL_ID_TEMP = 3;
@@ -157,7 +158,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (isWsReady && token) {
-      sendWebSocketMessage({ cmd: "login", param: { token } });
+      sendWebSocketMessage({ cmd: client.LOGIN, param: { token } });
     }
   }, [isWsReady, token]);
 
@@ -173,13 +174,13 @@ const Dashboard = () => {
   const handleCommand = (msg) => {
     const { cmd, param } = msg;
     switch (cmd) {
-      case "login":
+      case client.LOGIN:
         if (param.status === "success") {
           console.log("Login success");
         }
         break;
 
-      case "modbus_status": {
+      case client.MODBUS_STATUS: {
         if (Array.isArray(param.data)) {
           setRoomList((prevRooms) =>
             prevRooms.map((room) => {
@@ -201,7 +202,7 @@ const Dashboard = () => {
         break;
       }
 
-      case "room_status_update": {
+      case client.ROOM_STATUS_UPDATE: {
         if (param.data) {
           const roomStatus = param.data;
 
@@ -231,7 +232,7 @@ const Dashboard = () => {
         break;
       }
 
-      case "forward_update": {
+      case client.FORWARD_UPDATE: {
         const { data } = param;
         if (!Array.isArray(data) || data.length === 0) return;
         setRoomList((prevRooms) => {
@@ -294,7 +295,7 @@ const Dashboard = () => {
       const { address, funct } = CheckFunctionModbus(addressStatus.value);
 
       sendWebSocketMessage({
-        cmd: "write_register",
+        cmd: client.WRITE_REGISTER,
         param: {
           address: address,
           value: status,
@@ -501,7 +502,7 @@ const Dashboard = () => {
                       <button
                         onClick={() => {
                           sendWebSocketMessage({
-                            cmd: "write_register",
+                            cmd: client.WRITE_REGISTER,
                             param: {
                               address: 6,
                               value: item.dnd_status == 0 ? 1 : 0,
@@ -518,7 +519,7 @@ const Dashboard = () => {
                       <button
                         onClick={() => {
                           sendWebSocketMessage({
-                            cmd: "write_register",
+                            cmd: client.WRITE_REGISTER,
                             param: {
                               address: 5,
                               value: item.mur_status == 0 ? 1 : 0,

@@ -308,19 +308,3 @@ export const modbus_funct = {
   30000: "HOLDING_REGISTER",
   40000: "INPUT_REGISTER",
 };
-
-// [{"name":"date_time","data":[{"name":"Date & Time","type":"date","hour_address":50,"hour_value":0,"min_address":51,"min_value":0,"sec_address":52,"sec_value":0,"date_address":53,"date_value":0,"month_address":54,"month_value":0,"year_address":55,"year_value":0}]},{"name":"night_shift","data":[{"name":"sleep_start_hour","type":"number","address":21,"value":0},{"name":"sleep_start_min","type":"number","address":22,"value":0},{"name":"sleep_reverse_hr","type":"number","address":25,"value":0},{"name":"sleep_reverse_m","type":"number","address":26,"value":0},{"name":"sleep_max_temp","type":"number","address":24,"value":0}]},{"name":"esm","data":[{"name":"energysaving_time","type":"time","address":23,"value":0},{"name":"fan_set_checkin","type":"number","address":37,"value":0},{"name":"temp_set_checkin","type":"number","address":38,"value":0},{"name":"fan_set_checkout","type":"number","address":39,"value":0},{"name":"temp_set_checkout","type":"number","address":40,"value":0},{"name":"fan_set_esm03","type":"number","address":41,"value":0},{"name":"temp_set_esm03","type":"number","address":42,"value":0},{"name":"timedelay_esm03","type":"time","address":43,"value":0},{"name":"timeset_keycard","type":"time","address":44,"value":0},{"name":"fanset_on_keycard","type":"number","address":45,"value":0},{"name":"tempset_on_keycard","type":"number","address":46,"value":0},{"name":"fan_set_off_keycard","type":"number","address":47,"value":0},{"name":"temp_set_off_keycard","type":"number","address":48,"value":0},{"name":"recheck_config_op","type":"not_use","address":49,"value":0},{"name":"fan_set_esm04","type":"number","address":81,"value":0},{"name":"temp_set_esm04","type":"number","address":82,"value":0},{"name":"time_delay_esm04","type":"time","address":83,"value":0},{"name":"fan_set_esm05","type":"number","address":84,"value":0},{"name":"temp_set_esm05","type":"number","address":85,"value":0},{"name":"time_delay_esm05","type":"time","address":86,"value":0}]}]
-
-// {
-//     "cmd": "forward_update",
-//     "param": {
-//         "ip": "192.168.1.30",
-//         "data": [
-//             {
-//                 "room_id": 5,
-//                 "device_id": 73,
-//                 "control_id": 1,
-//                 "value": 250
-//             }
-//         ]
-//       }
