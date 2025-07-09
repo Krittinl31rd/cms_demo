@@ -145,17 +145,11 @@ exports.GetMaintenanceTask = async (req, res) => {
       replacements.assigned_to = assigned_to;
     }
 
+    let statusIds = [];
     if (status_id) {
-      const statusIds = Array.isArray(status_id)
+      statusIds = Array.isArray(status_id)
         ? status_id
         : status_id.split(",").map((id) => Number(id.trim()));
-      if (statusIds.length > 1) {
-        whereClauses.push(`maintenance_tasks.status_id IN (:status_ids)`);
-        replacements.status_ids = statusIds;
-      } else {
-        whereClauses.push("maintenance_tasks.status_id = :status_id");
-        replacements.status_id = statusIds[0];
-      }
     }
 
     if (created_by) {
@@ -163,35 +157,126 @@ exports.GetMaintenanceTask = async (req, res) => {
       replacements.created_by = created_by;
     }
 
-    if (started_at && ended_at) {
-      whereClauses.push(
-        "maintenance_tasks.ended_at BETWEEN :started_at AND :ended_at"
-      );
-      replacements.started_at = `${started_at} 00:00:00`;
-      replacements.ended_at = `${ended_at} 23:59:59`;
-    } else if (started_at) {
-      whereClauses.push(
-        "maintenance_tasks.ended_at BETWEEN :started_at AND :ended_at"
-      );
-      replacements.started_at = `${started_at} 00:00:00`;
-      replacements.ended_at = `${started_at} 23:59:59`;
-      // whereClauses.push("maintenance_tasks.ended_at >= :started_at");
-      // replacements.started_at = `${started_at} 00:00:00`;
-    } else if (ended_at) {
-      whereClauses.push(
-        "maintenance_tasks.ended_at BETWEEN :started_at AND :ended_at"
-      );
-      replacements.started_at = `${ended_at} 00:00:00`;
-      replacements.ended_at = `${ended_at} 23:59:59`;
-      // whereClauses.push("maintenance_tasks.ended_at <= :ended_at");
-      // replacements.ended_at = `${ended_at} 23:59:59`;
+    if (statusIds.length > 1) {
+      let allResults = [];
+      for (const sid of statusIds) {
+        const localWhere = [
+          ...whereClauses,
+          "maintenance_tasks.status_id = :sid",
+        ];
+        const localReplacements = { ...replacements, sid };
+
+        let dateField = null;
+        if (
+          [maintenance_status.PENDING, maintenance_status.ASSIGNED].includes(
+            sid
+          )
+        )
+          dateField = "created_at";
+        else if (sid == maintenance_status.IN_PROGRESS)
+          dateField = "started_at";
+        else if (
+          [
+            maintenance_status.COMPLETED,
+            maintenance_status.UNRESOLVED,
+          ].includes(sid)
+        )
+          dateField = "ended_at";
+
+        if ((started_at || ended_at) && dateField) {
+          if (started_at && ended_at) {
+            localWhere.push(
+              `maintenance_tasks.${dateField} BETWEEN :started_at AND :ended_at`
+            );
+            localReplacements.started_at = `${started_at} 00:00:00`;
+            localReplacements.ended_at = `${ended_at} 23:59:59`;
+          } else if (started_at) {
+            localWhere.push(
+              `maintenance_tasks.${dateField} BETWEEN :started_at AND :ended_at`
+            );
+            localReplacements.started_at = `${started_at} 00:00:00`;
+            localReplacements.ended_at = `${started_at} 23:59:59`;
+          } else if (ended_at) {
+            localWhere.push(
+              `maintenance_tasks.${dateField} BETWEEN :started_at AND :ended_at`
+            );
+            localReplacements.started_at = `${ended_at} 00:00:00`;
+            localReplacements.ended_at = `${ended_at} 23:59:59`;
+          }
+        }
+
+        let query = baseQuery;
+        if (localWhere.length > 0) {
+          query += " WHERE " + localWhere.join(" AND ");
+        }
+        query += " ORDER BY maintenance_tasks.created_at DESC";
+
+        const result = await sequelize.query(query, {
+          replacements: localReplacements,
+          type: sequelize.QueryTypes.SELECT,
+        });
+
+        allResults = allResults.concat(
+          result.map((item) => ({
+            ...item,
+            image_report: item.image_report
+              ? JSON.parse(item.image_report)
+              : null,
+          }))
+        );
+      }
+      return res.status(200).json(allResults);
+    }
+
+    if (statusIds.length == 1) {
+      whereClauses.push("maintenance_tasks.status_id = :status_id");
+      replacements.status_id = statusIds[0];
+    }
+
+    let dateField = null;
+    if (statusIds.length === 1) {
+      if (
+        [maintenance_status.PENDING, maintenance_status.ASSIGNED].includes(
+          statusIds[0]
+        )
+      )
+        dateField = "created_at";
+      else if (statusIds[0] == maintenance_status.IN_PROGRESS)
+        dateField = "started_at";
+      else if (
+        [maintenance_status.COMPLETED, maintenance_status.UNRESOLVED].includes(
+          statusIds[0]
+        )
+      )
+        dateField = "ended_at";
+    }
+
+    if ((started_at || ended_at) && dateField) {
+      if (started_at && ended_at) {
+        whereClauses.push(
+          `maintenance_tasks.${dateField} BETWEEN :started_at AND :ended_at`
+        );
+        replacements.started_at = `${started_at} 00:00:00`;
+        replacements.ended_at = `${ended_at} 23:59:59`;
+      } else if (started_at) {
+        whereClauses.push(
+          `maintenance_tasks.${dateField} BETWEEN :started_at AND :ended_at`
+        );
+        replacements.started_at = `${started_at} 00:00:00`;
+        replacements.ended_at = `${started_at} 23:59:59`;
+      } else if (ended_at) {
+        whereClauses.push(
+          `maintenance_tasks.${dateField} BETWEEN :started_at AND :ended_at`
+        );
+        replacements.started_at = `${ended_at} 00:00:00`;
+        replacements.ended_at = `${ended_at} 23:59:59`;
+      }
     }
 
     let query = baseQuery;
     if (whereClauses.length > 0) {
       query += " WHERE " + whereClauses.join(" AND ");
     }
-
     query += " ORDER BY maintenance_tasks.created_at DESC";
 
     const result = await sequelize.query(query, {
@@ -203,10 +288,6 @@ exports.GetMaintenanceTask = async (req, res) => {
       ...item,
       image_report: item.image_report ? JSON.parse(item.image_report) : null,
     }));
-
-    // if (parsedResults.length == 0) {
-    //   return res.status(200).json(parsedResults);
-    // }
 
     res.status(200).json(parsedResults);
   } catch (err) {

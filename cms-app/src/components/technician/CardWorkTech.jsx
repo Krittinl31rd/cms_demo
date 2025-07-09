@@ -30,6 +30,13 @@ const CardWorkTech = ({ task, onSelect, onView, onEdit, onDelete }) => {
               <p className="text-sm break-words line-clamp-2 ">
                 {task?.problem_description || "No description provided."}
               </p>
+              <h1 className="font-semibold text-sm">
+                {task?.status_id == maintenance_status.ASSIGNED &&
+                  dayjs(task?.created_at).format("DD MMMM YYYY HH:mm:ss")}
+
+                {task?.status_id == maintenance_status.IN_PROGRESS &&
+                  dayjs(task?.started_at).format("DD MMMM YYYY HH:mm:ss")}
+              </h1>
             </div>
             <div className="h-full flex flex-col items-center justify-center">
               <button

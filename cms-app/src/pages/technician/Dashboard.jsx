@@ -115,18 +115,21 @@ const Dashboard = () => {
 
     const beforeImages = taskImages[`before_${selectedTask.id}`] || [];
     const afterImages = taskImages[`after_${selectedTask.id}`] || [];
-    if (beforeImages.length === 0) {
-      toast.error("Please upload at least 1 'before' image.");
-      return;
-    }
-    if (afterImages.length === 0) {
-      toast.error("Please upload at least 1 'after' image.");
-      return;
-    }
 
-    if (!fix_description || fix_description.trim() === "") {
-      toast.error("Please enter a fix description.");
-      return;
+    if (status_id === maintenance_status.IN_PROGRESS) {
+      if (beforeImages.length === 0) {
+        toast.error("Please upload at least 1 'before' image.");
+        return;
+      }
+    } else {
+      if (afterImages.length === 0) {
+        toast.error("Please upload at least 1 'after' image.");
+        return;
+      }
+      if (!fix_description || fix_description.trim() === "") {
+        toast.error("Please enter a fix description.");
+        return;
+      }
     }
 
     const form = new FormData();
@@ -138,14 +141,15 @@ const Dashboard = () => {
       form.append("fix_description", fix_description);
     }
 
-    // before
     beforeImages.forEach((img) => {
       form.append("before", img.file);
     });
-    // after
-    afterImages.forEach((img) => {
-      form.append("after", img.file);
-    });
+
+    if (afterImages.length > 0) {
+      afterImages.forEach((img) => {
+        form.append("after", img.file);
+      });
+    }
 
     try {
       const response = await UpdateTask(token, selectedTask?.id, form);
