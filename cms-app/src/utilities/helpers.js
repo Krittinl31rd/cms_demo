@@ -6,7 +6,7 @@ export const colorBadge = {
   5: "bg-red-300/80 text-red-950",
 };
 
-export const nameStatusId = {
+export const taskStatusId = {
   1: "PENDING",
   2: "ASSIGNED",
   3: "IN_PROGRESS",

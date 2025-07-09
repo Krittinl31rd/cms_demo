@@ -73,7 +73,6 @@ router.put(
   RoleCheck([
     member_role.SUPER_ADMIN,
     member_role.TECHNICIAN_LEAD,
-    ,
     member_role.TECHNICIAN,
   ]),
   upload.fields([

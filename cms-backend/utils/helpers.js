@@ -10,6 +10,7 @@ const payloadNotify = {
   boardcast: {
     role: [],
     type: [],
+    user_id: [],
   },
 };
 
@@ -40,6 +41,17 @@ async function doBoardcastNotification({ data, boardcast }) {
   }
 
   let userIds = [];
+
+  if (boardcast.user_id && boardcast.user_id.length > 0) {
+    const userByID = await sequelize.query(
+      `SELECT id FROM users WHERE id IN (:user_id)`,
+      {
+        replacements: { user_id: boardcast.user_id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    userIds.push(...userByID.map((u) => u.id));
+  }
 
   if (boardcast.role && boardcast.role.length > 0) {
     const usersByRole = await sequelize.query(

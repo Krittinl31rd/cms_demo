@@ -1,6 +1,8 @@
 const sequelize = require("../../config/db");
 const upload = require("../../middleware/uploadImage");
 const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+
 const {
   checkExists,
   getMaintenanceTaskBaseQuery,
@@ -15,6 +17,12 @@ const {
   doBoardcastNotification,
   payloadNotify,
 } = require("../../utils/helpers");
+
+// const Test = async (req, res) => {
+//   const local = dayjs().format();
+//   const test = dayjs(local).utc().format("YYYY-MM-DD HH:mm:ss");
+//   console.log(test);
+// };
 
 exports.GetTechnicians = async (req, res) => {
   try {
@@ -96,10 +104,7 @@ exports.CreateMaintenanceTask = async (req, res) => {
       payloadNotify.data.message = `${CheckTypeTechnician(
         tech_type_id
       )} - ${problem_description}`;
-      payloadNotify.boardcast = {
-        role: [member_role.TECHNICIAN_LEAD],
-        type: [tech_type_id],
-      };
+      payloadNotify.boardcast.user_id = [assigned_to];
       const result = await doBoardcastNotification(payloadNotify);
       console.log(result.response);
     } catch (err) {
@@ -199,9 +204,9 @@ exports.GetMaintenanceTask = async (req, res) => {
       image_report: item.image_report ? JSON.parse(item.image_report) : null,
     }));
 
-    if (parsedResults.length == 0) {
-      return res.status(404).json({ message: "No maintenance tasks found." });
-    }
+    // if (parsedResults.length == 0) {
+    //   return res.status(200).json(parsedResults);
+    // }
 
     res.status(200).json(parsedResults);
   } catch (err) {
@@ -319,23 +324,10 @@ exports.GetMaintenanceTaskByID = async (req, res) => {
 exports.GetMaintenanceTaskByUserID = async (req, res) => {
   try {
     const { user_id } = req.params;
-    const result = await sequelize.query(
-      `SELECT
-      maintenance_tasks.*,
-      rooms.room_number,
-      rooms.floor,
-      rooms.guest_status_id,
-      rooms.dnd_status,
-      rooms.room_check_status,
-      rooms.is_online,
-      rooms.ip_address,
-      assigned_user.full_name AS assigned_to_name,
-      created_by_user.full_name AS created_by_name
-    FROM maintenance_tasks
-    JOIN  rooms ON rooms.id = maintenance_tasks.room_id
-    LEFT JOIN users AS assigned_user ON assigned_user.id = maintenance_tasks.assigned_to
-    LEFT JOIN users AS created_by_user ON created_by_user.id = maintenance_tasks.created_by
-    WHERE maintenance_tasks.assigned_to = :user_id ORDER BY maintenance_tasks.created_at DESC`,
+    const { status_id } = req.query;
+
+    const allTasks = await sequelize.query(
+      `SELECT status_id FROM maintenance_tasks WHERE assigned_to = :user_id`,
       {
         replacements: { user_id },
         type: sequelize.QueryTypes.SELECT,
@@ -350,10 +342,50 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
       inspected: 0,
     };
 
-    result.forEach((item) => {
+    allTasks.forEach((item) => {
       const name = statusNameMap[item.status_id];
       if (name) statusCounts[name] += 1;
     });
+
+    let whereClause = "maintenance_tasks.assigned_to = :user_id";
+    const replacements = { user_id };
+
+    if (status_id) {
+      const statusArr = Array.isArray(status_id)
+        ? status_id
+        : status_id.split(",").map((id) => Number(id.trim()));
+      if (statusArr.length > 1) {
+        whereClause += " AND maintenance_tasks.status_id IN (:status_ids)";
+        replacements.status_ids = statusArr;
+      } else {
+        whereClause += " AND maintenance_tasks.status_id = :status_id";
+        replacements.status_id = statusArr[0];
+      }
+    }
+
+    const result = await sequelize.query(
+      `SELECT
+        maintenance_tasks.*,
+        rooms.room_number,
+        rooms.floor,
+        rooms.guest_status_id,
+        rooms.dnd_status,
+        rooms.room_check_status,
+        rooms.is_online,
+        rooms.ip_address,
+        assigned_user.full_name AS assigned_to_name,
+        created_by_user.full_name AS created_by_name
+      FROM maintenance_tasks
+      JOIN rooms ON rooms.id = maintenance_tasks.room_id
+      LEFT JOIN users AS assigned_user ON assigned_user.id = maintenance_tasks.assigned_to
+      LEFT JOIN users AS created_by_user ON created_by_user.id = maintenance_tasks.created_by
+      WHERE ${whereClause}
+      ORDER BY maintenance_tasks.status_id, maintenance_tasks.created_at DESC`,
+      {
+        replacements,
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
 
     res.status(200).json({
       statusCounts,
@@ -368,9 +400,11 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
 exports.UpdateMaintenanceTask = async (req, res) => {
   try {
     const { task_id } = req.params;
+
     const {
       room_id,
       fix_description = null,
+      problem_description = null,
       started_at = null,
       ended_at = null,
       status_id = null,
@@ -447,14 +481,41 @@ exports.UpdateMaintenanceTask = async (req, res) => {
       replacements.fix_description = fix_description;
     }
 
+    if (problem_description) {
+      updates.push("problem_description = :problem_description");
+      replacements.problem_description = problem_description;
+    }
+
     if (started_at) {
       updates.push("started_at = :started_at");
-      replacements.started_at = started_at;
+      replacements.started_at = dayjs(started_at)
+        .utc()
+        .format("YYYY-MM-DD HH:mm:ss");
+    } else {
+      if (status_id == maintenance_status.IN_PROGRESS) {
+        const local = dayjs().format();
+        dayjs.extend(utc);
+        updates.push("started_at = :started_at");
+        replacements.started_at = dayjs(local)
+          .utc()
+          .format("YYYY-MM-DD HH:mm:ss");
+      }
     }
 
     if (ended_at) {
       updates.push("ended_at = :ended_at");
-      replacements.ended_at = ended_at;
+      replacements.ended_at = dayjs(ended_at)
+        .utc()
+        .format("YYYY-MM-DD HH:mm:ss");
+    } else {
+      if (status_id == maintenance_status.COMPLETED) {
+        const local = dayjs().format();
+        dayjs.extend(utc);
+        updates.push("ended_at = :ended_at");
+        replacements.ended_at = dayjs(local)
+          .utc()
+          .format("YYYY-MM-DD HH:mm:ss");
+      }
     }
 
     if (image_before) {

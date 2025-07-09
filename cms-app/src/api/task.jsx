@@ -7,9 +7,10 @@ export const GetMaintenanceTask = async (token) =>
     },
   });
 
-export const GetMaintenanceTaskByUserID = async (id, token) =>
+export const GetMaintenanceTaskByUserID = async (id, token, query) =>
   await axios.get(
-    import.meta.env.VITE_API_URL + `/get-maintenancetask/user/${id}`,
+    import.meta.env.VITE_API_URL +
+      `/get-maintenancetask/user/${id}/?status_id=${query}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -42,10 +43,9 @@ export const CreateTask = async (formData, token) =>
     }
   );
 
-export const UpdateTask = async (formData, token) =>
+export const UpdateTask = async (token, id, formData) =>
   await axios.put(
-    import.meta.env.VITE_API_URL +
-      `/update-maintenancetask/${formData?.task_id}`,
+    import.meta.env.VITE_API_URL + `/update-maintenancetask/${id}`,
     formData,
     {
       headers: {

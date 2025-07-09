@@ -47,10 +47,7 @@ const UpdateWorkForm = ({
     }
 
     try {
-      const response = await UpdateTask(
-        { ...formData, task_id: selectedTask?.id },
-        token
-      );
+      const response = await UpdateTask(token, selectedTask?.id, formData);
       toast.success(response?.data?.message || "Work updated successfully");
       onEdit();
       fetchTaskList();

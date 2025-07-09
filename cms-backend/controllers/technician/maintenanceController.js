@@ -89,12 +89,9 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
 
 exports.GetRooms = async (req, res) => {
   try {
-    const rooms = await sequelize.query(
-      `SELECT id, room_number, floor, guest_status_id, cleaning_status_id, dnd_status, mur_status, room_check_status, is_online FROM rooms`,
-      {
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
+    const rooms = await sequelize.query(`SELECT * FROM rooms`, {
+      type: sequelize.QueryTypes.SELECT,
+    });
 
     res.status(200).json(rooms);
   } catch (err) {

@@ -13,14 +13,14 @@ import Button from "@/components/ui/Button";
 import { Plus, CheckCircle, Loader, UserCheck, X, XCircle } from "lucide-react";
 import CardWork from "@/components/technician/CardWork";
 import ModalPopup from "@/components/ui/ModalPopup";
-import { nameStatusId, colorBadge } from "@/utilities/helpers";
+import { taskStatusId, colorBadge } from "@/utilities/helpers";
 import dayjs from "dayjs";
 import { DeleteTask } from "@/api/task";
 import { toast } from "react-toastify";
 
 const RepairWork = () => {
   const { token } = useStore((state) => state);
-  const [taskList, settaskList] = useState([]);
+  const [taskList, setTaskList] = useState([]);
   const [technicianList, setTechnicianList] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ const RepairWork = () => {
     setLoading(true);
     try {
       const response = await GetMaintenanceTask(token);
-      settaskList(response?.data || []);
+      setTaskList(response?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -93,18 +93,19 @@ const RepairWork = () => {
       completed: 0,
       unresolved: 0,
     };
+
     taskList.forEach((task) => {
       switch (task.status_id) {
-        case 1:
+        case 2:
           counts.assigned += 1;
           break;
-        case 2:
+        case 3:
           counts.in_progress += 1;
           break;
-        case 3:
+        case 4:
           counts.completed += 1;
           break;
-        case 4:
+        case 5:
           counts.unresolved += 1;
           break;
         default:
@@ -217,7 +218,7 @@ const RepairWork = () => {
                     colorBadge[selectedTask?.status_id]
                   }`}
                 >
-                  <span>{nameStatusId[selectedTask?.status_id]}</span>
+                  <span>{taskStatusId[selectedTask?.status_id]}</span>
                 </div>
               </div>
             </div>
@@ -267,8 +268,8 @@ const RepairWork = () => {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <h1 className="font-semibold mb-2 text-center">Before</h1>
-                <div className="max-h-64 overflow-y-auto bg-gray-200/50 border-2 border-dashed border-gray-400 p-2 rounded-lg">
-                  <div className="grid grid-cols-3 gap-2">
+                <div className="h-64 overflow-y-auto bg-gray-200/50 border-2 border-dashed border-gray-400 p-2 rounded-lg">
+                  <div className="grid grid-cols-2 gap-2">
                     {selectedTask?.image_before &&
                     JSON.parse(selectedTask?.image_before).length > 0 ? (
                       JSON.parse(selectedTask?.image_before).map(
@@ -279,7 +280,7 @@ const RepairWork = () => {
                               import.meta.env.VITE_BASE_BEFORE_PATH
                             }/${image}`}
                             alt={`before${selectedTask?.id}_${index}`}
-                            className="cursor-pointer"
+                            className="cursor-pointer rounded-lg h-32 w-full object-cover"
                             onClick={() => {
                               setSelectedImage({ image, type: "before" });
                               setFullScreen(true);
@@ -288,7 +289,7 @@ const RepairWork = () => {
                         )
                       )
                     ) : (
-                      <div className="col-span-3 w-full h-56 flex items-center justify-center">
+                      <div className="col-span-2 w-full h-56 flex items-center justify-center">
                         <p>No images uploaded</p>
                       </div>
                     )}
@@ -297,8 +298,8 @@ const RepairWork = () => {
               </div>
               <div>
                 <h1 className="font-semibold mb-2 text-center">After</h1>
-                <div className="max-h-64 overflow-y-auto bg-gray-200/50 border-2 border-dashed border-gray-400 p-2 rounded-lg">
-                  <div className="grid grid-cols-3 gap-2">
+                <div className="h-64 overflow-y-auto bg-gray-200/50 border-2 border-dashed border-gray-400 p-2 rounded-lg">
+                  <div className="grid grid-cols-2 gap-2">
                     {selectedTask?.image_after &&
                     JSON.parse(selectedTask?.image_after).length > 0 ? (
                       JSON.parse(selectedTask?.image_after).map(
@@ -309,7 +310,7 @@ const RepairWork = () => {
                               import.meta.env.VITE_BASE_AFTER_PATH
                             }/${image}`}
                             alt={`before${selectedTask?.id}_${index}`}
-                            className="cursor-pointer"
+                            className="cursor-pointer rounded-lg h-32 w-full object-cover"
                             onClick={() => {
                               setSelectedImage({ image, type: "after" });
                               setFullScreen(true);
@@ -318,7 +319,7 @@ const RepairWork = () => {
                         )
                       )
                     ) : (
-                      <div className="col-span-3 w-full h-56 flex items-center justify-center">
+                      <div className="col-span-2 w-full h-56 flex items-center justify-center">
                         <p>No images uploaded</p>
                       </div>
                     )}

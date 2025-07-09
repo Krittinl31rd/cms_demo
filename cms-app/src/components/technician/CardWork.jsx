@@ -2,7 +2,7 @@ import React from "react";
 import ModalPopup from "@/components/ui/ModalPopup";
 import dayjs from "dayjs";
 import { Pencil, Search, Trash } from "lucide-react";
-import { nameStatusId, colorBadge } from "@/utilities/helpers";
+import { taskStatusId, colorBadge } from "@/utilities/helpers";
 import { maintenance_status } from "@/constant/common";
 
 const CardWork = ({ task, onSelect, onView, onEdit, onDelete }) => {
@@ -29,7 +29,7 @@ const CardWork = ({ task, onSelect, onView, onEdit, onDelete }) => {
             colorBadge[task?.status_id]
           }`}
         >
-          <span>{nameStatusId[task?.status_id]}</span>
+          <span>{taskStatusId[task?.status_id]}</span>
         </div>
       </div>
       {/* content */}

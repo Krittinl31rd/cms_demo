@@ -5,6 +5,7 @@ export default function Button({ children, variant = "primary", ...props }) {
     primary: "bg-primary text-white",
     gray: "bg-gray-200 hover:bg-gray-300 text-black",
     danger: "bg-red-500 text-white",
+    success: "bg-green-500 text-white",
   };
 
   return (

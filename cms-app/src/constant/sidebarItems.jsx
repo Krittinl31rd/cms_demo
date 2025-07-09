@@ -51,5 +51,8 @@ export const sidebarItems = {
   ],
   [member_role.TECHNICIAN]: [
     { label: "Dashboard", path: "/tech", icon: <LayoutDashboard /> },
+    { label: "Task", path: "/tech/task", icon: <NotepadText /> },
+    { label: "History", path: "/tech/task-history", icon: <History /> },
+    { label: "Room", path: "/tech/room", icon: <House /> },
   ],
 };

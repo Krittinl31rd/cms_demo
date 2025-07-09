@@ -8,6 +8,7 @@ import DashboardFrontDesk from "@/pages/frontdesk/Dashboard";
 import DashboardTechLead from "@/pages/technicianLead/Dashboard";
 import RoomDevicesLog from "@/pages/technicianLead/RoomDevicesLog";
 import DashboardTech from "@/pages/technician/Dashboard";
+import Task from "@/pages/technician/Task";
 import DashboardAdmin from "@/pages/superadmin/Dashboard";
 import UserAdmin from "@/pages/superadmin/User";
 import RoomAdmin from "@/pages/superadmin/Room";
@@ -97,7 +98,12 @@ const router = createBrowserRouter([
         // requiredPermission="VIEW_TECH_PANEL"
       />
     ),
-    children: [{ index: true, element: <DashboardTech /> }],
+    children: [
+      { index: true, element: <DashboardTech /> },
+      { path: "task", element: <Task /> },
+      { path: "task-history", element: <DashboardTech /> },
+      { path: "room", element: <DashboardTech /> },
+    ],
   },
   {
     path: "/test",
