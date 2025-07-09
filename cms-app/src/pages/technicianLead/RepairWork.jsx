@@ -271,23 +271,21 @@ const RepairWork = () => {
                 <div className="h-64 overflow-y-auto bg-gray-200/50 border-2 border-dashed border-gray-400 p-2 rounded-lg">
                   <div className="grid grid-cols-2 gap-2">
                     {selectedTask?.image_before &&
-                    JSON.parse(selectedTask?.image_before).length > 0 ? (
-                      JSON.parse(selectedTask?.image_before).map(
-                        (image, index) => (
-                          <img
-                            key={index}
-                            src={`${
-                              import.meta.env.VITE_BASE_BEFORE_PATH
-                            }/${image}`}
-                            alt={`before${selectedTask?.id}_${index}`}
-                            className="cursor-pointer rounded-lg h-32 w-full object-cover"
-                            onClick={() => {
-                              setSelectedImage({ image, type: "before" });
-                              setFullScreen(true);
-                            }}
-                          />
-                        )
-                      )
+                    selectedTask?.image_before.length > 0 ? (
+                      selectedTask?.image_before.map((image, index) => (
+                        <img
+                          key={index}
+                          src={`${
+                            import.meta.env.VITE_BASE_BEFORE_PATH
+                          }/${image}`}
+                          alt={`before${selectedTask?.id}_${index}`}
+                          className="cursor-pointer rounded-lg h-32 w-full object-cover"
+                          onClick={() => {
+                            setSelectedImage({ image, type: "before" });
+                            setFullScreen(true);
+                          }}
+                        />
+                      ))
                     ) : (
                       <div className="col-span-2 w-full h-56 flex items-center justify-center">
                         <p>No images uploaded</p>
@@ -301,23 +299,21 @@ const RepairWork = () => {
                 <div className="h-64 overflow-y-auto bg-gray-200/50 border-2 border-dashed border-gray-400 p-2 rounded-lg">
                   <div className="grid grid-cols-2 gap-2">
                     {selectedTask?.image_after &&
-                    JSON.parse(selectedTask?.image_after).length > 0 ? (
-                      JSON.parse(selectedTask?.image_after).map(
-                        (image, index) => (
-                          <img
-                            key={index}
-                            src={`${
-                              import.meta.env.VITE_BASE_AFTER_PATH
-                            }/${image}`}
-                            alt={`before${selectedTask?.id}_${index}`}
-                            className="cursor-pointer rounded-lg h-32 w-full object-cover"
-                            onClick={() => {
-                              setSelectedImage({ image, type: "after" });
-                              setFullScreen(true);
-                            }}
-                          />
-                        )
-                      )
+                    selectedTask?.image_after.length > 0 ? (
+                      selectedTask?.image_after.map((image, index) => (
+                        <img
+                          key={index}
+                          src={`${
+                            import.meta.env.VITE_BASE_AFTER_PATH
+                          }/${image}`}
+                          alt={`before${selectedTask?.id}_${index}`}
+                          className="cursor-pointer rounded-lg h-32 w-full object-cover"
+                          onClick={() => {
+                            setSelectedImage({ image, type: "after" });
+                            setFullScreen(true);
+                          }}
+                        />
+                      ))
                     ) : (
                       <div className="col-span-2 w-full h-56 flex items-center justify-center">
                         <p>No images uploaded</p>

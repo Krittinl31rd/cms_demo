@@ -1,18 +1,18 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import DataTable from "@/components/table/DataTable";
 import CardSummary from "@/components/ui/CardSummary";
 import CardRoom from "@/components/ui/CardRoom";
 import ModalPopup from "@/components/ui/ModalPopup";
 import ElementDevices from "@/components/ui/ElementDevices";
 import { Wifi, WifiOff, Globe, ListFilter, Check } from "lucide-react";
-import { data } from "@/constant/data";
 import { GetRooms } from "@/api/room";
 import useStore from "@/store/store";
 import { client } from "@/constant/wsCommand";
-const stats = data.stats;
+import Spinner from "@/components/ui/Spinner";
 
 const Rooms = () => {
   const { token } = useStore((state) => state);
+  const [loading, setLoading] = useState(true);
   const [roomList, setRoomList] = useState([]);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState([]);
@@ -35,11 +35,14 @@ const Rooms = () => {
   const ws = useRef(null);
 
   const fetchRoomList = async () => {
+    setLoading(true);
     try {
       const response = await GetRooms(token);
       setRoomList(response?.data || []);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -271,65 +274,97 @@ const Rooms = () => {
     }
   }, [roomList]);
 
+  const statusCounts = useMemo(() => {
+    const counts = {
+      offline: 0,
+      online: 0,
+    };
+
+    roomList.forEach((room) => {
+      switch (room?.is_online) {
+        case 0:
+          counts.offline += 1;
+          break;
+        case 1:
+          counts.online += 1;
+          break;
+        default:
+          break;
+      }
+    });
+    return counts;
+  }, [roomList]);
+
   return (
-    <div className="flex flex-col gap-2">
-      <div className="hidden sm:grid md:grid-cols-2 lg:grid-cols-4 gap-2">
-        <CardSummary
-          title="Online"
-          value={stats.onlineRooms}
-          icon={Globe}
-          iconColor="text-green-500"
-        />
-        <CardSummary
-          title="Offline"
-          value={stats.offlineRooms}
-          icon={Globe}
-          iconColor="text-red-500"
-        />
-      </div>
-
-      <div className="w-full flex items-center justify-between gap-2 bg-white rounded-xl shadow-xl p-4">
-        <input
-          type="text"
-          placeholder="Search by room number..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          onClick={() => setIsModalFilterOpen(true)}
-          className="flex items-center gap-1  text-primary cursor-pointer rounded-lg p-1 hover:bg-gray-100"
-        >
-          Filter <ListFilter size={16} />
-        </button>
-      </div>
-      <h1 className="text-sm">
-        Filter by:{" "}
-        <span className="font-semibold">
-          {activeFilterLabels.length > 0
-            ? activeFilterLabels.join(", ")
-            : "None"}
-        </span>
-      </h1>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-        {filteredRooms.length > 0 ? (
-          filteredRooms.map((room, index) => (
-            <CardRoom
-              onClick={() => {
-                setSelectedRoom(room);
-                setIsModalRoomOpen(true);
-              }}
-              key={index}
-              room={room}
+    <>
+      {loading ? (
+        <div className="w-full h-full flex flex-col items-center justify-center">
+          <Spinner />
+          Loading rooms....
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <div className="hidden sm:grid md:grid-cols-2 lg:grid-cols-4 gap-2">
+            <CardSummary
+              title="Online"
+              value={statusCounts?.online}
+              icon={Globe}
+              iconColor="text-green-500"
+              borderColor="border-green-500"
             />
-          ))
-        ) : (
-          <p className="text-center col-span-full text-gray-500">
-            No rooms found.
-          </p>
-        )}
-      </div>
+            <CardSummary
+              title="Offline"
+              value={statusCounts?.offline}
+              icon={Globe}
+              iconColor="text-red-500"
+              borderColor="border-red-500"
+            />
+          </div>
+
+          <div className="w-full flex items-center justify-between gap-2 bg-white rounded-xl shadow-xl p-4">
+            <input
+              type="text"
+              placeholder="Search by room number..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={() => setIsModalFilterOpen(true)}
+              className="flex items-center gap-1  text-primary cursor-pointer rounded-lg p-1 hover:bg-gray-100"
+            >
+              Filter <ListFilter size={16} />
+            </button>
+          </div>
+          <h1 className="text-sm">
+            Filter by:{" "}
+            <span className="font-semibold">
+              {activeFilterLabels.length > 0
+                ? activeFilterLabels.join(", ")
+                : "None"}
+            </span>
+          </h1>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+            {filteredRooms.length > 0 ? (
+              filteredRooms.map((room, index) => (
+                <CardRoom
+                  onClick={() => {
+                    setSelectedRoom(room);
+                    setIsModalRoomOpen(true);
+                  }}
+                  key={index}
+                  room={room}
+                />
+              ))
+            ) : (
+              <p className="text-center col-span-full text-gray-500">
+                No rooms found.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <ModalPopup
         isOpen={isModalFilterOpen}
@@ -425,7 +460,7 @@ const Rooms = () => {
           sendWebSocketMessage={sendWebSocketMessage}
         />
       </ModalPopup>
-    </div>
+    </>
   );
 };
 

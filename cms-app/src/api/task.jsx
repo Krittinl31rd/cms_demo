@@ -1,10 +1,11 @@
 import axios from "axios";
 
-export const GetMaintenanceTask = async (token) =>
+export const GetMaintenanceTask = async (token, query = {}) =>
   await axios.get(import.meta.env.VITE_API_URL + "/get-maintenancetask", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    params: query,
   });
 
 export const GetMaintenanceTaskByUserID = async (id, token, query = {}) =>

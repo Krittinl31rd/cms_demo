@@ -50,7 +50,7 @@ const statusNameMap = {
   2: "assigned",
   3: "in_progress",
   4: "completed",
-  5: "inspected",
+  5: "unresolved",
 };
 
 const device_type = {

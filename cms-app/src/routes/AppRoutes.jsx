@@ -9,6 +9,7 @@ import DashboardTechLead from "@/pages/technicianLead/Dashboard";
 import RoomDevicesLog from "@/pages/technicianLead/RoomDevicesLog";
 import DashboardTech from "@/pages/technician/Dashboard";
 import Task from "@/pages/technician/Task";
+import TaskHistoryTech from "@/pages/technician/History";
 import DashboardAdmin from "@/pages/superadmin/Dashboard";
 import UserAdmin from "@/pages/superadmin/User";
 import RoomAdmin from "@/pages/superadmin/Room";
@@ -101,8 +102,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardTech /> },
       { path: "task", element: <Task /> },
-      { path: "task-history", element: <DashboardTech /> },
-      { path: "room", element: <DashboardTech /> },
+      { path: "task-history", element: <TaskHistoryTech /> },
+      { path: "room", element: <Rooms /> },
     ],
   },
   {

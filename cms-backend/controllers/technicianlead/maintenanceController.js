@@ -215,8 +215,16 @@ exports.GetMaintenanceTask = async (req, res) => {
           replacements: localReplacements,
           type: sequelize.QueryTypes.SELECT,
         });
+
+        allResults = allResults.concat(
+          result.map((item) => ({
+            ...item,
+            image_before: JSON.parse(item.image_before),
+            image_after: JSON.parse(item.image_after),
+          }))
+        );
       }
-      return res.status(200).json(result);
+      return res.status(200).json(allResults);
     }
 
     if (statusIds.length == 1) {
@@ -275,7 +283,13 @@ exports.GetMaintenanceTask = async (req, res) => {
       type: sequelize.QueryTypes.SELECT,
     });
 
-    res.status(200).json(result);
+    const parsedResults = result.map((item) => ({
+      ...item,
+      image_before: JSON.parse(item.image_before),
+      image_after: JSON.parse(item.image_after),
+    }));
+
+    res.status(200).json(parsedResults);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
@@ -406,7 +420,7 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
       assigned: 0,
       in_progress: 0,
       completed: 0,
-      inspected: 0,
+      unresolved: 0,
     };
 
     allTasks.forEach((item) => {
@@ -454,9 +468,15 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
       }
     );
 
+    const parsedResults = result.map((item) => ({
+      ...item,
+      image_before: JSON.parse(item.image_before),
+      image_after: JSON.parse(item.image_after),
+    }));
+
     res.status(200).json({
       statusCounts,
-      tasks: result,
+      tasks: parsedResults,
     });
   } catch (err) {
     console.error(err);
@@ -467,7 +487,6 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
 exports.UpdateMaintenanceTask = async (req, res) => {
   try {
     const { task_id } = req.params;
-    console.log(task_id);
     const {
       room_id,
       fix_description = null,
@@ -575,7 +594,10 @@ exports.UpdateMaintenanceTask = async (req, res) => {
         .utc()
         .format("YYYY-MM-DD HH:mm:ss");
     } else {
-      if (status_id == maintenance_status.COMPLETED) {
+      if (
+        status_id == maintenance_status.COMPLETED ||
+        status_id == maintenance_status.UNRESOLVED
+      ) {
         const local = dayjs().format();
         dayjs.extend(utc);
         updates.push("ended_at = :ended_at");

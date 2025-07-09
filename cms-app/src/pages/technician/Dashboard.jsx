@@ -30,6 +30,7 @@ const Dashboard = () => {
   const [viewTask, setViewTask] = useState(false);
   const [taskImages, setTaskImages] = useState({});
   const [fixDescription, setFixDescription] = useState("");
+  const [statusCounts, setStatusCounts] = useState({});
 
   const fetchTaskList = async () => {
     setLoading(true);
@@ -45,6 +46,7 @@ const Dashboard = () => {
 
       const response = await GetMaintenanceTaskByUserID(user?.id, token, query);
       setTaskList(response?.data.tasks || []);
+      setStatusCounts(response?.data.statusCounts || {});
     } catch (err) {
       console.error(err);
     } finally {
@@ -159,35 +161,6 @@ const Dashboard = () => {
       toast.error(err?.response?.data || "Maintenance task updated failed.");
     }
   };
-
-  const statusCounts = useMemo(() => {
-    const counts = {
-      assigned: 0,
-      in_progress: 0,
-      completed: 0,
-      unresolved: 0,
-    };
-
-    taskList.forEach((task) => {
-      switch (task.status_id) {
-        case 2:
-          counts.assigned += 1;
-          break;
-        case 3:
-          counts.in_progress += 1;
-          break;
-        case 4:
-          counts.completed += 1;
-          break;
-        case 5:
-          counts.unresolved += 1;
-          break;
-        default:
-          break;
-      }
-    });
-    return counts;
-  }, [taskList]);
 
   return (
     <>
@@ -365,23 +338,21 @@ const Dashboard = () => {
                 <div className="max-h-64 overflow-y-auto  border-1  border-gray-300 p-2 rounded-lg">
                   <div className="grid grid-cols-3 gap-2">
                     {selectedTask?.image_before &&
-                    JSON.parse(selectedTask?.image_before).length > 0 ? (
-                      JSON.parse(selectedTask?.image_before).map(
-                        (image, index) => (
-                          <img
-                            key={index}
-                            src={`${
-                              import.meta.env.VITE_BASE_BEFORE_PATH
-                            }/${image}`}
-                            alt={`before${selectedTask?.id}_${index}`}
-                            className="cursor-pointer rounded-lg h-32 w-full object-cover"
-                            // onClick={() => {
-                            //   setSelectedImage({ image, type: "after" });
-                            //   setFullScreen(true);
-                            // }}
-                          />
-                        )
-                      )
+                    selectedTask?.image_before.length > 0 ? (
+                      selectedTask?.image_before.map((image, index) => (
+                        <img
+                          key={index}
+                          src={`${
+                            import.meta.env.VITE_BASE_BEFORE_PATH
+                          }/${image}`}
+                          alt={`before${selectedTask?.id}_${index}`}
+                          className="cursor-pointer rounded-lg h-32 w-full object-cover"
+                          // onClick={() => {
+                          //   setSelectedImage({ image, type: "after" });
+                          //   setFullScreen(true);
+                          // }}
+                        />
+                      ))
                     ) : (
                       <div className="col-span-3 w-full h-56 flex items-center justify-center">
                         <p>No images uploaded</p>
@@ -490,7 +461,7 @@ const Dashboard = () => {
                   handleUpdateTask({
                     e,
                     room_id: selectedTask?.room_id,
-                    status_id: maintenance_status.FIXED,
+                    status_id: maintenance_status.UNRESOLVED,
                     fix_description: fixDescription,
                   })
                 }

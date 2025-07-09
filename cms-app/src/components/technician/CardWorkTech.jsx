@@ -7,7 +7,13 @@ import { maintenance_status } from "@/constant/common";
 
 const CardWorkTech = ({ task, onSelect, onView, onEdit, onDelete }) => {
   return (
-    <div className="w-full h-[100px] bg-white shadow-2xl p-0 rounded-lg space-y-4  ">
+    <div
+      onClick={() => {
+        onSelect(task);
+        onView();
+      }}
+      className="w-full h-[100px] bg-white shadow-2xl p-0 rounded-lg space-y-4 cursor-pointer"
+    >
       {/* header */}
       <div className="w-full h-full flex items-start justify-center gap-1">
         <div className="flex-1 h-full flex items-center gap-0">
