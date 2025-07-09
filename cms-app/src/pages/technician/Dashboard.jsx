@@ -31,21 +31,19 @@ const Dashboard = () => {
   const [taskImages, setTaskImages] = useState({});
   const [fixDescription, setFixDescription] = useState("");
 
-  const fetchTaskList = async (statusIds) => {
+  const fetchTaskList = async () => {
     setLoading(true);
     try {
-      const query = {};
-      if (statusIds) {
-        query.status_id = Array.isArray(statusIds)
-          ? statusIds.join(",")
-          : statusIds;
-      }
+      const statusIds = [
+        maintenance_status.ASSIGNED,
+        maintenance_status.IN_PROGRESS,
+      ];
 
-      const response = await GetMaintenanceTaskByUserID(
-        user?.id,
-        token,
-        query?.status_id
-      );
+      const query = {
+        status_id: statusIds.join(","),
+      };
+
+      const response = await GetMaintenanceTaskByUserID(user?.id, token, query);
       setTaskList(response?.data.tasks || []);
     } catch (err) {
       console.error(err);
@@ -55,11 +53,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchTaskList([
-      maintenance_status.ASSIGNED,
-      maintenance_status.IN_PROGRESS,
-    ]);
-  }, [token]);
+    if (token && user?.id) {
+      fetchTaskList();
+    }
+  }, [token, user?.id]);
 
   const handleImageChange = (e, key) => {
     const files = Array.from(e.target.files);
@@ -163,34 +160,63 @@ const Dashboard = () => {
     }
   };
 
+  const statusCounts = useMemo(() => {
+    const counts = {
+      assigned: 0,
+      in_progress: 0,
+      completed: 0,
+      unresolved: 0,
+    };
+
+    taskList.forEach((task) => {
+      switch (task.status_id) {
+        case 2:
+          counts.assigned += 1;
+          break;
+        case 3:
+          counts.in_progress += 1;
+          break;
+        case 4:
+          counts.completed += 1;
+          break;
+        case 5:
+          counts.unresolved += 1;
+          break;
+        default:
+          break;
+      }
+    });
+    return counts;
+  }, [taskList]);
+
   return (
     <>
       <div className="flex flex-col gap-2">
         <div className="hidden sm:grid  sm:grid-cols-2 md:grid-cols-4 gap-2">
           <CardSummary
             title="Assigned"
-            value={9999}
+            value={statusCounts?.assigned}
             icon={UserCheck}
             iconColor="text-yellow-500"
             borderColor="border-yellow-500"
           />
           <CardSummary
             title="In Progress"
-            value={9999}
+            value={statusCounts?.in_progress}
             icon={Loader}
             iconColor="text-blue-500"
             borderColor="border-blue-500"
           />
           <CardSummary
             title="Completed"
-            value={9999}
+            value={statusCounts?.completed}
             icon={CheckCircle}
             iconColor="text-green-500"
             borderColor="border-green-500"
           />
           <CardSummary
             title="Unresolved"
-            value={9999}
+            value={statusCounts?.unresolved}
             icon={XCircle}
             iconColor="text-red-500"
             borderColor="border-red-500"
@@ -198,7 +224,7 @@ const Dashboard = () => {
         </div>
 
         <div className="w-full space-y-2">
-          <h1 className="font-semibold text-xl">Task</h1>
+          <h1 className="font-semibold text-xl">My Task</h1>
           {loading ? (
             <div className="w-full flex items-center justify-center">
               <Spinner />

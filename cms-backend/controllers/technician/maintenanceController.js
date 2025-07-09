@@ -7,11 +7,91 @@ const {
 const { maintenance_status, member_role } = require("../../constants/common");
 
 // find user by type and count task today and yesterday, user with the least work will be selected.
+// exports.CreateMaintenanceTaskByType = async (req, res) => {
+//   try {
+//     const { ip, type, message } = req.body;
+
+//     // fin the user with the least work today and yesterday
+//     const leastBusy = await sequelize.query(
+//       `
+//       SELECT
+//         t.user_id,
+//         COUNT(m.id) AS task_count
+//       FROM
+//         technician t
+//       LEFT JOIN
+//         maintenance_tasks m ON t.user_id = m.assigned_to
+//         AND DATE(m.created_at) IN (CURDATE(), DATE_SUB(CURDATE(), INTERVAL 1 DAY))
+//         AND m.status_id IN (${maintenance_status.ASSIGNED}, ${maintenance_status.IN_PROGRESS}, ${maintenance_status.COMPLETED}, ${maintenance_status.UNRESOLVED})
+//       WHERE
+//         t.type_id = :type
+//       GROUP BY
+//         t.user_id
+//       ORDER BY
+//         task_count ASC, RAND()
+//       LIMIT 1
+//       `,
+//       {
+//         replacements: { type },
+//         type: sequelize.QueryTypes.SELECT,
+//       }
+//     );
+
+//     if (!leastBusy || leastBusy.length == 0) {
+//       return res
+//         .status(404)
+//         .json({ message: "No technician with task count found." });
+//     }
+
+//     const selectedUser = leastBusy[0].user_id;
+
+//     const room = await sequelize.query(
+//       `
+//       SELECT id FROM rooms WHERE ip_address = :ip_address
+//       `,
+//       {
+//         replacements: { ip_address: ip },
+//         type: sequelize.QueryTypes.SELECT,
+//       }
+//     );
+
+//     if (!room || room.length == 0) {
+//       return res.status(404).json({ message: "No rooms found." });
+//     }
+//     const roomId = room[0].id;
+
+//     // create maintenance task
+//     await sequelize.query(
+//       `
+//       INSERT INTO maintenance_tasks (room_id, assigned_to, problem_description, status_id, created_by)
+//       VALUES (:room_id, :assigned_to, :problem_description, ${maintenance_status.ASSIGNED}, :created_by)
+//       `,
+//       {
+//         replacements: {
+//           room_id: roomId,
+//           assigned_to: selectedUser,
+//           problem_description: message,
+//           created_by: null, //null is system assigned
+//         },
+//         type: sequelize.QueryTypes.INSERT,
+//       }
+//     );
+
+//     res.status(200).json({
+//       message: "Task created and assigned successfully.",
+//       assigned_to: selectedUser,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 exports.CreateMaintenanceTaskByType = async (req, res) => {
   try {
     const { ip, type, message } = req.body;
 
-    // fin the user with the least work today and yesterday
+    // 1. หา technician ที่งานน้อยที่สุด (วันนี้ + เมื่อวาน)
     const leastBusy = await sequelize.query(
       `
       SELECT
@@ -37,30 +117,66 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
       }
     );
 
-    if (!leastBusy || leastBusy.length == 0) {
-      return res
-        .status(404)
-        .json({ message: "No technician with task count found." });
+    if (!leastBusy || leastBusy.length === 0) {
+      return res.status(404).json({ message: "No technician found." });
     }
 
     const selectedUser = leastBusy[0].user_id;
 
+    // 2. หา room จาก IP
     const room = await sequelize.query(
-      `
-      SELECT id FROM rooms WHERE ip_address = :ip_address
-      `,
+      `SELECT id FROM rooms WHERE ip_address = :ip_address`,
       {
         replacements: { ip_address: ip },
         type: sequelize.QueryTypes.SELECT,
       }
     );
 
-    if (!room || room.length == 0) {
-      return res.status(404).json({ message: "No rooms found." });
+    if (!room || room.length === 0) {
+      return res.status(404).json({ message: "No room found." });
     }
+
     const roomId = room[0].id;
 
-    // create maintenance task
+    // 3. ตรวจสอบว่า room นี้มี task ที่ยังไม่จบอยู่หรือไม่
+    const existingRoomTask = await sequelize.query(
+      `
+      SELECT id FROM maintenance_tasks
+      WHERE room_id = :room_id
+      AND status_id IN (${maintenance_status.ASSIGNED}, ${maintenance_status.IN_PROGRESS})
+      `,
+      {
+        replacements: { room_id: roomId },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (existingRoomTask.length > 0) {
+      return res.status(400).json({
+        message: "This room already has an active maintenance task.",
+      });
+    }
+
+    // 4. ตรวจสอบว่า technician คนนี้มี task ค้างอยู่หรือไม่
+    const existingUserTask = await sequelize.query(
+      `
+      SELECT id FROM maintenance_tasks
+      WHERE assigned_to = :user_id
+      AND status_id IN (${maintenance_status.ASSIGNED}, ${maintenance_status.IN_PROGRESS})
+      `,
+      {
+        replacements: { user_id: selectedUser },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (existingUserTask.length > 0) {
+      return res.status(400).json({
+        message: "Technician already has an active maintenance task.",
+      });
+    }
+
+    // 5. สร้าง task ใหม่
     await sequelize.query(
       `
       INSERT INTO maintenance_tasks (room_id, assigned_to, problem_description, status_id, created_by)
@@ -71,7 +187,7 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
           room_id: roomId,
           assigned_to: selectedUser,
           problem_description: message,
-          created_by: null, //null is system assigned
+          created_by: null, // system assigned
         },
         type: sequelize.QueryTypes.INSERT,
       }

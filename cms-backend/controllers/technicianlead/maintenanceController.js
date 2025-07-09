@@ -215,17 +215,8 @@ exports.GetMaintenanceTask = async (req, res) => {
           replacements: localReplacements,
           type: sequelize.QueryTypes.SELECT,
         });
-
-        allResults = allResults.concat(
-          result.map((item) => ({
-            ...item,
-            image_report: item.image_report
-              ? JSON.parse(item.image_report)
-              : null,
-          }))
-        );
       }
-      return res.status(200).json(allResults);
+      return res.status(200).json(result);
     }
 
     if (statusIds.length == 1) {
@@ -284,12 +275,7 @@ exports.GetMaintenanceTask = async (req, res) => {
       type: sequelize.QueryTypes.SELECT,
     });
 
-    const parsedResults = result.map((item) => ({
-      ...item,
-      image_report: item.image_report ? JSON.parse(item.image_report) : null,
-    }));
-
-    res.status(200).json(parsedResults);
+    res.status(200).json(result);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
@@ -481,7 +467,7 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
 exports.UpdateMaintenanceTask = async (req, res) => {
   try {
     const { task_id } = req.params;
-
+    console.log(task_id);
     const {
       room_id,
       fix_description = null,

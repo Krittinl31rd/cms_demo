@@ -34,7 +34,13 @@ const Task = () => {
   const fetchTaskList = async () => {
     setLoading(true);
     try {
-      const response = await GetMaintenanceTaskByUserID(user?.id, token);
+      const statusIds = [maintenance_status.IN_PROGRESS];
+
+      const query = {
+        status_id: statusIds.join(","),
+      };
+
+      const response = await GetMaintenanceTaskByUserID(user?.id, token, query);
       setTaskList(response?.data.tasks || []);
     } catch (err) {
       console.error(err);
@@ -44,16 +50,10 @@ const Task = () => {
   };
 
   useEffect(() => {
-    fetchTaskList();
-  }, [token]);
-
-  const filteredTasks = useMemo(
-    () =>
-      taskList.filter(
-        (task) => task.status_id == maintenance_status.IN_PROGRESS
-      ),
-    [taskList]
-  );
+    if (token && user?.id) {
+      fetchTaskList();
+    }
+  }, [token, user?.id]);
 
   const handleImageChange = (e, key) => {
     const files = Array.from(e.target.files);
@@ -101,8 +101,30 @@ const Task = () => {
     room_id,
     fix_description,
   }) => {
-    e.preventDefault();
-    if (!selectedTask) return;
+    e && e.preventDefault();
+    if (!selectedTask) {
+      toast.error("No task selected.");
+      return;
+    }
+
+    const beforeImages = taskImages[`before_${selectedTask.id}`] || [];
+    const afterImages = taskImages[`after_${selectedTask.id}`] || [];
+
+    if (status_id === maintenance_status.IN_PROGRESS) {
+      if (beforeImages.length === 0) {
+        toast.error("Please upload at least 1 'before' image.");
+        return;
+      }
+    } else {
+      if (afterImages.length === 0) {
+        toast.error("Please upload at least 1 'after' image.");
+        return;
+      }
+      if (!fix_description || fix_description.trim() === "") {
+        toast.error("Please enter a fix description.");
+        return;
+      }
+    }
 
     const form = new FormData();
     form.append("room_id", room_id);
@@ -113,15 +135,12 @@ const Task = () => {
       form.append("fix_description", fix_description);
     }
 
-    // before
-    if (taskImages[`before_${selectedTask.id}`]?.length > 0) {
-      taskImages[`before_${selectedTask.id}`].forEach((img) => {
-        form.append("before", img.file);
-      });
-    }
-    //  after
-    if (taskImages[`after_${selectedTask.id}`]?.length > 0) {
-      taskImages[`after_${selectedTask.id}`].forEach((img) => {
+    beforeImages.forEach((img) => {
+      form.append("before", img.file);
+    });
+
+    if (afterImages.length > 0) {
+      afterImages.forEach((img) => {
         form.append("after", img.file);
       });
     }
@@ -134,16 +153,15 @@ const Task = () => {
       fetchTaskList();
       setViewTask(false);
     } catch (err) {
-      // console.log(err);
-      toast.error(err.response.data || "Maintenance task updated failed.");
+      toast.error(err?.response?.data || "Maintenance task updated failed.");
     }
   };
 
   return (
     <>
       <div className="flex flex-col gap-2">
-        <h1 className="font-semibold text-xl">Task i'm working on</h1>
         <div className="w-full space-y-2">
+          <h1 className="font-semibold text-xl">Task i'm working on</h1>
           {loading ? (
             <div className="w-full flex items-center justify-center">
               <Spinner />
@@ -151,8 +169,8 @@ const Task = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 p-2">
-              {filteredTasks.length > 0 ? (
-                filteredTasks.map((task) => (
+              {taskList.length > 0 ? (
+                taskList.map((task) => (
                   <CardWorkTech
                     key={task.id}
                     task={task}
@@ -162,7 +180,7 @@ const Task = () => {
                 ))
               ) : (
                 <p className="text-center sm:col-span-2 xl:col-span-3">
-                  No task list for inprogress.
+                  No task list in progress.
                 </p>
               )}
             </div>
@@ -191,6 +209,86 @@ const Task = () => {
               {selectedTask?.problem_description}
             </p>
           </div>
+          {selectedTask?.status_id == maintenance_status.ASSIGNED && (
+            <div className="space-y-2">
+              {/* Image Previews */}
+              {taskImages[`before_${selectedTask.id}`]?.length > 0 && (
+                <div className="max-h-64 overflow-y-auto  border-1  border-gray-300 p-2 rounded-lg">
+                  <div className="grid grid-cols-3 gap-2">
+                    {taskImages[`before_${selectedTask.id}`].map(
+                      (img, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={img.url}
+                            alt={`preview-${index}`}
+                            className="cursor-pointer rounded-lg h-32 w-full object-cover"
+                          />
+                          <button
+                            onClick={() =>
+                              setTaskImages((prev) => {
+                                const key = `before_${selectedTask.id}`;
+                                const current = prev[key] || [];
+                                const updated = current.filter(
+                                  (_, i) => i !== index
+                                );
+
+                                // Revoke URL after deletion
+                                setTimeout(() => {
+                                  if (current[index]?.url)
+                                    URL.revokeObjectURL(current[index].url);
+                                }, 0);
+
+                                return {
+                                  ...prev,
+                                  [key]: updated,
+                                };
+                              })
+                            }
+                            className="absolute top-0 right-0 p-1 bg-black bg-opacity-50 text-white rounded-bl-md"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Button */}
+              <label
+                htmlFor="image-upload"
+                className="w-full flex items-center justify-center h-24 text-gray-500 border-gray-300 border-2 border-dashed rounded-lg cursor-pointer"
+              >
+                <Camera size={32} />
+                <input
+                  id="image-upload"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="hidden"
+                  disabled={
+                    (taskImages[`before_${selectedTask.id}`]?.length || 0) >= 5
+                  }
+                  onChange={(e) =>
+                    handleImageChange(e, `before_${selectedTask.id}`)
+                  }
+                />
+              </label>
+              <button
+                onClick={(e) =>
+                  handleUpdateTask({
+                    e,
+                    room_id: selectedTask?.room_id,
+                    status_id: maintenance_status.IN_PROGRESS,
+                  })
+                }
+                className="bg-primary text-white font-semibold w-full inline-flex items-center justify-center px-4 py-2 gap-1 text-sm rounded-xl transition cursor-pointer"
+              >
+                <PlayCircle /> START
+              </button>
+            </div>
+          )}
 
           {selectedTask?.status_id == maintenance_status.IN_PROGRESS && (
             <div className="space-y-2">
@@ -320,9 +418,22 @@ const Task = () => {
                     fix_description: fixDescription,
                   })
                 }
-                className="bg-blue-500 text-white font-semibold w-full inline-flex items-center justify-center px-4 py-2 gap-1 text-sm rounded-xl transition cursor-pointer"
+                className="bg-green-500 text-white font-semibold w-full inline-flex items-center justify-center px-4 py-2 gap-1 text-sm rounded-xl transition cursor-pointer"
               >
-                <CheckCircle /> FINISH
+                <CheckCircle /> COMPLETE
+              </button>
+              <button
+                onClick={(e) =>
+                  handleUpdateTask({
+                    e,
+                    room_id: selectedTask?.room_id,
+                    status_id: maintenance_status.FIXED,
+                    fix_description: fixDescription,
+                  })
+                }
+                className="bg-red-500 text-white font-semibold w-full inline-flex items-center justify-center px-4 py-2 gap-1 text-sm rounded-xl transition cursor-pointer"
+              >
+                <XCircle /> UNRESOLVED
               </button>
             </div>
           )}
