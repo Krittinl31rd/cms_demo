@@ -220,9 +220,9 @@ exports.GetMaintenanceTask = async (req, res) => {
           result.map((item) => ({
             ...item,
             image_before:
-              image_before != null ? JSON.parse(item.image_before) : [],
+              item.image_before != null ? JSON.parse(item.image_before) : [],
             image_after:
-              image_after != null ? JSON.parse(item.image_after) : [],
+              item.image_after != null ? JSON.parse(item.image_after) : [],
           }))
         );
       }
@@ -287,8 +287,9 @@ exports.GetMaintenanceTask = async (req, res) => {
 
     const parsedResults = result.map((item) => ({
       ...item,
-      image_before: image_before != null ? JSON.parse(item.image_before) : [],
-      image_after: image_after != null ? JSON.parse(item.image_after) : [],
+      image_before:
+        item.image_before != null ? JSON.parse(item.image_before) : [],
+      image_after: item.image_after != null ? JSON.parse(item.image_after) : [],
     }));
 
     res.status(200).json(parsedResults);
@@ -332,12 +333,14 @@ exports.GetMaintenanceTaskByID = async (req, res) => {
     }
 
     try {
-      result.image_before = JSON.parse(result.image_before);
+      result.image_before =
+        item.image_before != null ? JSON.parse(item.image_before) : [];
     } catch (e) {
       result.image_before = [];
     }
     try {
-      result.image_after = JSON.parse(result.image_after);
+      result.image_after =
+        item.image_after != null ? JSON.parse(item.image_after) : [];
     } catch (e) {
       result.image_after = [];
     }
@@ -418,8 +421,9 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
 
     const parsedResults = result.map((item) => ({
       ...item,
-      image_before: image_before != null ? JSON.parse(item.image_before) : [],
-      image_after: image_after != null ? JSON.parse(item.image_after) : [],
+      image_before:
+        item.image_before != null ? JSON.parse(item.image_before) : [],
+      image_after: item.image_after != null ? JSON.parse(item.image_after) : [],
     }));
 
     res.status(200).json({
