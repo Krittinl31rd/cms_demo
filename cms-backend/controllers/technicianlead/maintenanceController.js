@@ -302,8 +302,7 @@ exports.GetMaintenanceTaskByID = async (req, res) => {
     const [result] = await sequelize.query(
       `SELECT
       maintenance_tasks.*,
-      rooms.room_number,
-      rooms.floor,
+      rooms.*,
       assigned_user.full_name AS assigned_to_name,
       created_by_user.full_name AS created_by_name
     FROM maintenance_tasks
@@ -323,79 +322,87 @@ exports.GetMaintenanceTaskByID = async (req, res) => {
       return res.status(404).json({ message: "Maintenance task not found." });
     }
 
-    let room = null;
-    // Only fetch room_control if status is IN_PROGRESS
-    if (result.status_id === maintenance_status.IN_PROGRESS) {
-      const rooms = await sequelize.query(
-        `SELECT * FROM smarthotel.rooms WHERE id = :id`,
-        {
-          replacements: { id: result.room_id },
-          type: sequelize.QueryTypes.SELECT,
-        }
-      );
-      [room] = await Promise.all(
-        rooms.map(async (room) => {
-          const devices = await sequelize.query(
-            `SELECT d.id, d.type_id, d.name, d.status_id, d.last_online, d.config
-             FROM devices d
-             WHERE d.room_id = :room_id
-             ORDER BY d.type_id ASC`,
-            {
-              replacements: { room_id: room.id },
-              type: sequelize.QueryTypes.SELECT,
-            }
-          );
+    // let room = null;
+    // // Only fetch room_control if status is IN_PROGRESS
+    // if (result.status_id === maintenance_status.IN_PROGRESS) {
+    //   const rooms = await sequelize.query(
+    //     `SELECT * FROM smarthotel.rooms WHERE id = :id`,
+    //     {
+    //       replacements: { id: result.room_id },
+    //       type: sequelize.QueryTypes.SELECT,
+    //     }
+    //   );
+    //   [room] = await Promise.all(
+    //     rooms.map(async (room) => {
+    //       const devices = await sequelize.query(
+    //         `SELECT d.id, d.type_id, d.name, d.status_id, d.last_online, d.config
+    //          FROM devices d
+    //          WHERE d.room_id = :room_id
+    //          ORDER BY d.type_id ASC`,
+    //         {
+    //           replacements: { room_id: room.id },
+    //           type: sequelize.QueryTypes.SELECT,
+    //         }
+    //       );
 
-          const deviceList = await Promise.all(
-            devices.map(async (device) => {
-              const controls = await sequelize.query(
-                `SELECT ctrl.control_id, ctrl.name, ctrl.value, ctrl.last_update
-                 FROM device_control ctrl
-                 WHERE ctrl.device_id = :device_id AND ctrl.room_id = :room_id`,
-                {
-                  replacements: {
-                    device_id: device.id,
-                    room_id: room.id,
-                  },
-                  type: sequelize.QueryTypes.SELECT,
-                }
-              );
+    //       const deviceList = await Promise.all(
+    //         devices.map(async (device) => {
+    //           const controls = await sequelize.query(
+    //             `SELECT ctrl.control_id, ctrl.name, ctrl.value, ctrl.last_update
+    //              FROM device_control ctrl
+    //              WHERE ctrl.device_id = :device_id AND ctrl.room_id = :room_id`,
+    //             {
+    //               replacements: {
+    //                 device_id: device.id,
+    //                 room_id: room.id,
+    //               },
+    //               type: sequelize.QueryTypes.SELECT,
+    //             }
+    //           );
 
-              return {
-                device_id: device.id,
-                type_id: device.type_id,
-                status_id: device.status_id,
-                device_name: device.name,
-                last_online: device.last_online,
-                config: device.config,
-                controls: controls.map((ctrl) => ({
-                  control_id: ctrl.control_id,
-                  name: ctrl.name,
-                  value: ctrl.value,
-                  last_update: ctrl.last_update,
-                })),
-              };
-            })
-          );
+    //           return {
+    //             device_id: device.id,
+    //             type_id: device.type_id,
+    //             status_id: device.status_id,
+    //             device_name: device.name,
+    //             last_online: device.last_online,
+    //             config: device.config,
+    //             controls: controls.map((ctrl) => ({
+    //               control_id: ctrl.control_id,
+    //               name: ctrl.name,
+    //               value: ctrl.value,
+    //               last_update: ctrl.last_update,
+    //             })),
+    //           };
+    //         })
+    //       );
 
-          return {
-            guest_status_id: room.guest_status_id,
-            dnd_status: room.dnd_status,
-            mur_status: room.mur_status,
-            room_check_status: room.room_check_status,
-            is_online: room.is_online,
-            ip_address: room.ip_address,
-            mac_address: room.mac_address,
-            devices: deviceList,
-          };
-        })
-      );
+    //       return {
+    //         guest_status_id: room.guest_status_id,
+    //         dnd_status: room.dnd_status,
+    //         mur_status: room.mur_status,
+    //         room_check_status: room.room_check_status,
+    //         is_online: room.is_online,
+    //         ip_address: room.ip_address,
+    //         mac_address: room.mac_address,
+    //         devices: deviceList,
+    //       };
+    //     })
+    //   );
+    // }
+
+    try {
+      result.image_before = JSON.parse(result.image_before);
+    } catch (e) {
+      result.image_before = [];
+    }
+    try {
+      result.image_after = JSON.parse(result.image_after);
+    } catch (e) {
+      result.image_after = [];
     }
 
-    res.status(200).json({
-      ...result,
-      room_control: room || [null],
-    });
+    res.status(200).json(result);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });

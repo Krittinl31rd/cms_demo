@@ -91,7 +91,7 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
   try {
     const { ip, type, message } = req.body;
 
-    // 1. หา technician ที่งานน้อยที่สุด (วันนี้ + เมื่อวาน)
+    // Find a technician with the least work (today + yesterday)
     const leastBusy = await sequelize.query(
       `
       SELECT
@@ -123,7 +123,7 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
 
     const selectedUser = leastBusy[0].user_id;
 
-    // 2. หา room จาก IP
+    // Find room from IP
     const room = await sequelize.query(
       `SELECT id FROM rooms WHERE ip_address = :ip_address`,
       {
@@ -138,7 +138,7 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
 
     const roomId = room[0].id;
 
-    // 3. ตรวจสอบว่า room นี้มี task ที่ยังไม่จบอยู่หรือไม่
+    // Check if there are any unfinished tasks in this room.
     const existingRoomTask = await sequelize.query(
       `
       SELECT id FROM maintenance_tasks
@@ -157,7 +157,7 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
       });
     }
 
-    // 4. ตรวจสอบว่า technician คนนี้มี task ค้างอยู่หรือไม่
+    // Check if this technician has any pending tasks.
     const existingUserTask = await sequelize.query(
       `
       SELECT id FROM maintenance_tasks
@@ -176,7 +176,7 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
       });
     }
 
-    // 5. สร้าง task ใหม่
+    // create new task
     await sequelize.query(
       `
       INSERT INTO maintenance_tasks (room_id, assigned_to, problem_description, status_id, created_by)
