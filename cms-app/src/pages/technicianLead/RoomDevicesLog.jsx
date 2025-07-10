@@ -59,7 +59,7 @@ const RoomDevicesLog = () => {
     ws.current = new WebSocket(import.meta.env.VITE_WS_URL);
 
     ws.current.onopen = () => {
-      // console.log('WebSocket Connected');
+      console.log("WebSocket Connected");
       setIsWsReady(true);
     };
 
@@ -73,7 +73,7 @@ const RoomDevicesLog = () => {
     };
 
     ws.current.onclose = () => {
-      // console.log('WebSocket Disconnected');
+      console.log("WebSocket Disconnected");
       setIsWsReady(false);
     };
 
@@ -99,11 +99,12 @@ const RoomDevicesLog = () => {
 
   const handleCommand = (msg) => {
     const { cmd, param } = msg;
+
     switch (cmd) {
       case client.LOG_UPDATE:
         if (param && param.data) {
           const newLog = param.data;
-          // console.log("New log received:", newLog);
+          console.log("New log received:", newLog);
           setLoglist((prevLogs) => {
             const isDuplicate = prevLogs.some((log) => log.id == newLog.id);
             if (isDuplicate) {

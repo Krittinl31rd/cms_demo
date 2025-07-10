@@ -189,7 +189,7 @@ wss.on("connection", (ws) => {
           );
         }
 
-        insertToDB(mappedData, source);
+        await insertToDB(mappedData, source);
 
         broadcastToLoggedInClients(
           JSON.stringify({
