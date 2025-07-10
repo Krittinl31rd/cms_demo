@@ -112,7 +112,7 @@ exports.CreateMaintenanceTask = async (req, res) => {
     }
 
     return res
-      .status(201)
+      .status(200)
       .json({ message: "Maintenance task created successfully." });
   } catch (err) {
     console.error(err);
@@ -219,8 +219,10 @@ exports.GetMaintenanceTask = async (req, res) => {
         allResults = allResults.concat(
           result.map((item) => ({
             ...item,
-            image_before: JSON.parse(item.image_before),
-            image_after: JSON.parse(item.image_after),
+            image_before:
+              image_before != null ? JSON.parse(item.image_before) : [],
+            image_after:
+              image_after != null ? JSON.parse(item.image_after) : [],
           }))
         );
       }
@@ -285,8 +287,8 @@ exports.GetMaintenanceTask = async (req, res) => {
 
     const parsedResults = result.map((item) => ({
       ...item,
-      image_before: JSON.parse(item.image_before),
-      image_after: JSON.parse(item.image_after),
+      image_before: image_before != null ? JSON.parse(item.image_before) : [],
+      image_after: image_after != null ? JSON.parse(item.image_after) : [],
     }));
 
     res.status(200).json(parsedResults);
@@ -321,75 +323,6 @@ exports.GetMaintenanceTaskByID = async (req, res) => {
     if (!result) {
       return res.status(404).json({ message: "Maintenance task not found." });
     }
-
-    // let room = null;
-    // // Only fetch room_control if status is IN_PROGRESS
-    // if (result.status_id === maintenance_status.IN_PROGRESS) {
-    //   const rooms = await sequelize.query(
-    //     `SELECT * FROM smarthotel.rooms WHERE id = :id`,
-    //     {
-    //       replacements: { id: result.room_id },
-    //       type: sequelize.QueryTypes.SELECT,
-    //     }
-    //   );
-    //   [room] = await Promise.all(
-    //     rooms.map(async (room) => {
-    //       const devices = await sequelize.query(
-    //         `SELECT d.id, d.type_id, d.name, d.status_id, d.last_online, d.config
-    //          FROM devices d
-    //          WHERE d.room_id = :room_id
-    //          ORDER BY d.type_id ASC`,
-    //         {
-    //           replacements: { room_id: room.id },
-    //           type: sequelize.QueryTypes.SELECT,
-    //         }
-    //       );
-
-    //       const deviceList = await Promise.all(
-    //         devices.map(async (device) => {
-    //           const controls = await sequelize.query(
-    //             `SELECT ctrl.control_id, ctrl.name, ctrl.value, ctrl.last_update
-    //              FROM device_control ctrl
-    //              WHERE ctrl.device_id = :device_id AND ctrl.room_id = :room_id`,
-    //             {
-    //               replacements: {
-    //                 device_id: device.id,
-    //                 room_id: room.id,
-    //               },
-    //               type: sequelize.QueryTypes.SELECT,
-    //             }
-    //           );
-
-    //           return {
-    //             device_id: device.id,
-    //             type_id: device.type_id,
-    //             status_id: device.status_id,
-    //             device_name: device.name,
-    //             last_online: device.last_online,
-    //             config: device.config,
-    //             controls: controls.map((ctrl) => ({
-    //               control_id: ctrl.control_id,
-    //               name: ctrl.name,
-    //               value: ctrl.value,
-    //               last_update: ctrl.last_update,
-    //             })),
-    //           };
-    //         })
-    //       );
-
-    //       return {
-    //         guest_status_id: room.guest_status_id,
-    //         dnd_status: room.dnd_status,
-    //         mur_status: room.mur_status,
-    //         room_check_status: room.room_check_status,
-    //         is_online: room.is_online,
-    //         ip_address: room.ip_address,
-    //         mac_address: room.mac_address,
-    //         devices: deviceList,
-    //       };
-    //     })
-    //   );
-    // }
 
     try {
       result.image_before = JSON.parse(result.image_before);
@@ -477,8 +410,8 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
 
     const parsedResults = result.map((item) => ({
       ...item,
-      image_before: JSON.parse(item.image_before),
-      image_after: JSON.parse(item.image_after),
+      image_before: image_before != null ? JSON.parse(item.image_before) : [],
+      image_after: image_after != null ? JSON.parse(item.image_after) : [],
     }));
 
     res.status(200).json({

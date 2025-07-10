@@ -5,6 +5,7 @@ const {
   getMaintenanceTaskBaseQuery,
 } = require("../../utils/dbHelpers");
 const { maintenance_status, member_role } = require("../../constants/common");
+const { CheckTypeTechnician } = require("../../utils/helpers");
 
 // find user by type and count task today and yesterday, user with the least work will be selected.
 // exports.CreateMaintenanceTaskByType = async (req, res) => {
@@ -186,12 +187,26 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
         replacements: {
           room_id: roomId,
           assigned_to: selectedUser,
-          problem_description: message,
+          problem_description: `${CheckTypeTechnician(
+            tech_type_id
+          )} - ${message}`,
           created_by: null, // system assigned
         },
         type: sequelize.QueryTypes.INSERT,
       }
     );
+
+    try {
+      payloadNotify.data.room_id = roomId;
+      payloadNotify.data.message = `${CheckTypeTechnician(
+        tech_type_id
+      )} - ${message}`;
+      payloadNotify.boardcast.user_id = [selectedUser];
+      const result = await doBoardcastNotification(payloadNotify);
+      console.log(result.response);
+    } catch (err) {
+      console.error("Error sending notification:", err);
+    }
 
     res.status(200).json({
       message: "Task created and assigned successfully.",
