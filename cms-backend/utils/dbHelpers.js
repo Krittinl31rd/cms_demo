@@ -14,6 +14,12 @@ const getMaintenanceTaskBaseQuery = () => `
     maintenance_tasks.*,
     rooms.room_number,
     rooms.floor,
+    rooms.guest_status_id,
+    rooms.dnd_status,
+    rooms.room_check_status,
+    rooms.cleaning_status_id,
+    rooms.is_online,
+    rooms.ip_address,
     assigned_user.full_name AS assigned_to_name,
     technician.type_id AS assigned_to_type,
     created_by_user.full_name AS created_by_name

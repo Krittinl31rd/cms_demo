@@ -304,7 +304,14 @@ exports.GetMaintenanceTaskByID = async (req, res) => {
     const [result] = await sequelize.query(
       `SELECT
       maintenance_tasks.*,
-      rooms.*,
+      rooms.room_number,
+      rooms.floor,
+      rooms.guest_status_id,
+      rooms.dnd_status,
+      rooms.room_check_status,
+      rooms.cleaning_status_id,
+      rooms.is_online,
+      rooms.ip_address,
       assigned_user.full_name AS assigned_to_name,
       created_by_user.full_name AS created_by_name
     FROM maintenance_tasks
@@ -392,6 +399,7 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
         rooms.guest_status_id,
         rooms.dnd_status,
         rooms.room_check_status,
+        rooms.cleaning_status_id,
         rooms.is_online,
         rooms.ip_address,
         assigned_user.full_name AS assigned_to_name,
