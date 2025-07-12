@@ -362,13 +362,13 @@ exports.GetMaintenanceTaskByID = async (req, res) => {
 
     try {
       result.image_before =
-        item.image_before != null ? JSON.parse(item.image_before) : [];
+        result.image_before != null ? JSON.parse(result.image_before) : [];
     } catch (e) {
       result.image_before = [];
     }
     try {
       result.image_after =
-        item.image_after != null ? JSON.parse(item.image_after) : [];
+        result.image_after != null ? JSON.parse(result.image_after) : [];
     } catch (e) {
       result.image_after = [];
     }
