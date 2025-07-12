@@ -8,13 +8,19 @@ export const ws_cmd = {
   ROOM_STATUS_UPDATE: 7,
   FORWARD_UPDATE: 8,
   LOG_UPDATE: 9,
+  NEW_TASK: 100,
+  UPDATE_TASK: 101,
+  DELETE_TASK: 102,
 };
 
 export const client = {
   LOGIN: 2, // send  and receive
-  MODBUS_STATUS: 4, // receive status modbus
+  MODBUS_STATUS: 4, // receive status modbus for rcu in room
   ROOM_STATUS_UPDATE: 7, // receive dnd mur guest check
   FORWARD_UPDATE: 8, // receive all data from modbus
   WRITE_REGISTER: 6, // send data to modbus
   LOG_UPDATE: 9, // receive devices logs
+  NEW_TASK: 100, // receive new task and count task
+  UPDATE_TASK: 101, // receive update task and count task
+  DELETE_TASK: 102, // receive task id for deleted
 };

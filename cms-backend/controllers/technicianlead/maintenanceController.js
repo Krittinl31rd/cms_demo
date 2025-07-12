@@ -2,27 +2,25 @@ const sequelize = require("../../config/db");
 const upload = require("../../middleware/uploadImage");
 const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
-
+const {
+  getWsClientByUserId,
+  sendWsMessageToAll,
+  sendWsMessageToUser,
+  sendWsMessageToRole,
+} = require("../../utils/ws/wsClients");
 const {
   checkExists,
   getMaintenanceTaskBaseQuery,
+  countTaskByUserId,
+  getTaskWithDetailsById,
 } = require("../../utils/dbHelpers");
-const {
-  maintenance_status,
-  statusNameMap,
-  member_role,
-} = require("../../constants/common");
+const { maintenance_status, member_role } = require("../../constants/common");
 const {
   CheckTypeTechnician,
   doBoardcastNotification,
   payloadNotify,
 } = require("../../utils/helpers");
-
-// const Test = async (req, res) => {
-//   const local = dayjs().format();
-//   const test = dayjs(local).utc().format("YYYY-MM-DD HH:mm:ss");
-//   console.log(test);
-// };
+const { ws_cmd } = require("../../constants/wsCommand");
 
 exports.GetTechnicians = async (req, res) => {
   try {
@@ -81,7 +79,8 @@ exports.CreateMaintenanceTask = async (req, res) => {
     if (!(await checkExists(sequelize, "users", created_by))) {
       return res.status(403).json({ message: "Creator not found." });
     }
-    await sequelize.query(
+
+    const [result] = await sequelize.query(
       `INSERT INTO maintenance_tasks
         (room_id, assigned_to, problem_description, status_id, created_by)
         VALUES (:room_id, :assigned_to, :problem_description, :status_id, :created_by)`,
@@ -105,10 +104,39 @@ exports.CreateMaintenanceTask = async (req, res) => {
         tech_type_id
       )} - ${problem_description}`;
       payloadNotify.boardcast.user_id = [assigned_to];
-      const result = await doBoardcastNotification(payloadNotify);
-      console.log(result.response);
+      await doBoardcastNotification(payloadNotify);
     } catch (err) {
       console.error("Error sending notification:", err);
+    }
+
+    if (assigned_to != null) {
+      const insertedTaskId = result;
+      const task = await getTaskWithDetailsById(insertedTaskId);
+      const statusCounts = await countTaskByUserId(assigned_to);
+
+      sendWsMessageToUser(assigned_to, {
+        cmd: ws_cmd.NEW_TASK,
+        param: {
+          statusCounts: statusCounts,
+          task: {
+            ...task,
+            image_before: [],
+            image_after: [],
+          },
+        },
+      });
+
+      sendWsMessageToRole(member_role.TECHNICIAN_LEAD, {
+        cmd: ws_cmd.NEW_TASK,
+        param: {
+          statusCounts: statusCounts,
+          task: {
+            ...task,
+            image_before: [],
+            image_after: [],
+          },
+        },
+      });
     }
 
     return res
@@ -357,27 +385,6 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
     const { user_id } = req.params;
     const { status_id } = req.query;
 
-    const allTasks = await sequelize.query(
-      `SELECT status_id FROM maintenance_tasks WHERE assigned_to = :user_id`,
-      {
-        replacements: { user_id },
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
-
-    const statusCounts = {
-      pending: 0,
-      assigned: 0,
-      in_progress: 0,
-      completed: 0,
-      unresolved: 0,
-    };
-
-    allTasks.forEach((item) => {
-      const name = statusNameMap[item.status_id];
-      if (name) statusCounts[name] += 1;
-    });
-
     let whereClause = "maintenance_tasks.assigned_to = :user_id";
     const replacements = { user_id };
 
@@ -425,6 +432,8 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
         item.image_before != null ? JSON.parse(item.image_before) : [],
       image_after: item.image_after != null ? JSON.parse(item.image_after) : [],
     }));
+
+    const statusCounts = await countTaskByUserId(user_id);
 
     res.status(200).json({
       statusCounts,

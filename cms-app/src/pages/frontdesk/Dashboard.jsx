@@ -3,7 +3,7 @@ import Button from "@/components/ui/button";
 import Spinner from "@/components/ui/Spinner";
 import { GetRooms } from "@/api/room";
 import useStore from "@/store/store";
-import { device_type } from "../../constant/common";
+import { device_type, cleaning_status } from "@/constant/common";
 import { NotepadText, DoorClosed, BrushCleaning, Bubbles } from "lucide-react";
 import { CheckFunctionModbus } from "@/utilities/helpers";
 import { client } from "@/constant/wsCommand";
@@ -29,7 +29,9 @@ const Dashboard = () => {
   };
   const cleanBgColor = {
     1: "bg-dirty",
-    2: "bg-clean",
+    2: "bg-dirty",
+    3: "bg-clean",
+    4: "bg-clean",
   };
 
   const fetchRoomList = async () => {
@@ -482,23 +484,29 @@ const Dashboard = () => {
                         cleanBgColor[item.cleaning_status_id]
                       } rounded-full`}
                     >
-                      {item.cleaning_status_id === 1 ? (
+                      {item.cleaning_status_id ==
+                        cleaning_status.DIRTY_VACANT ||
+                      item.cleaning_status_id ==
+                        cleaning_status.DIRTY_OCCUPIED ? (
                         <Bubbles className="text-white" />
-                      ) : item.cleaning_status_id == 2 ? (
+                      ) : (item.cleaning_status_id ==
+                          cleaning_status.CLEAN_VACANT ||
+                          item.cleaning_status_id ==
+                            cleaning_status.CLEAN_OCCUPIED) | 3 ? (
                         <BrushCleaning className="text-white" />
                       ) : null}
                     </div>
                     <div className="flex-1 text-center">
                       <span
                         className={`font-semibold text-xl ${
-                          item.is_online === 0 ? "text-red-500" : "text-black"
+                          item.is_online == 0 ? "text-red-500" : "text-black"
                         }`}
                       >
                         {item.floor}
                         {String(item.room_number).padStart(2, "0")}
                       </span>
                     </div>
-                    <div className="flex gap-1">
+                    {/* <div className="flex gap-1">
                       <button
                         onClick={() => {
                           sendWebSocketMessage({
@@ -533,7 +541,7 @@ const Dashboard = () => {
                       >
                         MUR
                       </button>
-                    </div>
+                    </div> */}
                   </div>
                   <div className="flex-1 overflow-auto px-2 py-1 max-h-[125px]">
                     <div className="w-full flex items-start gap-1">

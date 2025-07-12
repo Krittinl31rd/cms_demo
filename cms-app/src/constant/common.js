@@ -32,7 +32,7 @@ export const guest_presence_status = {
   GUEST_IN: 1,
 };
 
-const cleaning_status = {
+export const cleaning_status = {
   DIRTY_VACANT: 1,
   DIRTY_OCCUPIED: 2,
   CLEAN_VACANT: 3,

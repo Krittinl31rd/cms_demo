@@ -94,7 +94,8 @@ async function doBoardcastNotification({ data, boardcast }) {
   const subscribeId = onesignalUsers.map((user) => user.subscribe_id);
 
   if (subscribeId.length === 0) {
-    throw new Error("No OneSignal subscriptions found");
+    console.warn(`No OneSignal subscription found for users:`, userIds);
+    return;
   }
 
   let isRoom;
@@ -142,8 +143,13 @@ async function doBoardcastNotification({ data, boardcast }) {
   };
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 module.exports = {
   CheckTypeTechnician,
   doBoardcastNotification,
   payloadNotify,
+  delay,
 };

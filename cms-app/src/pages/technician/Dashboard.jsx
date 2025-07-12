@@ -15,12 +15,14 @@ import {
   PlayCircle,
 } from "lucide-react";
 import CardWorkTech from "@/components/technician/CardWorkTech";
+import UpdateDetailWork from "@/components/technician/UpdateDetailWork";
 import ModalPopup from "@/components/ui/ModalPopup";
 import dayjs from "dayjs";
 import { GetMaintenanceTaskByUserID } from "@/api/task";
 import { toast } from "react-toastify";
 import { maintenance_status } from "@/constant/common";
 import { colorBadge } from "@/utilities/helpers";
+import { client } from "@/constant/wsCommand";
 
 const Dashboard = () => {
   const { user, token } = useStore((state) => state);
@@ -31,6 +33,8 @@ const Dashboard = () => {
   const [taskImages, setTaskImages] = useState({});
   const [fixDescription, setFixDescription] = useState("");
   const [statusCounts, setStatusCounts] = useState({});
+  const [isWsReady, setIsWsReady] = useState(false);
+  const ws = useRef(null);
 
   const fetchTaskList = async () => {
     setLoading(true);
@@ -47,6 +51,7 @@ const Dashboard = () => {
       const response = await GetMaintenanceTaskByUserID(user?.id, token, query);
       setTaskList(response?.data.tasks || []);
       setStatusCounts(response?.data.statusCounts || {});
+      console.log(response.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -60,105 +65,85 @@ const Dashboard = () => {
     }
   }, [token, user?.id]);
 
-  const handleImageChange = (e, key) => {
-    const files = Array.from(e.target.files);
-    const existingImages = taskImages[key] || [];
+  useEffect(() => {
+    ws.current = new WebSocket(import.meta.env.VITE_WS_URL);
 
-    if (existingImages.length + files.length > 5) {
-      toast.error("You can upload up to 5 images only.");
-      return;
+    ws.current.onopen = () => {
+      console.log("WebSocket Connected");
+      setIsWsReady(true);
+    };
+
+    ws.current.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      handleCommand(msg);
+    };
+
+    ws.current.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+    };
+
+    ws.current.onclose = () => {
+      // console.log('WebSocket Disconnected');
+      setIsWsReady(false);
+    };
+
+    return () => {
+      ws.current.close();
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (isWsReady && token) {
+      sendWebSocketMessage({ cmd: client.LOGIN, param: { token } });
     }
+  }, [isWsReady, token]);
 
-    const filePreviews = files.map((file) => ({
-      file,
-      url: URL.createObjectURL(file),
-    }));
-
-    setTaskImages((prev) => ({
-      ...prev,
-      [key]: [...existingImages, ...filePreviews],
-    }));
+  const sendWebSocketMessage = (message) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(message));
+    } else {
+      // console.warn('WebSocket not open, retrying...');
+      setTimeout(() => sendWebSocketMessage(message), 500);
+    }
   };
 
-  useEffect(() => {
-    return () => {
-      Object.values(taskImages)
-        .flat()
-        .forEach((img) => {
-          URL.revokeObjectURL(img.url);
-        });
-    };
-  }, []);
+  const handleCommand = (msg) => {
+    const { cmd, param } = msg;
 
-  useEffect(() => {
-    return () => {
-      Object.values(taskImages)
-        .flat()
-        .forEach((img) => {
-          URL.revokeObjectURL(img.url);
-        });
-    };
-  }, [viewTask === false]);
+    switch (cmd) {
+      case client.LOGIN:
+        if (param.status == "success") {
+          console.log("Login success");
+        }
+        break;
 
-  const handleUpdateTask = async ({
-    e,
-    status_id,
-    room_id,
-    fix_description,
-  }) => {
-    e && e.preventDefault();
-    if (!selectedTask) {
-      toast.error("No task selected.");
-      return;
-    }
+      case client.NEW_TASK:
+        if (param) {
+          const statusCounts = param?.statusCounts;
+          const newTask = param?.task;
+          setStatusCounts(statusCounts);
+          setTaskList((prev) => {
+            const exists = prev.find((t) => t.id === newTask.id);
+            if (exists) return prev;
+            return [newTask, ...prev];
+          });
+        }
+        break;
 
-    const beforeImages = taskImages[`before_${selectedTask.id}`] || [];
-    const afterImages = taskImages[`after_${selectedTask.id}`] || [];
+      case client.UPDATE_TASK:
+        if (param) {
+          const t = 0;
+        }
+        break;
 
-    if (status_id === maintenance_status.IN_PROGRESS) {
-      if (beforeImages.length === 0) {
-        toast.error("Please upload at least 1 'before' image.");
-        return;
-      }
-    } else {
-      if (afterImages.length === 0) {
-        toast.error("Please upload at least 1 'after' image.");
-        return;
-      }
-      if (!fix_description || fix_description.trim() === "") {
-        toast.error("Please enter a fix description.");
-        return;
-      }
-    }
+      case client.DELETE_TASK:
+        if (param) {
+          const t = 0;
+        }
+        break;
 
-    const form = new FormData();
-    form.append("room_id", room_id);
-    form.append("task_id", selectedTask.id);
-    form.append("status_id", status_id);
-
-    if (fix_description) {
-      form.append("fix_description", fix_description);
-    }
-
-    beforeImages.forEach((img) => {
-      form.append("before", img.file);
-    });
-
-    if (afterImages.length > 0) {
-      afterImages.forEach((img) => {
-        form.append("after", img.file);
-      });
-    }
-
-    try {
-      const response = await UpdateTask(token, selectedTask?.id, form);
-      toast.success(
-        response?.data?.message || "Maintenance task updated successfully."
-      );
-      fetchTaskList();
-      setViewTask(false);
-    } catch (err) {
-      toast.error(err?.response?.data || "Maintenance task updated failed.");
+      default:
+        break;
     }
   };
 
@@ -224,254 +209,12 @@ const Dashboard = () => {
         </div>
       </div>
       <ModalPopup isOpen={viewTask} onClose={() => setViewTask(false)}>
-        <div className="space-y-2 text-black">
-          <div className="w-full flex items-center gap-2">
-            <div
-              className={`w-[100px] ${
-                colorBadge[selectedTask?.status_id]
-              } flex items-center justify-center text-xl font-semibold p-2 rounded-xl`}
-            >
-              {selectedTask?.floor}
-              {selectedTask?.room_number}
-            </div>
-            <h1 className="font-semibold text-xl">
-              {selectedTask?.guest_status_id == 0 ? "GUEST-OUT" : "GUEST-IN"}
-              {selectedTask?.dnd_status == 1 && ", DND"}
-            </h1>
-          </div>
-          <div>
-            <h1 className="font-semibold">Detail</h1>
-            <p className="max-h-20 overflow-auto mr-0.5">
-              {selectedTask?.problem_description}
-            </p>
-          </div>
-          {selectedTask?.status_id == maintenance_status.ASSIGNED && (
-            <div className="space-y-2">
-              {/* Image Previews */}
-              {taskImages[`before_${selectedTask.id}`]?.length > 0 && (
-                <div className="max-h-64 overflow-y-auto  border-1  border-gray-300 p-2 rounded-lg">
-                  <div className="grid grid-cols-3 gap-2">
-                    {taskImages[`before_${selectedTask.id}`].map(
-                      (img, index) => (
-                        <div key={index} className="relative">
-                          <img
-                            src={img.url}
-                            alt={`preview-${index}`}
-                            className="cursor-pointer rounded-lg h-32 w-full object-cover"
-                          />
-                          <button
-                            onClick={() =>
-                              setTaskImages((prev) => {
-                                const key = `before_${selectedTask.id}`;
-                                const current = prev[key] || [];
-                                const updated = current.filter(
-                                  (_, i) => i !== index
-                                );
-
-                                // Revoke URL after deletion
-                                setTimeout(() => {
-                                  if (current[index]?.url)
-                                    URL.revokeObjectURL(current[index].url);
-                                }, 0);
-
-                                return {
-                                  ...prev,
-                                  [key]: updated,
-                                };
-                              })
-                            }
-                            className="absolute top-0 right-0 p-1 bg-black bg-opacity-50 text-white rounded-bl-md"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Upload Button */}
-              <label
-                htmlFor="image-upload"
-                className="w-full flex items-center justify-center h-24 text-gray-500 border-gray-300 border-2 border-dashed rounded-lg cursor-pointer"
-              >
-                <Camera size={32} />
-                <input
-                  id="image-upload"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  className="hidden"
-                  disabled={
-                    (taskImages[`before_${selectedTask.id}`]?.length || 0) >= 5
-                  }
-                  onChange={(e) =>
-                    handleImageChange(e, `before_${selectedTask.id}`)
-                  }
-                />
-              </label>
-              <button
-                onClick={(e) =>
-                  handleUpdateTask({
-                    e,
-                    room_id: selectedTask?.room_id,
-                    status_id: maintenance_status.IN_PROGRESS,
-                  })
-                }
-                className="bg-primary text-white font-semibold w-full inline-flex items-center justify-center px-4 py-2 gap-1 text-sm rounded-xl transition cursor-pointer"
-              >
-                <PlayCircle /> START
-              </button>
-            </div>
-          )}
-
-          {selectedTask?.status_id == maintenance_status.IN_PROGRESS && (
-            <div className="space-y-2">
-              <div>
-                <h1 className="font-semibold">
-                  Start at:{" "}
-                  {dayjs(selectedTask?.started_at).format(
-                    "DD MMMM YYYY HH:mm:ss"
-                  )}
-                </h1>
-                <div className="max-h-64 overflow-y-auto  border-1  border-gray-300 p-2 rounded-lg">
-                  <div className="grid grid-cols-3 gap-2">
-                    {selectedTask?.image_before &&
-                    selectedTask?.image_before.length > 0 ? (
-                      selectedTask?.image_before.map((image, index) => (
-                        <img
-                          key={index}
-                          src={`${
-                            import.meta.env.VITE_BASE_BEFORE_PATH
-                          }/${image}`}
-                          alt={`before${selectedTask?.id}_${index}`}
-                          className="cursor-pointer rounded-lg h-32 w-full object-cover"
-                          // onClick={() => {
-                          //   setSelectedImage({ image, type: "after" });
-                          //   setFullScreen(true);
-                          // }}
-                        />
-                      ))
-                    ) : (
-                      <div className="col-span-3 w-full h-56 flex items-center justify-center">
-                        <p>No images uploaded</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Image Previews */}
-              <div>
-                <h1 className="font-semibold">
-                  End at:{" "}
-                  {selectedTask?.ended_at &&
-                    dayjs(selectedTask?.ended_at).format(
-                      "DD MMMM YYYY HH:mm:ss"
-                    )}
-                </h1>
-                {taskImages[`after_${selectedTask.id}`]?.length > 0 && (
-                  <div className="max-h-64 overflow-y-auto  border-1  border-gray-300 p-2 rounded-lg">
-                    <div className="grid grid-cols-3 gap-2">
-                      {taskImages[`after_${selectedTask.id}`].map(
-                        (img, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={img.url}
-                              alt={`preview-${index}`}
-                              className="cursor-pointer rounded-lg h-32 w-full object-cover"
-                            />
-                            <button
-                              onClick={() =>
-                                setTaskImages((prev) => {
-                                  const key = `after_${selectedTask.id}`;
-                                  const current = prev[key] || [];
-                                  const updated = current.filter(
-                                    (_, i) => i !== index
-                                  );
-
-                                  setTimeout(() => {
-                                    if (current[index]?.url)
-                                      URL.revokeObjectURL(current[index].url);
-                                  }, 0);
-
-                                  return {
-                                    ...prev,
-                                    [key]: updated,
-                                  };
-                                })
-                              }
-                              className="absolute top-0 right-0 p-1 bg-black bg-opacity-50 text-white rounded-bl-md"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <label
-                htmlFor="image-upload"
-                className="w-full flex items-center justify-center h-24 text-gray-500 border-gray-300 border-2 border-dashed rounded-lg cursor-pointer"
-              >
-                <Camera size={32} />
-                <input
-                  id="image-upload"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  className="hidden"
-                  disabled={
-                    (taskImages[`after_${selectedTask.id}`]?.length || 0) >= 5
-                  }
-                  onChange={(e) =>
-                    handleImageChange(e, `after_${selectedTask.id}`)
-                  }
-                />
-              </label>
-              <div>
-                <h1 className="font-semibold">Fix description</h1>
-                <textarea
-                  value={fixDescription}
-                  onChange={(e) => setFixDescription(e.target.value)}
-                  placeholder="Enter fix description..."
-                  rows={3}
-                  className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <button
-                onClick={(e) =>
-                  handleUpdateTask({
-                    e,
-                    room_id: selectedTask?.room_id,
-                    status_id: maintenance_status.FIXED,
-                    fix_description: fixDescription,
-                  })
-                }
-                className="bg-green-500 text-white font-semibold w-full inline-flex items-center justify-center px-4 py-2 gap-1 text-sm rounded-xl transition cursor-pointer"
-              >
-                <CheckCircle /> COMPLETE
-              </button>
-              <button
-                onClick={(e) =>
-                  handleUpdateTask({
-                    e,
-                    room_id: selectedTask?.room_id,
-                    status_id: maintenance_status.UNRESOLVED,
-                    fix_description: fixDescription,
-                  })
-                }
-                className="bg-red-500 text-white font-semibold w-full inline-flex items-center justify-center px-4 py-2 gap-1 text-sm rounded-xl transition cursor-pointer"
-              >
-                <XCircle /> UNRESOLVED
-              </button>
-            </div>
-          )}
-        </div>
+        <UpdateDetailWork
+          fetchTaskList={fetchTaskList}
+          selectedTask={selectedTask}
+          setViewTask={(e) => setViewTask(e)}
+          viewTask={viewTask}
+        ></UpdateDetailWork>
       </ModalPopup>
     </>
   );

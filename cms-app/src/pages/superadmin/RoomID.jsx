@@ -495,7 +495,7 @@ const RoomID = () => {
         const ctrlStatus = dev.controls?.find((c) => c.control_id == 1);
         const ctrlAddress = dev.controls?.find((c) => c.control_id == 101);
         const { name, address } = CheckFunctionModbus(ctrlAddress?.value);
-        const statusLabel = ctrlStatus?.value ? ctrlStatus.value : "N/A";
+        const statusLabel = ctrlStatus?.value;
 
         return (
           <DeviceCardWrapper footerColor="bg-orange-400">

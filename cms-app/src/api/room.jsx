@@ -22,7 +22,7 @@ export const UpadteRoom = async (token, id, form) =>
   });
 
 export const GetRoomByID = async (token, id) =>
-  await axios.get(import.meta.env.VITE_API_URL + `/get-room/${id}`, {
+  await axios.get(import.meta.env.VITE_API_URL + `/get-room-devices/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

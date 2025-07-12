@@ -3,7 +3,7 @@ const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
 const { readdirSync } = require("fs");
-const { testConnection } = require("./config/db");
+const { wss } = require("./server_ws");
 
 const app = express();
 app.use(

@@ -13,24 +13,27 @@ const {
   handleRoomStatusUpdate,
 } = require("./utils/ws/helper");
 const { GatewayLogin } = require("./controllers/authController");
-const { addWsClient, getWsClients } = require("./utils/ws/wsClients");
-// const { roomStatusCache } = require("./utils/ws/helper");
+const {
+  addWsClient,
+  getWsClients,
+  removeWsClientById,
+} = require("./utils/ws/wsClients");
 const { ws_cmd } = require("./constants/wsCommand");
 
 const wss = new WebSocket.Server({ port: process.env.WS_PORT });
-console.log(`WebSocket server started on port ${process.env.WS_PORT}`);
+console.log(`[WS] server running on port: ${process.env.WS_PORT}`);
 
 wss.on("connection", (ws) => {
-  console.log("Client connected");
+  console.log("[WS] Client connected");
   const infoClient = {
     id: uuidv4(),
     socket: ws,
-    lastTimestamp: Date.now(),
+    user: null,
     isLogin: false,
     ip: null,
-    user: null,
-    updated: false,
+    lastTimestamp: Date.now(),
   };
+
   addWsClient(infoClient);
 
   ws.on("message", async (message) => {
@@ -54,7 +57,9 @@ wss.on("connection", (ws) => {
           const decoded = await jwt.verify(token, process.env.JWT_SECRET);
           infoClient.isLogin = true;
           infoClient.user = decoded;
-          console.log(`Client ${infoClient.id} login success`);
+          console.log(
+            `Client [${infoClient.user?.id}]${infoClient.user?.username} login success`
+          );
 
           ws.send(
             JSON.stringify({
@@ -94,7 +99,12 @@ wss.on("connection", (ws) => {
           const decoded = await jwt.verify(token, process.env.JWT_SECRET);
           infoClient.isLogin = true;
           infoClient.user = decoded;
-          console.log(`Client ${infoClient.id} login success`);
+          const clientUser = getWsClients().find(
+            (c) => c.user?.id == decoded.id
+          );
+          console.log(
+            `[WS] Clients now: [${clientUser?.user?.id}]${clientUser?.user?.username}`
+          );
           ws.send(
             JSON.stringify({
               cmd: ws_cmd.LOGIN,
@@ -102,22 +112,10 @@ wss.on("connection", (ws) => {
                 status: "success",
                 message: "Login successful",
                 clientId: infoClient.id,
+                user: infoClient.user,
               },
             })
           );
-          // setTimeout(() => {
-          //   const wsModbusClient = getWsClients().find(
-          //     (client) => client?.user?.role == "gateway"
-          //   );
-          //   if (wsModbusClient != undefined) {
-          //     wsModbusClient.socket.send(
-          //       JSON.stringify({
-          //         cmd: ws_cmd.MODBUS_STATUS,
-          //         param: {},
-          //       })
-          //     );
-          //   }
-          // }, 500);
           return;
         } catch (err) {
           console.log(`Client ${infoClient.id} login failed: ${err.message}`);
@@ -179,7 +177,7 @@ wss.on("connection", (ws) => {
 
         const roomStatus = await handleRoomStatusUpdate(ip, mappedData);
 
-        if (roomStatus) {
+        if (roomStatus != undefined || roomStatus != null) {
           await updateRoomStatusInDB(roomStatus);
           broadcastToLoggedInClients(
             JSON.stringify({
@@ -244,12 +242,7 @@ wss.on("connection", (ws) => {
 
   ws.on("close", () => {
     console.log(`Client ${infoClient.id} disconnected`);
-    const index = getWsClients().findIndex(
-      (client) => client.id === infoClient.id
-    );
-    if (index !== -1) {
-      getWsClients().splice(index, 1);
-    }
+    removeWsClientById(infoClient.id);
   });
 });
 
@@ -265,6 +258,6 @@ function broadcastToLoggedInClients(message) {
   });
 }
 
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+module.exports = {
+  wss,
+};

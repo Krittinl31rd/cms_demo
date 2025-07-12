@@ -8,15 +8,15 @@ import {
 import useStore from "@/store/store";
 import AssignWorkForm from "@/components/technician/AssignWorkForm";
 import UpdateWorkForm from "@/components/technician/UpdateWorkForm";
+import DetailWork from "@/components/technician/DetailWork";
 import CardSummary from "@/components/ui/CardSummary";
 import Button from "@/components/ui/Button";
 import { Plus, CheckCircle, Loader, UserCheck, X, XCircle } from "lucide-react";
 import CardWork from "@/components/technician/CardWork";
 import ModalPopup from "@/components/ui/ModalPopup";
-import { taskStatusId, colorBadge } from "@/utilities/helpers";
-import dayjs from "dayjs";
 import { DeleteTask } from "@/api/task";
 import { toast } from "react-toastify";
+import { client } from "@/constant/wsCommand";
 
 const RepairWork = () => {
   const { token } = useStore((state) => state);
@@ -29,8 +29,9 @@ const RepairWork = () => {
   const [isViewTask, setViewTask] = useState(false);
   const [isEditTask, setEditTask] = useState(false);
   const [isDeleteTask, setDeleteTask] = useState(false);
-  const [isFullScreen, setFullScreen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+
+  const [isWsReady, setIsWsReady] = useState(false);
+  const ws = useRef(null);
 
   const fetchTaskList = async () => {
     setLoading(true);
@@ -115,6 +116,74 @@ const RepairWork = () => {
     return counts;
   }, [taskList]);
 
+  useEffect(() => {
+    ws.current = new WebSocket(import.meta.env.VITE_WS_URL);
+
+    ws.current.onopen = () => {
+      console.log("WebSocket Connected");
+      setIsWsReady(true);
+    };
+
+    ws.current.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      handleCommand(msg);
+    };
+
+    ws.current.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+    };
+
+    ws.current.onclose = () => {
+      // console.log('WebSocket Disconnected');
+      setIsWsReady(false);
+    };
+
+    return () => {
+      ws.current.close();
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (isWsReady && token) {
+      sendWebSocketMessage({ cmd: client.LOGIN, param: { token } });
+    }
+  }, [isWsReady, token]);
+
+  const sendWebSocketMessage = (message) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(message));
+    } else {
+      // console.warn('WebSocket not open, retrying...');
+      setTimeout(() => sendWebSocketMessage(message), 500);
+    }
+  };
+
+  const handleCommand = (msg) => {
+    const { cmd, param } = msg;
+
+    switch (cmd) {
+      case client.LOGIN:
+        if (param.status == "success") {
+          console.log("Login success");
+        }
+        break;
+
+      case client.NEW_TASK:
+        if (param) {
+          const newTask = param?.task;
+          setTaskList((prev) => {
+            const exists = prev.find((t) => t.id === newTask.id);
+            if (exists) return prev;
+            return [newTask, ...prev];
+          });
+        }
+        break;
+
+      default:
+        break;
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2">
       <div className="w-full flex items-center justify-end mb-2">
@@ -193,138 +262,7 @@ const RepairWork = () => {
         onClose={() => setViewTask(false)}
         title={`Work Details Room ${selectedTask?.floor}${selectedTask?.room_number} #${selectedTask?.id} `}
       >
-        <div className="grid grid-cols-2 gap-4 text-black">
-          <div className="space-y-2">
-            <div className="w-full bg-gray-200/50 p-2 rounded-lg space-y-2">
-              <h1 className="font-semibold mb-4">Assignment Infomation</h1>
-              <div>
-                Assigned To: {""}
-                <span className="font-semibold ">
-                  {selectedTask?.assigned_to_name}
-                </span>
-              </div>
-              <div>
-                Assigned By: {""}
-                <span className="font-semibold ">
-                  {selectedTask?.created_by_name
-                    ? selectedTask?.created_by_name
-                    : "System"}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                Status: {""}
-                <div
-                  className={`px-4 py-1 rounded-full text-sm font-semibold ${
-                    colorBadge[selectedTask?.status_id]
-                  }`}
-                >
-                  <span>{taskStatusId[selectedTask?.status_id]}</span>
-                </div>
-              </div>
-            </div>
-            <div className="">
-              <div className="w-full bg-gray-200/50 p-2 rounded-lg space-y-2">
-                <h1 className="font-semibold mb-4">Timeline</h1>
-                <div>
-                  Started:{" "}
-                  <span className="font-semibold ">
-                    {selectedTask?.started_at
-                      ? dayjs(selectedTask.started_at).format(
-                          "DD MMMM YYYY HH:mm:ss"
-                        )
-                      : "Not set"}
-                  </span>
-                </div>
-                <div>
-                  Ended: {""}
-                  <span className="font-semibold ">
-                    {selectedTask?.ended_at
-                      ? dayjs(selectedTask.ended_at).format(
-                          "DD MMMM YYYY HH:mm:ss"
-                        )
-                      : "Not set"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <div className="w-full bg-gray-200/50 p-2 rounded-lg space-y-2 max-h-24 overflow-y-auto">
-              <h1 className="font-semibold mb-4">Problem Description</h1>
-              <p>
-                {selectedTask?.problem_description ||
-                  "No description provided."}
-              </p>
-            </div>
-            <div className="w-full bg-gray-200/50 p-2 rounded-lg space-y-2 max-h-24 overflow-y-auto">
-              <h1 className="font-semibold mb-4">Fix Description</h1>
-              <p>
-                {selectedTask?.fix_description || "No description provided."}
-              </p>
-            </div>
-          </div>
-          <div className="col-span-2">
-            <h1 className="font-semibold mb-4">Report Images</h1>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <h1 className="font-semibold mb-2 text-center">Before</h1>
-                <div className="h-64 overflow-y-auto bg-gray-200/50 border-2 border-dashed border-gray-400 p-2 rounded-lg">
-                  <div className="grid grid-cols-2 gap-2">
-                    {selectedTask?.image_before &&
-                    selectedTask?.image_before.length > 0 ? (
-                      selectedTask?.image_before.map((image, index) => (
-                        <img
-                          key={index}
-                          src={`${
-                            import.meta.env.VITE_BASE_BEFORE_PATH
-                          }/${image}`}
-                          alt={`before${selectedTask?.id}_${index}`}
-                          className="cursor-pointer rounded-lg h-32 w-full object-cover"
-                          onClick={() => {
-                            setSelectedImage({ image, type: "before" });
-                            setFullScreen(true);
-                          }}
-                        />
-                      ))
-                    ) : (
-                      <div className="col-span-2 w-full h-56 flex items-center justify-center">
-                        <p>No images uploaded</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div>
-                <h1 className="font-semibold mb-2 text-center">After</h1>
-                <div className="h-64 overflow-y-auto bg-gray-200/50 border-2 border-dashed border-gray-400 p-2 rounded-lg">
-                  <div className="grid grid-cols-2 gap-2">
-                    {selectedTask?.image_after &&
-                    selectedTask?.image_after.length > 0 ? (
-                      selectedTask?.image_after.map((image, index) => (
-                        <img
-                          key={index}
-                          src={`${
-                            import.meta.env.VITE_BASE_AFTER_PATH
-                          }/${image}`}
-                          alt={`before${selectedTask?.id}_${index}`}
-                          className="cursor-pointer rounded-lg h-32 w-full object-cover"
-                          onClick={() => {
-                            setSelectedImage({ image, type: "after" });
-                            setFullScreen(true);
-                          }}
-                        />
-                      ))
-                    ) : (
-                      <div className="col-span-2 w-full h-56 flex items-center justify-center">
-                        <p>No images uploaded</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DetailWork selectedTask={selectedTask}></DetailWork>
       </ModalPopup>
       <ModalPopup
         isOpen={isEditTask}
@@ -369,29 +307,6 @@ const RepairWork = () => {
               Delete
             </Button>
           </div>
-        </div>
-      </ModalPopup>
-      <ModalPopup
-        isOpen={isFullScreen}
-        onClose={() => setFullScreen(false)}
-        title={
-          selectedImage?.type === "before" ? "Before Image" : "After Image"
-        }
-      >
-        <div className="w-full h-full">
-          <img
-            src={`${
-              selectedImage?.type == "before"
-                ? `${import.meta.env.VITE_BASE_BEFORE_PATH}/${
-                    selectedImage?.image
-                  }`
-                : `${import.meta.env.VITE_BASE_AFTER_PATH}/${
-                    selectedImage?.image
-                  }`
-            }`}
-            alt="Full Screen"
-            className="w-full h-full object-cover"
-          />
         </div>
       </ModalPopup>
     </div>

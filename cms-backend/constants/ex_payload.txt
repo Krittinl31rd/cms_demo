@@ -53,3 +53,42 @@
         "fc": 6
     }
 }
+
+  NEW_TASK: 100, // receive task from user and rcu
+  {
+    "cmd": 6,
+    "param": {
+        "statusCounts": {
+            "pending": 0,
+            "assigned": 8,
+            "in_progress": 1,
+            "completed": 4,
+            "unresolved": 1
+        },
+        "task":{
+            "id": 26,
+            "room_id": 731,
+            "assigned_to": 202,
+            "problem_description": "RCU - testestset",
+            "fix_description": null,
+            "status_id": 2,
+            "started_at": null,
+            "ended_at": null,
+            "created_at": "2025-07-11T08:43:47.000Z",
+            "created_by": 201,
+            "image_before": [],
+            "image_after": [],
+            "room_number": "731",
+            "floor": 7,
+            "guest_status_id": 0,
+            "dnd_status": 0,
+            "room_check_status": 1,
+            "cleaning_status_id": 2,
+            "is_online": 0,
+            "ip_address": null,
+            "assigned_to_name": "Kurt Cobain",
+            "assigned_to_type": 1,
+            "created_by_name": "Krittin Klinhom"
+        }
+    }
+}

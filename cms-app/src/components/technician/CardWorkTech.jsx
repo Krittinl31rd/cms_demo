@@ -5,7 +5,7 @@ import { Pencil, Search, Trash } from "lucide-react";
 import { colorBadge } from "@/utilities/helpers";
 import { maintenance_status } from "@/constant/common";
 
-const CardWorkTech = ({ task, onSelect, onView, onEdit, onDelete }) => {
+const CardWorkTech = ({ task, onSelect, onView }) => {
   return (
     <div
       onClick={() => {
