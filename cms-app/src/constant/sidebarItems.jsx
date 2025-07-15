@@ -12,7 +12,7 @@ import { member_role } from "./common";
 
 export const sidebarItems = {
   [member_role.SUPER_ADMIN]: [
-    { label: "Dashboard", path: "/admin", icon: <LayoutDashboard /> },
+    // { label: "Dashboard", path: "/admin", icon: <LayoutDashboard /> },
     { label: "User", path: "/admin/user", icon: <Users /> },
     { label: "Rooms", path: "/admin/room", icon: <House /> },
     {
@@ -25,7 +25,7 @@ export const sidebarItems = {
     { label: "Dashboard", path: "/frontdesk", icon: <LayoutDashboard /> },
   ],
   [member_role.TECHNICIAN_LEAD]: [
-    { label: "Dashboard", path: "/techlead", icon: <LayoutDashboard /> },
+    // { label: "Dashboard", path: "/techlead", icon: <LayoutDashboard /> },
     { label: "Rooms", path: "/techlead/rooms", icon: <House /> },
     // { label: "Warn", path: "/techlead/warn", icon: <TriangleAlert /> },
     {
@@ -33,11 +33,11 @@ export const sidebarItems = {
       path: "/techlead/repair",
       icon: <Hammer />,
     },
-    {
-      label: "History",
-      path: "/techlead/history",
-      icon: <History />,
-    },
+    // {
+    //   label: "History",
+    //   path: "/techlead/history",
+    //   icon: <History />,
+    // },
     {
       label: "Config",
       path: "/techlead/config",
