@@ -167,11 +167,12 @@ const insertToDB = async (data, source) => {
             );
 
             const latestLog = logs?.[0];
-            // console.log(latestLog);
+            console.log(latestLog);
             if (latestLog) {
               const wsModbusClient = getWsClients().find(
                 (client) => client.user.role !== "gateway"
               );
+              console.log(`log: ${wsModbusClient}`);
               if (wsModbusClient) {
                 wsModbusClient.socket.send(
                   JSON.stringify({
@@ -197,7 +198,7 @@ const updateRoomStatusInDB = async (roomStatus) => {
 
     if ("guest_status_id" in roomStatus) {
       fields.push("guest_status_id = :guest_status_id");
-      replacements.guest_status_id = roomStatus.guest_status_id;
+      replacements.guest_status_id = roomStatus.guest_status_id == 0 ? 0 : 1;
     }
     if ("dnd_status" in roomStatus) {
       fields.push("dnd_status = :dnd_status");
