@@ -82,6 +82,19 @@ function sendWsMessageToRole(roleId, data) {
   return roleClients.length > 0;
 }
 
+function sendWsMessageToModbusClient(data) {
+  const message = JSON.stringify(data);
+  const wsModbusClient = getWsClients().find(
+    (client) => client.user.role == "gateway"
+  );
+  if (wsModbusClient == undefined) {
+    return false;
+  }
+  console.log(message);
+  wsModbusClient.socket.send(message);
+  return true;
+}
+
 // === Exports ===
 
 module.exports = {
@@ -95,4 +108,5 @@ module.exports = {
   sendWsMessageToClientById,
   sendWsMessageToUser,
   sendWsMessageToRole,
+  sendWsMessageToModbusClient,
 };

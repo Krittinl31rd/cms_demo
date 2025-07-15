@@ -7,6 +7,7 @@ const {
   sendWsMessageToAll,
   sendWsMessageToUser,
   sendWsMessageToRole,
+  sendWsMessageToModbusClient,
 } = require("../../utils/ws/wsClients");
 const {
   checkExists,
@@ -608,47 +609,51 @@ exports.UpdateMaintenanceTask = async (req, res) => {
 
       if (role_id == member_role.TECHNICIAN_LEAD) {
         // console.log(member_role.TECHNICIAN_LEAD, assigned_to);
-        sendWsMessageToUser(assigned_to, {
+        const resWS = sendWsMessageToUser(assigned_to, {
           cmd: ws_cmd.UPDATE_TASK,
           param: {
             statusCounts: statusCounts,
             task: task,
           },
         });
+        console.log(`sendWsMessageToUser: ${resWS}`);
       } else {
-        sendWsMessageToUser(id, {
+        const resWS = sendWsMessageToUser(id, {
           cmd: ws_cmd.UPDATE_TASK,
           param: {
             statusCounts: statusCounts,
             task: task,
           },
         });
+        console.log(`sendWsMessageToUser: ${resWS}`);
         if (
           status_id == maintenance_status.IN_PROGRESS ||
           status_id == maintenance_status.COMPLETED ||
           status_id == maintenance_status.UNRESOLVED
         ) {
-          sendWsMessageToRole("gateway", {
+          const resWS = sendWsMessageToModbusClient({
             cmd: ws_cmd.WRITE_REGISTER,
             param: {
-              ip: isRoom[0].ip_address,
-              address: param.address,
+              ip: task.ip_address,
+              address: 20,
               value: status_id == maintenance_status.IN_PROGRESS ? 1 : 0,
               slaveId: 1,
               fc: 6,
               userId: id,
             },
           });
+          console.log(`sendWsMessageToModbusClient: ${resWS}`);
         }
       }
 
-      sendWsMessageToRole(member_role.TECHNICIAN_LEAD, {
+      const resWS = sendWsMessageToRole(member_role.TECHNICIAN_LEAD, {
         cmd: ws_cmd.UPDATE_TASK,
         param: {
           statusCounts: statusCounts,
           task: task,
         },
       });
+      console.log(`sendWsMessageToRole : ${resWS}`);
     } catch (err) {
       console.error("WebSocket Error:", err);
     }
