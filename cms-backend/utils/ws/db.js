@@ -197,9 +197,8 @@ const updateRoomStatusInDB = async (roomStatus) => {
     const replacements = { ip: roomStatus.ip };
 
     if ("guest_status_id" in roomStatus) {
-      console.log(roomStatus.guest_status_id);
-      // fields.push("guest_status_id = :guest_status_id");
-      // replacements.guest_status_id = roomStatus.guest_status_id == 0 ? 0 : 1;
+      fields.push("guest_status_id = :guest_status_id");
+      replacements.guest_status_id = roomStatus.guest_status_id >= 2 && 1;
     }
     if ("dnd_status" in roomStatus) {
       fields.push("dnd_status = :dnd_status");
@@ -227,7 +226,7 @@ const updateRoomStatusInDB = async (roomStatus) => {
       type: sequelize.QueryTypes.UPDATE,
     });
 
-    // console.log("Room status updated:", roomStatus);
+    console.log("Room status updated:", roomStatus);
   } catch (err) {
     console.error("Failed to update room status:", err);
   }
