@@ -124,7 +124,7 @@ const UpdateDetailWork = ({
       toast.success(
         response?.data?.message || "Maintenance task updated successfully."
       );
-      fetchTaskList();
+      // fetchTaskList();
       setViewTask(false);
     } catch (err) {
       toast.error(err?.response?.data || "Maintenance task updated failed.");
@@ -139,7 +139,6 @@ const UpdateDetailWork = ({
             colorBadge[selectedTask?.status_id]
           } flex items-center justify-center text-xl font-semibold p-2 rounded-xl`}
         >
-          {selectedTask?.floor}
           {selectedTask?.room_number}
         </div>
         <h1 className="font-semibold text-xl">

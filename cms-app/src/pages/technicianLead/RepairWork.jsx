@@ -11,12 +11,29 @@ import UpdateWorkForm from "@/components/technician/UpdateWorkForm";
 import DetailWork from "@/components/technician/DetailWork";
 import CardSummary from "@/components/ui/CardSummary";
 import Button from "@/components/ui/Button";
-import { Plus, CheckCircle, Loader, UserCheck, X, XCircle } from "lucide-react";
+import {
+  Plus,
+  CheckCircle,
+  Loader,
+  UserCheck,
+  X,
+  XCircle,
+  ListFilter,
+  Cog,
+  Wifi,
+} from "lucide-react";
 import CardWork from "@/components/technician/CardWork";
 import ModalPopup from "@/components/ui/ModalPopup";
 import { DeleteTask } from "@/api/task";
 import { toast } from "react-toastify";
 import { client } from "@/constant/wsCommand";
+import { maintenance_status } from "@/constant/common";
+import FilterCheckbox from "@/components/ui/FilterCheckbox";
+import {
+  useRoomFilters,
+  doesTaskMatchFilters,
+  getFilterLabel,
+} from "@/utilities/helpers";
 
 const RepairWork = () => {
   const { token } = useStore((state) => state);
@@ -29,15 +46,38 @@ const RepairWork = () => {
   const [isViewTask, setViewTask] = useState(false);
   const [isEditTask, setEditTask] = useState(false);
   const [isDeleteTask, setDeleteTask] = useState(false);
-
+  const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
   const [isWsReady, setIsWsReady] = useState(false);
   const ws = useRef(null);
+  const [filters, setFilters] = useState([]);
+  const { toggleFilter } = useRoomFilters(filters, setFilters);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const taskStatusFilterOptions = [
+    {
+      key: "taskStatus",
+      value: maintenance_status.ASSIGNED,
+      label: "Assigned",
+    },
+    {
+      key: "taskStatus",
+      value: maintenance_status.IN_PROGRESS,
+      label: "In Progress",
+    },
+    { key: "taskStatus", value: maintenance_status.FIXED, label: "Complete" },
+    {
+      key: "taskStatus",
+      value: maintenance_status.UNRESOLVED,
+      label: "Unresolved",
+    },
+  ];
 
   const fetchTaskList = async () => {
     setLoading(true);
     try {
       const response = await GetMaintenanceTask(token);
       setTaskList(response?.data || []);
+      console.log(response?.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -80,7 +120,7 @@ const RepairWork = () => {
       const response = await DeleteTask(id, token);
       toast.success(response?.data?.message || "Delete task successfully");
       setDeleteTask(false);
-      fetchTaskList();
+      // fetchTaskList();
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || "Failed to delete task");
@@ -88,31 +128,36 @@ const RepairWork = () => {
   };
 
   const statusCounts = useMemo(() => {
+    const roomWithIPSet = new Set();
     const counts = {
       assigned: 0,
       in_progress: 0,
       completed: 0,
       unresolved: 0,
+      total_rcu: 0,
+      rcu_online: 0,
+      rcu_offline: 0,
     };
 
-    taskList.forEach((task) => {
-      switch (task.status_id) {
-        case 2:
-          counts.assigned += 1;
-          break;
-        case 3:
-          counts.in_progress += 1;
-          break;
-        case 4:
-          counts.completed += 1;
-          break;
-        case 5:
-          counts.unresolved += 1;
-          break;
-        default:
-          break;
+    taskList.forEach(({ status_id, ip_address, room_id, is_online }) => {
+      // Count by status_id
+      if (status_id === 2) counts.assigned += 1;
+      else if (status_id === 3) counts.in_progress += 1;
+      else if (status_id === 4) counts.completed += 1;
+      else if (status_id === 5) counts.unresolved += 1;
+
+      // Count unique room with ip (RCU)
+      if (ip_address && room_id && !roomWithIPSet.has(room_id)) {
+        roomWithIPSet.add(room_id);
+
+        // Count online/offline once per unique room
+        if (is_online === 1) counts.rcu_online += 1;
+        else if (is_online === 0) counts.rcu_offline += 1;
       }
     });
+
+    counts.total_rcu = roomWithIPSet.size;
+
     return counts;
   }, [taskList]);
 
@@ -179,13 +224,93 @@ const RepairWork = () => {
         }
         break;
 
+      case client.UPDATE_TASK:
+        if (param) {
+          const newTask = param?.task;
+          const taskId = param?.task?.id;
+          setTaskList((prev) =>
+            prev.map((task) =>
+              task.id == taskId
+                ? {
+                    ...task,
+                    ...newTask,
+                  }
+                : task
+            )
+          );
+        }
+        break;
+
+      case client.DELETE_TASK:
+        if (param) {
+          const taskId = Number(param?.task_id);
+          setTaskList((prev) => prev.filter((task) => task.id !== taskId));
+        }
+        break;
+
       default:
         break;
     }
   };
 
+  const assignedToTypeOptions = useMemo(() => {
+    const map = new Map();
+    taskList.forEach((task) => {
+      if (task.assigned_to_type && !map.has(task.assigned_to_type)) {
+        let label;
+        if (task.assigned_to_type == 1) {
+          label = "RCU";
+        } else if (task.assigned_to_type == 2) {
+          label = "ELECTRICAL";
+        } else if (task.assigned_to_type == 3) {
+          label = "OTHER";
+        }
+        map.set(task.assigned_to_type, label);
+      }
+    });
+    return Array.from(map.entries()).map(([value, label]) => ({
+      value,
+      label,
+    }));
+  }, [taskList]);
+
+  const createdByOptions = useMemo(() => {
+    const map = new Map();
+    taskList.forEach((task) => {
+      if (task.created_by && !map.has(task.created_by)) {
+        map.set(
+          task.created_by,
+          task.created_by_name || `User ${task.created_by}`
+        );
+      }
+    });
+    return Array.from(map.entries()).map(([value, label]) => ({
+      value,
+      label,
+    }));
+  }, [taskList]);
+
+  const filteredTasks = useMemo(() => {
+    let filtered = [...taskList];
+
+    // Apply filters
+    if (filters.length > 0) {
+      filtered = filtered.filter((task) => doesTaskMatchFilters(task, filters));
+    }
+
+    // Apply search
+    if (searchTerm.trim()) {
+      const search = searchTerm.trim().toLowerCase();
+      filtered = filtered.filter((task) =>
+        task.room_number?.toLowerCase().includes(search)
+      );
+    }
+
+    return filtered;
+  }, [taskList, filters, searchTerm]);
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-4">
       <div className="w-full flex items-center justify-end mb-2">
         <Button onClick={() => setAssignWork(true)}>
           <Plus />
@@ -193,6 +318,27 @@ const RepairWork = () => {
         </Button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+        <CardSummary
+          title="Total RCUs"
+          value={statusCounts?.total_rcu}
+          icon={Cog}
+          iconColor="text-blue-800"
+          borderColor="border-blue-800"
+        />
+        <CardSummary
+          title="RCU Online"
+          value={statusCounts?.rcu_online}
+          icon={Wifi}
+          iconColor="text-green-800"
+          borderColor="border-green-800"
+        />
+        <CardSummary
+          title="RCU Offline"
+          value={statusCounts?.rcu_offline}
+          icon={Wifi}
+          iconColor="text-red-800"
+          borderColor="border-red-800"
+        />
         <CardSummary
           title="Assigned"
           value={statusCounts?.assigned}
@@ -208,7 +354,7 @@ const RepairWork = () => {
           borderColor="border-blue-500"
         />
         <CardSummary
-          title="Completed"
+          title="Complete"
           value={statusCounts?.completed}
           icon={CheckCircle}
           iconColor="text-green-500"
@@ -222,14 +368,56 @@ const RepairWork = () => {
           borderColor="border-red-500"
         />
       </div>
+      <div className="w-full flex items-center justify-between gap-2 bg-white rounded-xl shadow-xl p-4">
+        <input
+          type="text"
+          placeholder="Search by room number..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm("")}
+            className="ml-2 text-sm text-gray-500 hover:underline"
+          >
+            Clear
+          </button>
+        )}
+        <button
+          onClick={() => setIsModalFilterOpen(true)}
+          className="flex items-center gap-1  text-primary cursor-pointer rounded-lg p-1 hover:bg-gray-100"
+        >
+          Filter <ListFilter size={16} />
+        </button>
+      </div>
+      <h1 className="text-sm">
+        Filter by:{" "}
+        <span className="font-semibold">
+          {filters.length === 0
+            ? "None"
+            : filters
+                .map((f) =>
+                  getFilterLabel(
+                    f,
+                    technicianList,
+                    maintenance_status,
+                    createdByOptions,
+                    assignedToTypeOptions
+                  )
+                )
+                .join(", ")}
+        </span>
+      </h1>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 mt-2">
         {loading ? (
           <div className="col-span-3 flex items-center justify-center">
             <Spinner />
             Loading tasks...
           </div>
-        ) : taskList.length > 0 ? (
-          taskList.map((task) => (
+        ) : filteredTasks.length > 0 ? (
+          filteredTasks.map((task) => (
             <CardWork
               key={task.id}
               task={task}
@@ -306,6 +494,85 @@ const RepairWork = () => {
             >
               Delete
             </Button>
+          </div>
+        </div>
+      </ModalPopup>
+      <ModalPopup
+        isOpen={isModalFilterOpen}
+        onClose={() => setIsModalFilterOpen(false)}
+        title={`Filter`}
+      >
+        <div className="space-y-2 text-sm">
+          <button
+            className="absolute top-12 right-6 text-primary font-semibold hover:underline cursor-pointer"
+            onClick={() => {
+              // setSearch("");
+              setFilters([]);
+            }}
+          >
+            Reset
+          </button>
+          <h1 className=" font-semibold">Task status</h1>
+          <div className="w-full flex items-center flex-wrap gap-2 pb-2 border-b border-gray-300">
+            {taskStatusFilterOptions.map(({ key, value, label }) => {
+              const filterKey = `${key}_${value}`;
+              return (
+                <FilterCheckbox
+                  key={filterKey}
+                  filterKey={filterKey}
+                  label={label}
+                  filters={filters}
+                  toggleFilter={toggleFilter}
+                />
+              );
+            })}
+          </div>
+          <h1 className="font-semibold">Assign by</h1>
+          <div className="w-full max-h-32 overflow-auto flex items-center flex-wrap gap-2 pb-2 border-b border-gray-300">
+            {technicianList.map((tech) => {
+              const filterKey = `assign_${tech.id}`;
+              return (
+                <FilterCheckbox
+                  key={filterKey}
+                  filterKey={filterKey}
+                  label={tech.full_name}
+                  filters={filters}
+                  toggleFilter={toggleFilter}
+                />
+              );
+            })}
+          </div>
+
+          <h1 className="font-semibold">Created By</h1>
+          <div className="w-full max-h-32 overflow-auto flex items-center flex-wrap gap-2 pb-2 border-b border-gray-300">
+            {createdByOptions.map(({ value, label }) => {
+              const filterKey = `createdBy_${value}`;
+              return (
+                <FilterCheckbox
+                  key={filterKey}
+                  filterKey={filterKey}
+                  label={label}
+                  filters={filters}
+                  toggleFilter={toggleFilter}
+                />
+              );
+            })}
+          </div>
+
+          <h1 className="font-semibold">Technician type</h1>
+          <div className="w-full max-h-32 overflow-auto flex items-center flex-wrap gap-2 pb-2 border-b border-gray-300">
+            {assignedToTypeOptions.map(({ value, label }) => {
+              const filterKey = `assignedToType_${value}`;
+              return (
+                <FilterCheckbox
+                  key={filterKey}
+                  filterKey={filterKey}
+                  label={label}
+                  filters={filters}
+                  toggleFilter={toggleFilter}
+                />
+              );
+            })}
           </div>
         </div>
       </ModalPopup>

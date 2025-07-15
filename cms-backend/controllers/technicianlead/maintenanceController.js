@@ -13,6 +13,7 @@ const {
   getMaintenanceTaskBaseQuery,
   countTaskByUserId,
   getTaskWithDetailsById,
+  getUpdatedFields,
 } = require("../../utils/dbHelpers");
 const { maintenance_status, member_role } = require("../../constants/common");
 const {
@@ -593,6 +594,65 @@ exports.UpdateMaintenanceTask = async (req, res) => {
       type: sequelize.QueryTypes.UPDATE,
     });
 
+    // send ws to client
+    try {
+      const oldData = taskResult;
+      const task = await getTaskWithDetailsById(oldData.id);
+      const statusCounts = await countTaskByUserId(id);
+
+      task.image_before =
+        task.image_before != null ? JSON.parse(task.image_before) : [];
+
+      task.image_after =
+        task.image_after != null ? JSON.parse(task.image_after) : [];
+
+      if (role_id == member_role.TECHNICIAN_LEAD) {
+        // console.log(member_role.TECHNICIAN_LEAD, assigned_to);
+        sendWsMessageToUser(assigned_to, {
+          cmd: ws_cmd.UPDATE_TASK,
+          param: {
+            statusCounts: statusCounts,
+            task: task,
+          },
+        });
+      } else {
+        sendWsMessageToUser(id, {
+          cmd: ws_cmd.UPDATE_TASK,
+          param: {
+            statusCounts: statusCounts,
+            task: task,
+          },
+        });
+        if (
+          status_id == maintenance_status.IN_PROGRESS ||
+          status_id == maintenance_status.COMPLETED ||
+          status_id == maintenance_status.UNRESOLVED
+        ) {
+          sendWsMessageToRole("gateway", {
+            cmd: ws_cmd.WRITE_REGISTER,
+            param: {
+              ip: isRoom[0].ip_address,
+              address: param.address,
+              value: status_id == maintenance_status.IN_PROGRESS ? 1 : 0,
+              slaveId: 1,
+              fc: 6,
+              userId: id,
+            },
+          });
+        }
+      }
+
+      sendWsMessageToRole(member_role.TECHNICIAN_LEAD, {
+        cmd: ws_cmd.UPDATE_TASK,
+        param: {
+          statusCounts: statusCounts,
+          task: task,
+        },
+      });
+    } catch (err) {
+      console.error("WebSocket Error:", err);
+    }
+
     return res
       .status(200)
       .json({ message: "Maintenance task updated successfully." });
@@ -605,13 +665,49 @@ exports.UpdateMaintenanceTask = async (req, res) => {
 exports.DeleteMaintenanceTask = async (req, res) => {
   try {
     const { task_id } = req.params;
+
+    const [task] = await sequelize.query(
+      `SELECT assigned_to FROM maintenance_tasks WHERE id = :task_id`,
+      {
+        replacements: { task_id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found." });
+    }
+
+    const assigned_to = task.assigned_to;
+
     await sequelize.query(`DELETE FROM maintenance_tasks WHERE id = :task_id`, {
       replacements: { task_id },
       type: sequelize.QueryTypes.DELETE,
     });
-    res.status(200).json({ message: "Maintenance task deleted successfully." });
+
+    const statusCounts = await countTaskByUserId(assigned_to);
+
+    sendWsMessageToUser(assigned_to, {
+      cmd: ws_cmd.DELETE_TASK,
+      param: {
+        statusCounts,
+        task_id,
+      },
+    });
+
+    sendWsMessageToRole(member_role.TECHNICIAN_LEAD, {
+      cmd: ws_cmd.DELETE_TASK,
+      param: {
+        statusCounts,
+        task_id,
+      },
+    });
+
+    return res
+      .status(200)
+      .json({ message: "Maintenance task deleted successfully." });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

@@ -20,6 +20,7 @@ import { GetMaintenanceTaskByUserID } from "@/api/task";
 import { toast } from "react-toastify";
 import { maintenance_status } from "@/constant/common";
 import { colorBadge } from "@/utilities/helpers";
+import { client } from "@/constant/wsCommand";
 
 const Task = () => {
   const { user, token } = useStore((state) => state);
@@ -27,7 +28,8 @@ const Task = () => {
   const [loading, setLoading] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [viewTask, setViewTask] = useState(false);
-  const [taskImages, setTaskImages] = useState({});
+  const [isWsReady, setIsWsReady] = useState(false);
+  const ws = useRef(null);
 
   const fetchTaskList = async () => {
     setLoading(true);
@@ -52,6 +54,70 @@ const Task = () => {
       fetchTaskList();
     }
   }, [token, user?.id]);
+
+  useEffect(() => {
+    ws.current = new WebSocket(import.meta.env.VITE_WS_URL);
+
+    ws.current.onopen = () => {
+      console.log("WebSocket Connected");
+      setIsWsReady(true);
+    };
+
+    ws.current.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      handleCommand(msg);
+    };
+
+    ws.current.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+    };
+
+    ws.current.onclose = () => {
+      // console.log('WebSocket Disconnected');
+      setIsWsReady(false);
+    };
+
+    return () => {
+      ws.current.close();
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (isWsReady && token) {
+      sendWebSocketMessage({ cmd: client.LOGIN, param: { token } });
+    }
+  }, [isWsReady, token]);
+
+  const sendWebSocketMessage = (message) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(message));
+    } else {
+      // console.warn('WebSocket not open, retrying...');
+      setTimeout(() => sendWebSocketMessage(message), 500);
+    }
+  };
+
+  const handleCommand = (msg) => {
+    const { cmd, param } = msg;
+
+    switch (cmd) {
+      case client.LOGIN:
+        if (param.status == "success") {
+          console.log("Login success");
+        }
+        break;
+
+      case client.DELETE_TASK:
+        if (param) {
+          const taskId = Number(param?.task_id);
+          setTaskList((prev) => prev.filter((task) => task.id !== taskId));
+        }
+        break;
+
+      default:
+        break;
+    }
+  };
 
   return (
     <>

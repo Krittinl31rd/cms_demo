@@ -94,6 +94,9 @@ const Setting = () => {
 
     try {
       setIsSaving(true);
+      setTimeout(() => {
+        setIsSaving(false);
+      }, 20000);
 
       const configField = formConfig[deviceId] || {};
       const devices = selectedRoom?.devices.find(
@@ -115,7 +118,6 @@ const Setting = () => {
           25: date.getFullYear() % 100,
         };
       }
-
       for (const {
         fc,
         address,
@@ -124,7 +126,7 @@ const Setting = () => {
       } of devices.controls) {
         let value;
 
-        if ([3, 13, 14, 28, 31].includes(control_id)) {
+        if ([13, 14, 28, 31].includes(control_id)) {
           const hasHour = configField.hasOwnProperty(`${control_id}_Hour`);
           const hasMin = configField.hasOwnProperty(`${control_id}_Min`);
           const hasSec = configField.hasOwnProperty(`${control_id}_Sec`);
@@ -170,13 +172,14 @@ const Setting = () => {
         };
 
         sendWebSocketMessage(payload);
-        await delay(250);
+        await delay(50);
       }
     } catch (err) {
       console.error("Save error", err);
-    } finally {
-      setIsSaving(false);
     }
+    // } finally {
+    //   setIsSaving(false);
+    // }
   };
 
   const configField = (devices) => {
@@ -190,13 +193,13 @@ const Setting = () => {
           );
 
           const category_nightShift = dev.controls?.filter((c) =>
-            [1, 2, 4, 5, 6].includes(c.control_id)
+            [3, 1, 2, 4, 5, 6].includes(c.control_id)
           );
 
           const category_ESM = dev.controls?.filter((c) =>
             [
-              3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 26, 27, 28, 29,
-              30, 31,
+              7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 26, 27, 28, 29, 30,
+              31,
             ].includes(c.control_id)
           );
 
@@ -289,7 +292,7 @@ const Setting = () => {
                       .replace(/\b\w/g, (l) => l.toUpperCase());
                     let inputElement;
 
-                    if ([3, 13, 14, 28, 31].includes(control.control_id)) {
+                    if ([13, 14, 28, 31].includes(control.control_id)) {
                       const totalSeconds = parseInt(control?.value) || 0;
                       const initialHours = Math.floor(totalSeconds / 3600);
                       const initialMinutes = Math.floor(

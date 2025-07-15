@@ -77,7 +77,6 @@ export default function AssignWorkForm({
             </option>
             {rooms.map((room) => (
               <option key={room.id} value={room.id}>
-                {room.floor}
                 {room.room_number}
               </option>
             ))}

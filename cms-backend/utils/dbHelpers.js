@@ -77,9 +77,26 @@ const countTaskByUserId = async (user_id) => {
   return statusCounts;
 };
 
+function getUpdatedFields(oldData, newData) {
+  const updatedFields = {};
+
+  for (const key in newData) {
+    if (
+      newData[key] !== null &&
+      typeof newData[key] !== "undefined" &&
+      newData[key] !== oldData[key]
+    ) {
+      updatedFields[key] = newData[key];
+    }
+  }
+
+  return updatedFields;
+}
+
 module.exports = {
   checkExists,
   getMaintenanceTaskBaseQuery,
   countTaskByUserId,
   getTaskWithDetailsById,
+  getUpdatedFields,
 };

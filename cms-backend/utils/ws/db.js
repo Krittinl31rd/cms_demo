@@ -77,6 +77,7 @@ const updatedToDB = async (data) => {
 // };
 
 const insertToDB = async (data, source) => {
+  // console.log(data, source);
   try {
     await Promise.all(
       data.map(
@@ -166,7 +167,7 @@ const insertToDB = async (data, source) => {
             );
 
             const latestLog = logs?.[0];
-
+            // console.log(latestLog);
             if (latestLog) {
               const wsModbusClient = getWsClients().find(
                 (client) => client.user.role !== "gateway"

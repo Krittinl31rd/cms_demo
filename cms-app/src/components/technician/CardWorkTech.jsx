@@ -22,10 +22,7 @@ const CardWorkTech = ({ task, onSelect, onView }) => {
               colorBadge[task?.status_id]
             }`}
           >
-            <h4 className="font-semibold text-xl">
-              {task?.floor}
-              {task?.room_number}
-            </h4>
+            <h4 className="font-semibold text-xl">{task?.room_number}</h4>
           </div>
           <div className="w-full h-full flex items-start justify-between gap-1 p-4">
             <div className="w-full h-full flex flex-col items-start justify-center">

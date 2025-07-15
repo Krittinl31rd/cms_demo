@@ -21,6 +21,7 @@ import { toast } from "react-toastify";
 import { maintenance_status } from "@/constant/common";
 import { colorBadge, taskStatusId } from "@/utilities/helpers";
 import DetailWork from "@/components/technician/DetailWork";
+import { client } from "@/constant/wsCommand";
 
 const History = () => {
   const { token, user } = useStore((state) => state);
@@ -28,8 +29,8 @@ const History = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isViewTask, setViewTask] = useState(false);
-  const [isFullScreen, setFullScreen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [isWsReady, setIsWsReady] = useState(false);
+  const ws = useRef(null);
 
   const fetchTaskList = async (
     statusIds = [maintenance_status.UNRESOLVED, maintenance_status.FIXED]
@@ -54,6 +55,98 @@ const History = () => {
       fetchTaskList();
     }
   }, [token, user?.id]);
+
+  useEffect(() => {
+    ws.current = new WebSocket(import.meta.env.VITE_WS_URL);
+
+    ws.current.onopen = () => {
+      console.log("WebSocket Connected");
+      setIsWsReady(true);
+    };
+
+    ws.current.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      handleCommand(msg);
+    };
+
+    ws.current.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+    };
+
+    ws.current.onclose = () => {
+      // console.log('WebSocket Disconnected');
+      setIsWsReady(false);
+    };
+
+    return () => {
+      ws.current.close();
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (isWsReady && token) {
+      sendWebSocketMessage({ cmd: client.LOGIN, param: { token } });
+    }
+  }, [isWsReady, token]);
+
+  const sendWebSocketMessage = (message) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(message));
+    } else {
+      // console.warn('WebSocket not open, retrying...');
+      setTimeout(() => sendWebSocketMessage(message), 500);
+    }
+  };
+
+  const handleCommand = (msg) => {
+    const { cmd, param } = msg;
+
+    switch (cmd) {
+      case client.LOGIN:
+        if (param.status == "success") {
+          console.log("Login success");
+        }
+        break;
+
+      // case client.NEW_TASK:
+      //   if (param) {
+      //     const newTask = param?.task;
+      //     setTaskList((prev) => {
+      //       const exists = prev.find((t) => t.id === newTask.id);
+      //       if (exists) return prev;
+      //       return [newTask, ...prev];
+      //     });
+      //   }
+      //   break;
+
+      case client.UPDATE_TASK:
+        if (param) {
+          const newTask = param?.task;
+          const taskId = param?.task?.id;
+          setTaskList((prev) =>
+            prev.map((task) =>
+              task.id == taskId
+                ? {
+                    ...task,
+                    ...newTask,
+                  }
+                : task
+            )
+          );
+        }
+        break;
+
+      case client.DELETE_TASK:
+        if (param) {
+          const taskId = Number(param?.task_id);
+          setTaskList((prev) => prev.filter((task) => task.id !== taskId));
+        }
+        break;
+
+      default:
+        break;
+    }
+  };
 
   return (
     <>

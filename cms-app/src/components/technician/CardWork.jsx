@@ -18,7 +18,7 @@ const CardWork = ({ task, onSelect, onView, onEdit, onDelete }) => {
           </span>
           <div className="flex-1">
             <h4 className="font-semibold">
-              Room: {task?.floor}
+              Room:
               {task?.room_number}
             </h4>
             <p className="text-sm">{task?.assigned_to_name}</p>

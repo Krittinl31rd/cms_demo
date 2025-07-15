@@ -56,7 +56,7 @@
 
   NEW_TASK: 100, // receive task from user and rcu
   {
-    "cmd": 6,
+    "cmd": 100,
     "param": {
         "statusCounts": {
             "pending": 0,
@@ -89,6 +89,48 @@
             "assigned_to_name": "Kurt Cobain",
             "assigned_to_type": 1,
             "created_by_name": "Krittin Klinhom"
+            }
         }
     }
-}
+
+  UPDATE_TASK: 101, // receive update task from user
+  {
+    "cmd": 101,
+    "param": {
+        "statusCounts": {
+            "pending": 0,
+            "assigned": 8,
+            "in_progress": 1,
+            "completed": 4,
+            "unresolved": 1
+        },
+        "task_id": "58",
+        "task":{
+            "room_id": "2411",
+            "fix_description": "zx zazaza",
+            "ended_at": "2025-07-14 07:02:49",
+            "status_id": "4",
+            "image_before": [
+                "1752476542250.png"
+            ],
+            "image_after": [
+                "1752476569736.jpg"
+            ]
+        }
+    }
+  }
+
+  UPDATE_TASK: 102, // receive delete task
+  {
+    "cmd": 102,
+    "param": {
+        "statusCounts": {
+            "pending": 0,
+            "assigned": 8,
+            "in_progress": 1,
+            "completed": 4,
+            "unresolved": 1
+        },
+        "task_id": "58"
+    }
+  }

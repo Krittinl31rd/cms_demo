@@ -97,4 +97,136 @@ export const CheckTypeTechnician = (value) => {
   return name;
 };
 
+const mutuallyExclusive = {
+  status_1: "status_0",
+  status_0: "status_1",
+  check_1: "check_0",
+  check_0: "check_1",
+  gi_1: "gi_0",
+  gi_0: "gi_1",
+  dnd_1: ["mur_1", "noservice"],
+  mur_1: ["dnd_1", "noservice"],
+  noservice: ["dnd_1", "mur_1"],
+};
+
+export const useRoomFilters = (filters, setFilters) => {
+  const toggleFilter = (filterKey) => {
+    const [key] = filterKey.split("_");
+
+    // ลบ filter ตัวเดิมที่ใช้ key เดียวกัน
+    const updated = filters.filter((f) => !f.startsWith(`${key}_`));
+
+    // ถ้าเดิมเลือกอยู่แล้ว -> ไม่ต้องเพิ่มใหม่ (หมายถึง toggle off)
+    const isAlreadySelected = filters.includes(filterKey);
+
+    // ถ้ายังไม่ได้เลือก -> ใส่เข้าไป
+    if (!isAlreadySelected) {
+      updated.push(filterKey);
+    }
+
+    // จัดการ mutually exclusive filters เช่น dnd, mur
+    // const conflicts = mutuallyExclusive[filterKey];
+    // if (conflicts) {
+    //   const conflictArray = Array.isArray(conflicts) ? conflicts : [conflicts];
+    //   setFilters(updated.filter((f) => !conflictArray.includes(f)));
+    // } else {
+    //   setFilters(updated);
+    // }
+    setFilters(updated);
+  };
+
+  return { toggleFilter };
+};
+
+export const doesTaskMatchFilters = (task, filters) => {
+  return filters.every((filterKey) => {
+    if (filterKey === "noservice") {
+      return task.dnd_status === 0 && task.mur_status === 0;
+    }
+
+    const [key, rawValue] = filterKey.split("_");
+    const value = isNaN(rawValue) ? rawValue : Number(rawValue);
+
+    switch (key) {
+      case "status":
+        return task.is_online === value;
+      case "check":
+        return task.room_check_status === value;
+      case "gi":
+        return task.guest_status_id === value;
+      case "dnd":
+        return task.dnd_status === value;
+      case "mur":
+        return task.mur_status === value;
+      case "taskStatus":
+        return task.status_id === value;
+      case "assign":
+        return task.assigned_to === value;
+      case "createdBy":
+        return task.created_by === value;
+      case "assignedToType":
+        return task.assigned_to_type === value;
+      default:
+        return true;
+    }
+  });
+};
+
+export function getFilterLabel(
+  filterKey,
+  technicianList = [],
+  maintenance_status,
+  createdByOptions = [],
+  assignedToTypeOptions = []
+) {
+  if (!filterKey) return "";
+
+  if (filterKey === "noservice") return "No Service";
+
+  const [key, rawValue] = filterKey.split("_");
+  const value = isNaN(rawValue) ? rawValue : Number(rawValue);
+
+  switch (key) {
+    case "taskStatus":
+      return (
+        {
+          [maintenance_status.ASSIGNED]: "Assigned",
+          [maintenance_status.IN_PROGRESS]: "In Progress",
+          [maintenance_status.FIXED]: "Fixed",
+          [maintenance_status.UNRESOLVED]: "Unresolved",
+        }[value] || filterKey
+      );
+
+    case "assign":
+      const tech = technicianList.find((t) => t.id === value);
+      return tech ? tech.full_name : filterKey;
+
+    case "createdBy":
+      const creator = createdByOptions.find((c) => c.value === value);
+      return creator ? creator.label : `User #${value}`;
+
+    case "assignedToType":
+      const type = assignedToTypeOptions.find((c) => c.value === value);
+      return type ? type.label : `Type #${value}`;
+
+    case "status":
+      return value === 1 ? "Online" : "Offline";
+
+    case "check":
+      return value === 1 ? "Checked In" : "Checked Out";
+
+    case "gi":
+      return value === 1 ? "Guest In" : "Guest Out";
+
+    case "dnd":
+      return value === 1 ? "DND" : "No DND";
+
+    case "mur":
+      return value === 1 ? "Make Up Room" : "No MUR";
+
+    default:
+      return filterKey;
+  }
+}
+
 // COIL STATUS, INPUT STATUS, HOLDING REGISTER,  INPUT REGISTER

@@ -30,8 +30,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [viewTask, setViewTask] = useState(false);
-  const [taskImages, setTaskImages] = useState({});
-  const [fixDescription, setFixDescription] = useState("");
   const [statusCounts, setStatusCounts] = useState({});
   const [isWsReady, setIsWsReady] = useState(false);
   const ws = useRef(null);
@@ -119,9 +117,7 @@ const Dashboard = () => {
 
       case client.NEW_TASK:
         if (param) {
-          const statusCounts = param?.statusCounts;
           const newTask = param?.task;
-          setStatusCounts(statusCounts);
           setTaskList((prev) => {
             const exists = prev.find((t) => t.id === newTask.id);
             if (exists) return prev;
@@ -132,13 +128,45 @@ const Dashboard = () => {
 
       case client.UPDATE_TASK:
         if (param) {
-          const t = 0;
+          console.log(param);
+          const newTask = param?.task;
+          const taskId = param?.task?.id;
+          if (
+            newTask.status_id == maintenance_status.PENDING ||
+            newTask.status_id == maintenance_status.ASSIGNED ||
+            newTask.status_id == maintenance_status.IN_PROGRESS
+          ) {
+            if (
+              user?.id == Number(newTask?.assigned_to) &&
+              newTask.status_id == maintenance_status.ASSIGNED
+            ) {
+              setTaskList((prev) => {
+                const exists = prev.find((t) => t.id === newTask.id);
+                if (exists) return prev;
+                return [newTask, ...prev];
+              });
+            } else {
+              setTaskList((prev) =>
+                prev.map((task) =>
+                  task.id == taskId
+                    ? {
+                        ...task,
+                        ...newTask,
+                      }
+                    : task
+                )
+              );
+            }
+          } else {
+            setTaskList((prev) => prev.filter((task) => task.id !== taskId));
+          }
         }
         break;
 
       case client.DELETE_TASK:
         if (param) {
-          const t = 0;
+          const taskId = Number(param?.task_id);
+          setTaskList((prev) => prev.filter((task) => task.id !== taskId));
         }
         break;
 

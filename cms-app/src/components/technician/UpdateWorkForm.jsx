@@ -50,7 +50,7 @@ const UpdateWorkForm = ({
       const response = await UpdateTask(token, selectedTask?.id, formData);
       toast.success(response?.data?.message || "Work updated successfully");
       onEdit();
-      fetchTaskList();
+      // fetchTaskList();
     } catch (err) {
       console.log(err);
       toast.error(err.response?.data?.message || "Failed to update work");
@@ -74,7 +74,6 @@ const UpdateWorkForm = ({
             </option>
             {rooms.map((room) => (
               <option key={room.id} value={room.id}>
-                {room.floor}
                 {room.room_number}
               </option>
             ))}

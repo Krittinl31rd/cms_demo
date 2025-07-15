@@ -312,9 +312,32 @@ const RoomDevicesLog = () => {
               } else {
                 labelEnvent = "is";
                 value == 0
-                  ? (labelValue = "ON")
-                  : value == 1
                   ? (labelValue = "OFF")
+                  : value == 1
+                  ? (labelValue = "ON")
+                  : (labelValue = "N/A");
+              }
+            }
+            break;
+          }
+
+          case device_type.OTHER: {
+            if (row.action == 1) {
+              if (row.device_name == "Guest-IN/OUT") {
+                labelEnvent = "";
+                labelName = "";
+                value == 0 || value == 2
+                  ? (labelValue = "GUEST IN")
+                  : value == 1
+                  ? (labelValue = "GUEST OUT")
+                  : (labelValue = "N/A");
+              } else if (row.device_name == "Service-IN/OUT") {
+                labelEnvent = "";
+                labelName = "";
+                value == 1
+                  ? (labelValue = "SERVICE IN")
+                  : value == 0
+                  ? (labelValue = "SERVICE OUT")
                   : (labelValue = "N/A");
               }
             }
