@@ -197,8 +197,9 @@ const updateRoomStatusInDB = async (roomStatus) => {
     const replacements = { ip: roomStatus.ip };
 
     if ("guest_status_id" in roomStatus) {
-      fields.push("guest_status_id = :guest_status_id");
-      replacements.guest_status_id = roomStatus.guest_status_id == 0 ? 0 : 1;
+      console.log(roomStatus.guest_status_id);
+      // fields.push("guest_status_id = :guest_status_id");
+      // replacements.guest_status_id = roomStatus.guest_status_id == 0 ? 0 : 1;
     }
     if ("dnd_status" in roomStatus) {
       fields.push("dnd_status = :dnd_status");
