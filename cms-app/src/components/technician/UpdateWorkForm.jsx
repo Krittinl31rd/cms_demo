@@ -50,7 +50,7 @@ const UpdateWorkForm = ({
       const response = await UpdateTask(token, selectedTask?.id, formData);
       toast.success(response?.data?.message || "Work updated successfully");
       onEdit();
-      fetchTaskList();
+      // fetchTaskList();
     } catch (err) {
       console.log(err);
       toast.error(err.response?.data?.message || "Failed to update work");

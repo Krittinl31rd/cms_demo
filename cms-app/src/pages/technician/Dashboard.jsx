@@ -49,7 +49,7 @@ const Dashboard = () => {
       const response = await GetMaintenanceTaskByUserID(user?.id, token, query);
       setTaskList(response?.data.tasks || []);
       setStatusCounts(response?.data.statusCounts || {});
-      console.log(response.data);
+      // console.log(response.data);
     } catch (err) {
       console.error(err);
     } finally {

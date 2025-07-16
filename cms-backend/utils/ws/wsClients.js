@@ -19,11 +19,11 @@ function removeWsClientById(id) {
 }
 
 function getWsClientById(id) {
-  return wsClients.find((client) => String(client.id) === String(id));
+  return wsClients.filter((client) => String(client.id) === String(id));
 }
 
 function getWsClientByUserId(userId) {
-  const client = wsClients.find(
+  const client = wsClients.filter(
     (client) => client.user && String(client.user.id) === String(userId)
   );
   return client;
@@ -44,6 +44,9 @@ function isSocketOpen(socket) {
 // Broadcast to all connected clients
 function sendWsMessageToAll(data) {
   const message = JSON.stringify(data);
+  if (wsClients.length == 0) {
+    return false;
+  }
   wsClients.forEach((client) => {
     if (isSocketOpen(client.socket)) {
       client.socket.send(message);
@@ -53,33 +56,44 @@ function sendWsMessageToAll(data) {
 
 // Send to a specific client by client.id
 function sendWsMessageToClientById(id, data) {
-  const client = getWsClientById(id);
-  if (client && isSocketOpen(client.socket)) {
-    client.socket.send(JSON.stringify(data));
-    return true;
+  const clients = getWsClientById(id);
+  const message = JSON.stringify(data);
+  if (clients.length == 0) {
+    return false;
   }
-  return false;
+  clients.forEach((client) => {
+    if (isSocketOpen(client.socket)) {
+      client.socket.send(message);
+    }
+  });
 }
 
 // Send to a client by user ID
 function sendWsMessageToUser(userId, data) {
-  const client = getWsClientByUserId(userId);
-  if (client && isSocketOpen(client.socket)) {
-    client.socket.send(JSON.stringify(data));
-    return true;
-  } else {
+  const clients = getWsClientByUserId(userId);
+  const message = JSON.stringify(data);
+  if (clients.length == 0) {
     return false;
   }
+  clients.forEach((client) => {
+    if (isSocketOpen(client.socket)) {
+      client.socket.send(message);
+    }
+  });
 }
 
 // Send to all clients by role ID
 function sendWsMessageToRole(roleId, data) {
+  const clients = getWsClientByRoleId(roleId);
   const message = JSON.stringify(data);
-  const roleClients = getWsClientByRoleId(roleId);
-  roleClients.forEach((client) => {
-    client.socket.send(message);
+  if (clients.length == 0) {
+    return false;
+  }
+  clients.forEach((client) => {
+    if (isSocketOpen(client.socket)) {
+      client.socket.send(message);
+    }
   });
-  return roleClients.length > 0;
 }
 
 function sendWsMessageToModbusClient(data) {
@@ -90,7 +104,6 @@ function sendWsMessageToModbusClient(data) {
   if (wsModbusClient == undefined) {
     return false;
   }
-  console.log(message);
   wsModbusClient.socket.send(message);
   return true;
 }

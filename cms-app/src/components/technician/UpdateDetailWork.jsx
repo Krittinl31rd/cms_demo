@@ -124,7 +124,7 @@ const UpdateDetailWork = ({
       toast.success(
         response?.data?.message || "Maintenance task updated successfully."
       );
-      fetchTaskList();
+      // fetchTaskList();
       setViewTask(false);
     } catch (err) {
       toast.error(err?.response?.data || "Maintenance task updated failed.");

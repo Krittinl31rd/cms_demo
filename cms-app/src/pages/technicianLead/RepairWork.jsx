@@ -120,7 +120,7 @@ const RepairWork = () => {
       const response = await DeleteTask(id, token);
       toast.success(response?.data?.message || "Delete task successfully");
       setDeleteTask(false);
-      fetchTaskList();
+      // fetchTaskList();
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || "Failed to delete task");
