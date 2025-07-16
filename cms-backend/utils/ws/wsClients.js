@@ -52,6 +52,7 @@ function sendWsMessageToAll(data) {
       client.socket.send(message);
     }
   });
+  return wsClients.length;
 }
 
 // Send to a specific client by client.id
@@ -66,6 +67,7 @@ function sendWsMessageToClientById(id, data) {
       client.socket.send(message);
     }
   });
+  return clients;
 }
 
 // Send to a client by user ID
@@ -80,6 +82,7 @@ function sendWsMessageToUser(userId, data) {
       client.socket.send(message);
     }
   });
+  return clients;
 }
 
 // Send to all clients by role ID
@@ -94,6 +97,7 @@ function sendWsMessageToRole(roleId, data) {
       client.socket.send(message);
     }
   });
+  return clients;
 }
 
 function sendWsMessageToModbusClient(data) {
