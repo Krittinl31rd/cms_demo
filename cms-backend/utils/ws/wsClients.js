@@ -50,9 +50,10 @@ function sendWsMessageToAll(data) {
   wsClients.forEach((client) => {
     if (isSocketOpen(client.socket)) {
       client.socket.send(message);
+      console.log(`sendWsMessageToAll: ${wsClients.length}`);
     }
   });
-  return wsClients.length;
+  return true;
 }
 
 // Send to a specific client by client.id
@@ -65,9 +66,10 @@ function sendWsMessageToClientById(id, data) {
   clients.forEach((client) => {
     if (isSocketOpen(client.socket)) {
       client.socket.send(message);
+      console.log(`sendWsMessageToClientById: ${wsClients.length}`);
     }
   });
-  return clients;
+  return true;
 }
 
 // Send to a client by user ID
@@ -80,9 +82,10 @@ function sendWsMessageToUser(userId, data) {
   clients.forEach((client) => {
     if (isSocketOpen(client.socket)) {
       client.socket.send(message);
+      console.log(`sendWsMessageToUser: ${wsClients.length}`);
     }
   });
-  return clients;
+  return true;
 }
 
 // Send to all clients by role ID
@@ -95,9 +98,10 @@ function sendWsMessageToRole(roleId, data) {
   clients.forEach((client) => {
     if (isSocketOpen(client.socket)) {
       client.socket.send(message);
+      console.log(`sendWsMessageToRole: ${wsClients.length}`);
     }
   });
-  return clients;
+  return true;
 }
 
 function sendWsMessageToModbusClient(data) {
