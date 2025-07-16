@@ -369,7 +369,7 @@ const Dashboard = () => {
         </div>
       </div>
       <div className="flex-1 flex flex-col gap-2">
-        <div className="grid grid-cols-2 gap-2">
+        {/* <div className="grid grid-cols-2 gap-2">
           <div className="h-[125px] bg-white border-t-4 border-t-check_in rounded-lg p-4 flex items-center justify-between shadow-lg">
             <div className="flex-1 space-y-1">
               <h6 className="text-3xl font-bold">12</h6>
@@ -392,7 +392,7 @@ const Dashboard = () => {
               <DoorClosed />
             </div>
           </div>
-        </div>
+        </div> */}
         <div className="flex items-center bg-white rounded-lg shadow-lg p-2 gap-2 flex-wrap">
           <div className="flex-1 flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-1">

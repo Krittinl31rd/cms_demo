@@ -53,7 +53,7 @@ export default function AssignWorkForm({
       const response = await CreateTask(formData, token);
       toast.success(response?.data?.message || "Work assigned successfully");
       onAssign();
-      // fetchTaskList();
+      fetchTaskList();
     } catch (err) {
       console.log(err);
       toast.error(err.response?.data?.message || "Failed to assign work");

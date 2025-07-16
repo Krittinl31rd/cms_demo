@@ -120,7 +120,7 @@ const RepairWork = () => {
       const response = await DeleteTask(id, token);
       toast.success(response?.data?.message || "Delete task successfully");
       setDeleteTask(false);
-      // fetchTaskList();
+      fetchTaskList();
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || "Failed to delete task");
@@ -212,6 +212,60 @@ const RepairWork = () => {
           console.log("Login success");
         }
         break;
+
+      case client.MODBUS_STATUS: {
+        console.log(param);
+        if (Array.isArray(param.data)) {
+          setTaskList((prevRooms) =>
+            prevRooms.map((room) => {
+              const match = param.data.find(
+                (item) => item.ip == room.ip_address
+              );
+              return match ? { ...room, is_online: match.status } : room;
+            })
+          );
+        } else if (param.ip) {
+          setTaskList((prevRooms) =>
+            prevRooms.map((room) =>
+              room.ip_address === param.ip
+                ? { ...room, is_online: param.status }
+                : room
+            )
+          );
+        }
+
+        break;
+      }
+
+      case client.ROOM_STATUS_UPDATE: {
+        if (param.data) {
+          const roomStatus = param.data;
+
+          setTaskList((prevRooms) =>
+            prevRooms.map((room) => {
+              if (room.ip_address == roomStatus.ip) {
+                return {
+                  ...room,
+                  ...(roomStatus.guest_status_id != undefined && {
+                    guest_status_id: roomStatus.guest_status_id,
+                  }),
+                  ...(roomStatus.dnd_status != undefined && {
+                    dnd_status: roomStatus.dnd_status,
+                  }),
+                  ...(roomStatus.mur_status != undefined && {
+                    mur_status: roomStatus.mur_status,
+                  }),
+                  ...(roomStatus.room_check_status != undefined && {
+                    room_check_status: roomStatus.room_check_status,
+                  }),
+                };
+              }
+              return room;
+            })
+          );
+        }
+        break;
+      }
 
       case client.NEW_TASK:
         if (param) {
