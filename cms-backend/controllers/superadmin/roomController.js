@@ -100,7 +100,7 @@ exports.GetRooms = async (req, res) => {
           floor: room.floor,
           guest_status_id: room.guest_status_id,
           cleaning_status_id: room.cleaning_status_id,
-          dnd_status: room.dnd_status,
+          request_status: room.request_status,
           mur_status: room.mur_status,
           room_check_status: room.room_check_status,
           is_online: room.is_online,
@@ -122,7 +122,7 @@ exports.GetRoomByID = async (req, res) => {
   try {
     const { room_id } = req.params;
     const rooms = await sequelize.query(
-      `SELECT id, room_number, floor, guest_status_id, cleaning_status_id, dnd_status, mur_status, room_check_status, is_online 
+      `SELECT id, room_number, floor, guest_status_id, cleaning_status_id, request_status, mur_status, room_check_status, is_online 
       FROM rooms WHERE id = :room_id;`,
       {
         replacements: { room_id },
@@ -208,7 +208,7 @@ exports.GetRoomByIDWithDevices = async (req, res) => {
           floor: room.floor,
           guest_status_id: room.guest_status_id,
           cleaning_status_id: room.cleaning_status_id,
-          dnd_status: room.dnd_status,
+          request_status: room.request_status,
           mur_status: room.mur_status,
           room_check_status: room.room_check_status,
           is_online: room.is_online,

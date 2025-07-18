@@ -7,6 +7,7 @@ const {
   insertToDB,
   updateRoomStatusInDB,
   updateIsOnline,
+  insertGuestPersenceLogs,
 } = require("./utils/ws/db");
 const {
   mapChangedDataToDeviceControls,
@@ -163,6 +164,7 @@ wss.on("connection", (ws) => {
         const roomStatus = await handleRoomStatusUpdate(ip, mappedData);
         if (roomStatus) {
           await updateRoomStatusInDB(roomStatus);
+          await insertGuestPersenceLogs(roomStatus);
         }
       }
 
@@ -174,11 +176,10 @@ wss.on("connection", (ws) => {
           changedData
         );
         await updatedToDB(mappedData);
-
         const roomStatus = await handleRoomStatusUpdate(ip, mappedData);
-
         if (roomStatus != undefined || roomStatus != null) {
           await updateRoomStatusInDB(roomStatus);
+          await insertGuestPersenceLogs(roomStatus);
           broadcastToLoggedInClients(
             JSON.stringify({
               cmd: ws_cmd.ROOM_STATUS_UPDATE,
@@ -241,7 +242,7 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
-    console.log(`Client ${infoClient.id} disconnected`);
+    // console.log(`Client ${infoClient.id} disconnected`);
     removeWsClientById(infoClient.id);
   });
 });

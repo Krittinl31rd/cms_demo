@@ -506,7 +506,7 @@ const Dashboard = () => {
                         {String(item.room_number).padStart(2, "0")}
                       </span>
                     </div>
-                    {/* <div className="flex gap-1">
+                    <div className="flex gap-1">
                       <button
                         onClick={() => {
                           sendWebSocketMessage({
@@ -541,7 +541,7 @@ const Dashboard = () => {
                       >
                         MUR
                       </button>
-                    </div> */}
+                    </div>
                   </div>
                   <div className="flex-1 overflow-auto px-2 py-1 max-h-[125px]">
                     <div className="w-full flex items-start gap-1">

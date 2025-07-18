@@ -94,10 +94,15 @@ const logs_type = {
 };
 
 const notification_type = {
-  //Notification Type
-  ALERT: 0, //No Type
-  CLEANING: 1, //To Maid
-  MAINTENANCE: 2, //To Technician
+  ALERT: 1,
+  CLEANING: 2,
+  MAINTENANCE: 3,
+};
+
+const technician_type = {
+  RCU: 1,
+  ELECTRICAL: 2,
+  OTHER: 3,
 };
 
 module.exports = {
@@ -112,4 +117,5 @@ module.exports = {
   task_status,
   cleaning_status,
   statusNameMap,
+  technician_type,
 };

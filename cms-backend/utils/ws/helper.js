@@ -88,25 +88,81 @@ const mapChangedDataToDeviceControls = async (ip_address, changedData) => {
 // dnd_status = address 6, mur_status = address 5,
 // room_check_status | check in/out = address 8
 
+const deviceStatusCache = {}; // key = ip, value = { mur: 0|1, dnd: 0|1, lastSentRequestStatus: 0|1|2 }
+
 const handleRoomStatusUpdate = async (ip, mappedData) => {
   const status = { ip };
 
+  if (!deviceStatusCache[ip]) {
+    deviceStatusCache[ip] = {
+      mur: 0,
+      dnd: 0,
+      lastSentRequestStatus: -1,
+      lastGuestStatusId: -1,
+      lastRoomCheckStatus: -1,
+    };
+  }
+
+  const current = deviceStatusCache[ip];
+  let newMur = current.mur;
+  let newDnd = current.dnd;
+
   for (const item of mappedData) {
     if (item.address == 5) {
-      status.mur_status = item.value;
+      if (item.value === 1 || item.value === 2) newMur = 1;
+      else if (item.value === 0) newMur = 0;
     }
+
     if (item.address == 6) {
-      status.dnd_status = item.value;
+      if (item.value === 1) newDnd = 1;
+      else if (item.value === 0) newDnd = 0;
     }
+
     if (item.address == 75) {
-      status.guest_status_id = item.value;
+      status.guest_status_id = item.value >= 2 ? 1 : 0;
     }
+
     if (item.address == 8) {
       status.room_check_status = item.value;
     }
   }
 
-  return Object.keys(status).length > 1 ? status : null;
+  // Update memory cache
+  current.mur = newMur;
+  current.dnd = newDnd;
+
+  // Determine request_status
+  let newRequestStatus = 0;
+  if (newDnd === 1) newRequestStatus = 1;
+  else if (newMur === 1) newRequestStatus = 2;
+
+  let updated = false;
+
+  if (
+    "guest_status_id" in status &&
+    status.guest_status_id !== current.lastGuestStatusId
+  ) {
+    updated = true;
+    current.lastGuestStatusId = status.guest_status_id;
+  }
+
+  if (
+    "room_check_status" in status &&
+    status.room_check_status !== current.lastRoomCheckStatus
+  ) {
+    updated = true;
+    current.lastRoomCheckStatus = status.room_check_status;
+  }
+
+  if (newRequestStatus !== current.lastSentRequestStatus) {
+    updated = true;
+    current.lastSentRequestStatus = newRequestStatus;
+  }
+
+  if (!updated) return null;
+
+  status.request_status = newRequestStatus;
+  return status;
 };
 
 module.exports = {

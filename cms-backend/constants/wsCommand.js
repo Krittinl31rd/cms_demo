@@ -11,6 +11,7 @@ const ws_cmd = {
   NEW_TASK: 100,
   UPDATE_TASK: 101,
   DELETE_TASK: 102,
+  NOTIFICATION: 200,
 };
 
 const client = {
@@ -23,6 +24,7 @@ const client = {
   NEW_TASK: 100, // receive new task and count task
   UPDATE_TASK: 101, // receive update task and count task
   DELETE_TASK: 102, // receive task id for deleted
+  NOTIFICATION: 200, // receive all notification
 };
 
 module.exports = { ws_cmd, client };

@@ -338,7 +338,7 @@ exports.GetMaintenanceTaskByID = async (req, res) => {
       rooms.room_number,
       rooms.floor,
       rooms.guest_status_id,
-      rooms.dnd_status,
+      rooms.request_status,
       rooms.room_check_status,
       rooms.cleaning_status_id,
       rooms.is_online,
@@ -409,7 +409,7 @@ exports.GetMaintenanceTaskByUserID = async (req, res) => {
         rooms.room_number,
         rooms.floor,
         rooms.guest_status_id,
-        rooms.dnd_status,
+        rooms.request_status,
         rooms.room_check_status,
         rooms.cleaning_status_id,
         rooms.is_online,
@@ -609,29 +609,27 @@ exports.UpdateMaintenanceTask = async (req, res) => {
 
       if (role_id == member_role.TECHNICIAN_LEAD) {
         // console.log(member_role.TECHNICIAN_LEAD, assigned_to);
-        const resWS = sendWsMessageToUser(assigned_to, {
+        sendWsMessageToUser(assigned_to, {
           cmd: ws_cmd.UPDATE_TASK,
           param: {
             statusCounts: statusCounts,
             task: task,
           },
         });
-        console.log(`sendWsMessageToUser: ${resWS}`);
       } else {
-        const resWS = sendWsMessageToUser(id, {
+        sendWsMessageToUser(id, {
           cmd: ws_cmd.UPDATE_TASK,
           param: {
             statusCounts: statusCounts,
             task: task,
           },
         });
-        console.log(`sendWsMessageToUser: ${resWS}`);
         if (
           status_id == maintenance_status.IN_PROGRESS ||
           status_id == maintenance_status.COMPLETED ||
           status_id == maintenance_status.UNRESOLVED
         ) {
-          const resWS = sendWsMessageToModbusClient({
+          sendWsMessageToModbusClient({
             cmd: ws_cmd.WRITE_REGISTER,
             param: {
               ip: task.ip_address,
@@ -642,11 +640,10 @@ exports.UpdateMaintenanceTask = async (req, res) => {
               userId: id,
             },
           });
-          console.log(`sendWsMessageToModbusClient: ${resWS}`);
         }
       }
 
-      const resWS = sendWsMessageToRole(member_role.TECHNICIAN_LEAD, {
+      sendWsMessageToRole(member_role.TECHNICIAN_LEAD, {
         cmd: ws_cmd.UPDATE_TASK,
         param: {
           statusCounts: statusCounts,
@@ -731,6 +728,36 @@ exports.GetRoomNumberAndFloor = async (req, res) => {
     res.status(200).json(rooms);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.GetGuestPersenceLogs = async (req, res) => {
+  try {
+    const {
+      room_id, // 101
+      event_type, // dnd_on, dnd_off, check_in, check_out
+      event_time, // date
+      created_by, // userID
+      source, // 0, -1
+    } = req.query;
+    const result = await sequelize.query(
+      `
+      SELECT 
+      guest_persence_logs.*,
+      rooms.floor
+      FROM guest_persence_logs
+      INNER JOIN rooms ON guest_persence_logs.room_id = rooms.id
+       `,
+      {
+        // replacements: { status: "active" },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

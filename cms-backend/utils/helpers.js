@@ -1,5 +1,8 @@
 const sequelize = require("../config/db");
 const axios = require("axios");
+const { sendWsMessageToRole } = require("./ws/wsClients");
+const { member_role } = require("../constants/common");
+const { ws_cmd } = require("../constants/wsCommand");
 
 const payloadNotify = {
   data: {
@@ -82,7 +85,7 @@ async function doBoardcastNotification({ data, boardcast }) {
   }
 
   const onesignalUsers = await sequelize.query(
-    `SELECT subscribe_id
+    `SELECT subscribe_id, user_id
      FROM onesignal
      WHERE user_id IN (:user_ids) AND is_login = 1 AND expires_at > NOW() + INTERVAL 7 HOUR`,
     {
@@ -94,7 +97,10 @@ async function doBoardcastNotification({ data, boardcast }) {
   const subscribeId = onesignalUsers.map((user) => user.subscribe_id);
 
   if (subscribeId.length === 0) {
-    console.warn(`No OneSignal subscription found for users:`, userIds);
+    console.warn(
+      "No active OneSignal subscription found for target users",
+      userIds
+    );
     return;
   }
 
@@ -137,10 +143,72 @@ async function doBoardcastNotification({ data, boardcast }) {
     },
   });
 
-  return {
-    message: "Notification sent successfully",
-    response: response.data,
-  };
+  if (response.status == 200 || response.status == 201) {
+    const logsToInsert = subscribeId.map((subId) => {
+      const user = onesignalUsers.find((u) => u.subscribe_id == subId);
+      return {
+        type_id: data.type_notification,
+        room_id: isRoom.id,
+        user_id: user?.user_id || null,
+        subscribe_id: subId,
+        message: data.message,
+      };
+    });
+
+    if (logsToInsert.length > 0) {
+      const values = logsToInsert.map(() => "(?, ?, ?, ?, ?)").join(", ");
+
+      const replacements = logsToInsert.flatMap((log) => [
+        log.type_id,
+        log.room_id,
+        log.user_id,
+        log.subscribe_id,
+        log.message,
+      ]);
+
+      await sequelize.query(
+        `INSERT INTO notifications (type_id, room_id, user_id, subscribe_id, message) VALUES ${values}`,
+        { replacements }
+      );
+
+      sendWsMessageToRole(member_role, {
+        cmd: ws_cmd.NEW_TASK,
+        param: {
+          replacements,
+        },
+      });
+    }
+
+    return {
+      message: "Notification sent successfully",
+      response: response.data,
+    };
+  } else {
+    return {
+      message: "Notification failed:",
+      response: response.data,
+    };
+  }
+}
+
+async function InsertNotificationLog({
+  type_id,
+  room_id,
+  user_id,
+  subscribe_id,
+  message,
+}) {
+  try {
+    await sequelize.query(
+      `INSERT INTO notification_log (type_id, room_id, user_id, subscribe_id, message)
+     VALUES (:type_id, :room_id, :user_id, :subscribe_id, :message)`,
+      {
+        replacements: { type_id, room_id, user_id, subscribe_id, message },
+      }
+    );
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 function delay(ms) {
@@ -150,6 +218,5 @@ function delay(ms) {
 module.exports = {
   CheckTypeTechnician,
   doBoardcastNotification,
-  payloadNotify,
   delay,
 };

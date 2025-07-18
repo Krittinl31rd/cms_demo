@@ -6,12 +6,14 @@ const {
   countTaskByUserId,
   getTaskWithDetailsById,
 } = require("../../utils/dbHelpers");
-const { maintenance_status, member_role } = require("../../constants/common");
-const { CheckTypeTechnician } = require("../../utils/helpers");
+const {
+  maintenance_status,
+  member_role,
+  notification_type,
+} = require("../../constants/common");
 const {
   CheckTypeTechnician,
   doBoardcastNotification,
-  payloadNotify,
 } = require("../../utils/helpers");
 const { ws_cmd } = require("../../constants/wsCommand");
 const {
@@ -22,90 +24,9 @@ const {
   sendWsMessageToModbusClient,
 } = require("../../utils/ws/wsClients");
 
-// find user by type and count task today and yesterday, user with the least work will be selected.
-// exports.CreateMaintenanceTaskByType = async (req, res) => {
-//   try {
-//     const { ip, type, message } = req.body;
-
-//     // fin the user with the least work today and yesterday
-//     const leastBusy = await sequelize.query(
-//       `
-//       SELECT
-//         t.user_id,
-//         COUNT(m.id) AS task_count
-//       FROM
-//         technician t
-//       LEFT JOIN
-//         maintenance_tasks m ON t.user_id = m.assigned_to
-//         AND DATE(m.created_at) IN (CURDATE(), DATE_SUB(CURDATE(), INTERVAL 1 DAY))
-//         AND m.status_id IN (${maintenance_status.ASSIGNED}, ${maintenance_status.IN_PROGRESS}, ${maintenance_status.COMPLETED}, ${maintenance_status.UNRESOLVED})
-//       WHERE
-//         t.type_id = :type
-//       GROUP BY
-//         t.user_id
-//       ORDER BY
-//         task_count ASC, RAND()
-//       LIMIT 1
-//       `,
-//       {
-//         replacements: { type },
-//         type: sequelize.QueryTypes.SELECT,
-//       }
-//     );
-
-//     if (!leastBusy || leastBusy.length == 0) {
-//       return res
-//         .status(404)
-//         .json({ message: "No technician with task count found." });
-//     }
-
-//     const selectedUser = leastBusy[0].user_id;
-
-//     const room = await sequelize.query(
-//       `
-//       SELECT id FROM rooms WHERE ip_address = :ip_address
-//       `,
-//       {
-//         replacements: { ip_address: ip },
-//         type: sequelize.QueryTypes.SELECT,
-//       }
-//     );
-
-//     if (!room || room.length == 0) {
-//       return res.status(404).json({ message: "No rooms found." });
-//     }
-//     const roomId = room[0].id;
-
-//     // create maintenance task
-//     await sequelize.query(
-//       `
-//       INSERT INTO maintenance_tasks (room_id, assigned_to, problem_description, status_id, created_by)
-//       VALUES (:room_id, :assigned_to, :problem_description, ${maintenance_status.ASSIGNED}, :created_by)
-//       `,
-//       {
-//         replacements: {
-//           room_id: roomId,
-//           assigned_to: selectedUser,
-//           problem_description: message,
-//           created_by: null, //null is system assigned
-//         },
-//         type: sequelize.QueryTypes.INSERT,
-//       }
-//     );
-
-//     res.status(200).json({
-//       message: "Task created and assigned successfully.",
-//       assigned_to: selectedUser,
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
-
 exports.CreateMaintenanceTaskByType = async (req, res) => {
   try {
-    const { ip, type, message } = req.body;
+    const { ip, type_technician, type_notification, message } = req.body;
 
     //  Find a technician with the least workload.
     const leastBusy = await sequelize.query(
@@ -120,7 +41,7 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
         AND DATE(m.created_at) IN (CURDATE(), DATE_SUB(CURDATE(), INTERVAL 1 DAY))
         AND m.status_id IN (${maintenance_status.ASSIGNED}, ${maintenance_status.IN_PROGRESS}, ${maintenance_status.COMPLETED}, ${maintenance_status.UNRESOLVED})
       WHERE
-        t.type_id = :type
+        t.type_id = :type_technician
       GROUP BY
         t.user_id
       ORDER BY
@@ -128,7 +49,7 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
       LIMIT 1
       `,
       {
-        replacements: { type },
+        replacements: { type_technician },
         type: sequelize.QueryTypes.SELECT,
       }
     );
@@ -173,7 +94,7 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
       });
     }
 
-    const description = `${CheckTypeTechnician(type)} - ${message}`;
+    const description = `${CheckTypeTechnician(type_technician)} - ${message}`;
 
     // create new task
     const [insertedTaskId] = await sequelize.query(
@@ -197,9 +118,12 @@ exports.CreateMaintenanceTaskByType = async (req, res) => {
       const payloadNotify = {
         data: {
           room_id: roomId,
+          type_technician,
+          type_notification,
           message: description,
         },
         boardcast: {
+          role: [member_role.TECHNICIAN_LEAD],
           user_id: [selectedUser],
         },
       };
@@ -332,7 +256,7 @@ exports.GetRoomByIDWithDevices = async (req, res) => {
           floor: room.floor,
           guest_status_id: room.guest_status_id,
           cleaning_status_id: room.cleaning_status_id,
-          dnd_status: room.dnd_status,
+          request_status: room.request_status,
           mur_status: room.mur_status,
           room_check_status: room.room_check_status,
           is_online: room.is_online,

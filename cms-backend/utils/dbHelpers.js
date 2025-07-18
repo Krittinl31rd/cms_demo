@@ -22,7 +22,7 @@ const getMaintenanceTaskBaseQuery = () => `
     rooms.room_number,
     rooms.floor,
     rooms.guest_status_id,
-    rooms.dnd_status,
+    rooms.request_status,
     rooms.room_check_status,
     rooms.cleaning_status_id,
     rooms.is_online,

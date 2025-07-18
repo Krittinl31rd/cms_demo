@@ -15,7 +15,15 @@ const {
   GetTechnicians,
   GetRoomNumberAndFloor,
   DeleteMaintenanceTask,
+  GetGuestPersenceLogs,
 } = require("../controllers/technicianlead/maintenanceController");
+
+router.get(
+  "/get-persence",
+  AuthCheck,
+  RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
+  GetGuestPersenceLogs
+);
 
 router.get(
   "/get-rooms-number-floor",

@@ -296,10 +296,9 @@ const logs_type = {
 };
 
 const notification_type = {
-  //Notification Type
-  ALERT: 0, //No Type
-  CLEANING: 1, //To Maid
-  MAINTENANCE: 2, //To Technician
+  ALERT: 1,
+  CLEANING: 2,
+  MAINTENANCE: 3,
 };
 
 export const modbus_funct = {

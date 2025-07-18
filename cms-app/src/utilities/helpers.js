@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 export const colorBadge = {
   1: "bg-gray-300/80 text-gray-950",
   2: "bg-yellow-300/80 text-yellow-950",
@@ -229,4 +231,109 @@ export function getFilterLabel(
   }
 }
 
+export const groupEventsByRoomAndType = (logs) => {
+  const grouped = [];
+  const sorted = [...logs].sort(
+    (a, b) => new Date(a.event_time) - new Date(b.event_time)
+  );
+
+  const usedIndexes = new Set();
+  const lastSeen = {}; // kepp check_in, guest_in lastest
+
+  for (let i = 0; i < sorted.length; i++) {
+    if (usedIndexes.has(i)) continue;
+
+    const log = sorted[i];
+    const { room_id, event_type, event_time, floor } = log;
+
+    // check_in
+    if (event_type === "check_in") {
+      lastSeen[`${room_id}_check_in`] = event_time;
+      grouped.push({
+        room_id,
+        floor,
+        event: "CHECK_IN",
+        time_on: event_time,
+        time_off: null,
+      });
+      usedIndexes.add(i);
+    }
+
+    // check_out -> compare check_in prev
+    else if (event_type === "check_out") {
+      const last = lastSeen[`${room_id}_check_in`];
+      grouped.push({
+        room_id,
+        floor,
+        event: "CHECK_OUT",
+        time_on: last || null,
+        time_off: event_time,
+      });
+      usedIndexes.add(i);
+    }
+
+    // guest_in
+    else if (event_type === "guest_in") {
+      lastSeen[`${room_id}_guest_in`] = event_time;
+      grouped.push({
+        room_id,
+        floor,
+        event: "GUEST_IN",
+        time_on: event_time,
+        time_off: null,
+      });
+      usedIndexes.add(i);
+    }
+
+    //  guest_out -> compare guest_in prev
+    else if (event_type === "guest_out") {
+      const last = lastSeen[`${room_id}_guest_in`];
+      grouped.push({
+        room_id,
+        floor,
+        event: "GUEST_OUT",
+        time_on: last || null,
+        time_off: event_time,
+      });
+      usedIndexes.add(i);
+    }
+
+    //  dnd_on/dnd_off / mur_on/mur_off (compare)
+    else if (event_type.endsWith("_on")) {
+      const base = event_type.replace("_on", "");
+      const offIndex = sorted.findIndex(
+        (l, idx) =>
+          idx > i &&
+          !usedIndexes.has(idx) &&
+          l.room_id === room_id &&
+          l.event_type === `${base}_off`
+      );
+
+      if (offIndex !== -1) {
+        grouped.push({
+          room_id,
+          floor,
+          event: base.toUpperCase(),
+          time_on: event_time,
+          time_off: sorted[offIndex].event_time,
+        });
+        usedIndexes.add(i);
+        usedIndexes.add(offIndex);
+      } else {
+        grouped.push({
+          room_id,
+          floor,
+          event: base.toUpperCase(),
+          time_on: event_time,
+          time_off: null,
+        });
+        usedIndexes.add(i);
+      }
+    }
+  }
+
+  return grouped;
+};
+
 // COIL STATUS, INPUT STATUS, HOLDING REGISTER,  INPUT REGISTER
+// dayjs(event_time).format("HH:mm:ss")
