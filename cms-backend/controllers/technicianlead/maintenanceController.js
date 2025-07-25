@@ -16,11 +16,15 @@ const {
   getTaskWithDetailsById,
   getUpdatedFields,
 } = require("../../utils/dbHelpers");
-const { maintenance_status, member_role } = require("../../constants/common");
+const {
+  maintenance_status,
+  member_role,
+  notification_type,
+  technician_type,
+} = require("../../constants/common");
 const {
   CheckTypeTechnician,
   doBoardcastNotification,
-  payloadNotify,
 } = require("../../utils/helpers");
 const { ws_cmd } = require("../../constants/wsCommand");
 
@@ -101,11 +105,24 @@ exports.CreateMaintenanceTask = async (req, res) => {
     );
 
     try {
-      payloadNotify.data.room_id = room_id;
-      payloadNotify.data.message = `${CheckTypeTechnician(
-        tech_type_id
-      )} - ${problem_description}`;
-      payloadNotify.boardcast.user_id = [assigned_to];
+      const payloadNotify = {
+        data: {
+          room_id: room_id,
+          type_technician: tech_type_id,
+          type_notification:
+            tech_type_id == technician_type.ELECTRICAL
+              ? notification_type.MAINTENANCE
+              : tech_type_id == technician_type.RCU &&
+                notification_type.CLEANING,
+          message: `${CheckTypeTechnician(
+            tech_type_id
+          )} - ${problem_description}`,
+        },
+        boardcast: {
+          role: [member_role.TECHNICIAN_LEAD],
+          user_id: [assigned_to],
+        },
+      };
       await doBoardcastNotification(payloadNotify);
     } catch (err) {
       console.error("Error sending notification:", err);
@@ -159,6 +176,7 @@ exports.GetMaintenanceTask = async (req, res) => {
       started_at,
       ended_at,
       created_by,
+      assigned_to_type,
     } = req.query;
 
     const baseQuery = getMaintenanceTaskBaseQuery();
@@ -185,6 +203,20 @@ exports.GetMaintenanceTask = async (req, res) => {
     if (created_by) {
       whereClauses.push("maintenance_tasks.created_by = :created_by");
       replacements.created_by = created_by;
+    }
+
+    if (assigned_to_type) {
+      const assignedTypes = Array.isArray(assigned_to_type)
+        ? assigned_to_type
+        : assigned_to_type.split(",").map((id) => Number(id.trim()));
+
+      if (assignedTypes.length === 1) {
+        whereClauses.push("technician.type_id = :assigned_to_type");
+        replacements.assigned_to_type = assignedTypes[0];
+      } else if (assignedTypes.length > 1) {
+        whereClauses.push("technician.type_id IN (:assigned_to_type)");
+        replacements.assigned_to_type = assignedTypes;
+      }
     }
 
     if (statusIds.length > 1) {

@@ -103,6 +103,7 @@ const technician_type = {
   RCU: 1,
   ELECTRICAL: 2,
   OTHER: 3,
+  TEMPERATURE: 4,
 };
 
 module.exports = {

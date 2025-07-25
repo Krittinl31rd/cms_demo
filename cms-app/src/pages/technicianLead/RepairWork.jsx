@@ -77,7 +77,6 @@ const RepairWork = () => {
     try {
       const response = await GetMaintenanceTask(token);
       setTaskList(response?.data || []);
-      console.log(response?.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -93,6 +92,7 @@ const RepairWork = () => {
     try {
       const response = await GetTechnician(token);
       setTechnicianList(response?.data || []);
+      console.log(response?.data);
     } catch (err) {
       console.error(err);
     }

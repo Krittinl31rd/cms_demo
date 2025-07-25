@@ -198,6 +198,52 @@ const updateIsOnline = async (ip, status) => {
         type: sequelize.QueryTypes.UPDATE,
       }
     );
+    // await handleInsertEvent(ip, status == 0 ? "rcu_offline" : "rcu_online");
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+const handleInsertEvent = async (ip = null, room_id = null, event) => {
+  try {
+    let room;
+    if (ip != null) {
+      const [result] = await sequelize.query(
+        `SELECT id FROM rooms WHERE ip_address = :ip`,
+        {
+          replacements: { ip },
+          type: sequelize.QueryTypes.SELECT,
+        }
+      );
+      room = result;
+    } else if (room_id != null) {
+      const [result] = await sequelize.query(
+        `SELECT id FROM rooms WHERE id = :id`,
+        {
+          replacements: { id: room_id },
+          type: sequelize.QueryTypes.SELECT,
+        }
+      );
+      room = result;
+    }
+
+    if (!room) {
+      console.warn(`Room not found for IP: ${ip}`);
+      return;
+    }
+
+    const roomId = room.id;
+
+    const [insertResult] = await sequelize.query(
+      `INSERT INTO rcu_event (room_id, event_type) VALUES (:room_id, :event_type)`,
+      {
+        replacements: {
+          room_id: roomId,
+          event_type: event,
+        },
+        type: sequelize.QueryTypes.INSERT,
+      }
+    );
   } catch (err) {
     console.log(err);
   }
@@ -331,4 +377,5 @@ module.exports = {
   updateRoomStatusInDB,
   updateIsOnline,
   insertGuestPersenceLogs,
+  handleInsertEvent,
 };

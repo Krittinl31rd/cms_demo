@@ -42,12 +42,27 @@ exports.CreateRoom = async (req, res) => {
 // READ ROOM
 exports.GetRooms = async (req, res) => {
   try {
-    const rooms = await sequelize.query(
-      `SELECT * FROM smarthotel.rooms ORDER BY floor OR room_number ASC`,
-      {
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
+    const { is_online } = req.query;
+
+    const baseQuery = `SELECT * FROM smarthotel.rooms`;
+    const whereClauses = [];
+    const replacements = {};
+
+    if (is_online) {
+      whereClauses.push("is_online = :is_online");
+      replacements.is_online = is_online;
+    }
+
+    let query = baseQuery;
+    if (whereClauses.length > 0) {
+      query += " WHERE " + whereClauses.join(" AND ");
+    }
+    query += " ORDER BY floor OR room_number ASC";
+
+    const rooms = await sequelize.query(query, {
+      replacements,
+      type: sequelize.QueryTypes.SELECT,
+    });
 
     const roomList = await Promise.all(
       rooms.map(async (room) => {

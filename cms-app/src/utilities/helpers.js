@@ -8,6 +8,14 @@ export const colorBadge = {
   5: "bg-red-300/80 text-red-950",
 };
 
+export const colorBadgeByLabel = {
+  ["PENDING"]: "bg-gray-300/80 text-gray-950",
+  ["ASSIGNED"]: "bg-yellow-300/80 text-yellow-950",
+  ["IN_PROGRESS"]: "bg-blue-300/80 text-blue-950",
+  ["COMPLETED"]: "bg-green-300/80 text-green-950",
+  ["UNRESOLVED"]: "bg-red-300/80 text-red-950",
+};
+
 export const taskStatusId = {
   1: "PENDING",
   2: "ASSIGNED",
@@ -91,6 +99,9 @@ export const CheckTypeTechnician = (value) => {
       break;
     case 3:
       name = "Other";
+      break;
+    case 4:
+      name = "Temp";
       break;
     default:
       name = "Unknown Type";

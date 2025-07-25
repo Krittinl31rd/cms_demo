@@ -17,6 +17,28 @@ const {
   DeleteMaintenanceTask,
   GetGuestPersenceLogs,
 } = require("../controllers/technicianlead/maintenanceController");
+const {
+  SummaryRoom,
+  GetNotifications,
+} = require("../controllers/technicianlead/summaryController");
+
+router.get(
+  "/get-notifications/:subscribe_id",
+  AuthCheck,
+  RoleCheck([
+    member_role.SUPER_ADMIN,
+    member_role.TECHNICIAN_LEAD,
+    member_role.TECHNICIAN,
+  ]),
+  GetNotifications
+);
+
+router.get(
+  "/get-summary",
+  AuthCheck,
+  RoleCheck([member_role.SUPER_ADMIN, member_role.TECHNICIAN_LEAD]),
+  SummaryRoom
+);
 
 router.get(
   "/get-persence",

@@ -1,21 +1,9 @@
 const sequelize = require("../config/db");
 const axios = require("axios");
-const { sendWsMessageToRole } = require("./ws/wsClients");
+const { sendWsMessageToRole, sendWsMessageToUser } = require("./ws/wsClients");
 const { member_role } = require("../constants/common");
 const { ws_cmd } = require("../constants/wsCommand");
-
-const payloadNotify = {
-  data: {
-    ip: null,
-    room_id: null,
-    message: null,
-  },
-  boardcast: {
-    role: [],
-    type: [],
-    user_id: [],
-  },
-};
+const { handleInsertEvent } = require("./ws/db");
 
 function CheckTypeTechnician(value) {
   if (!value || typeof value !== "number") return null;
@@ -30,6 +18,9 @@ function CheckTypeTechnician(value) {
       break;
     case 3:
       name = "Other";
+      break;
+    case 4:
+      name = "Temperature";
       break;
     default:
       name = "Unknown Type";
@@ -171,11 +162,17 @@ async function doBoardcastNotification({ data, boardcast }) {
         { replacements }
       );
 
-      sendWsMessageToRole(member_role, {
-        cmd: ws_cmd.NEW_TASK,
-        param: {
-          replacements,
-        },
+      logsToInsert.forEach((item) => {
+        sendWsMessageToUser(item.user_id, {
+          cmd: ws_cmd.NOTIFICATION,
+          param: {
+            type_id: item.type_id,
+            room_id: item.room_id,
+            user_id: item.user_id,
+            subscribe_id: item.subscribe_id,
+            message: item.message,
+          },
+        });
       });
     }
 
@@ -188,26 +185,6 @@ async function doBoardcastNotification({ data, boardcast }) {
       message: "Notification failed:",
       response: response.data,
     };
-  }
-}
-
-async function InsertNotificationLog({
-  type_id,
-  room_id,
-  user_id,
-  subscribe_id,
-  message,
-}) {
-  try {
-    await sequelize.query(
-      `INSERT INTO notification_log (type_id, room_id, user_id, subscribe_id, message)
-     VALUES (:type_id, :room_id, :user_id, :subscribe_id, :message)`,
-      {
-        replacements: { type_id, room_id, user_id, subscribe_id, message },
-      }
-    );
-  } catch (err) {
-    console.log(err);
   }
 }
 

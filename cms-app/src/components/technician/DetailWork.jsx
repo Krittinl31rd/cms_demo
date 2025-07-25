@@ -1,11 +1,24 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration";
 import { taskStatusId, colorBadge } from "@/utilities/helpers";
 import ModalPopup from "@/components/ui/ModalPopup";
+dayjs.extend(duration);
+
+const formatDuration = (start, end) => {
+  const s = dayjs(start);
+  const e = end ? dayjs(end) : dayjs();
+  const diff = dayjs.duration(e.diff(s));
+  const hours = String(Math.floor(diff.asHours())).padStart(2, "0");
+  const minutes = String(diff.minutes()).padStart(2, "0");
+  const seconds = String(diff.seconds()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+};
 
 const DetailWork = ({ selectedTask }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isFullScreen, setFullScreen] = useState(false);
+
   return (
     <div className="grid grid-cols-2 gap-4 text-black">
       <div className="space-y-2">
@@ -35,6 +48,16 @@ const DetailWork = ({ selectedTask }) => {
               <span>{taskStatusId[selectedTask?.status_id]}</span>
             </div>
           </div>
+          <div>
+            Created at: {""}
+            <span className="font-semibold ">
+              {selectedTask?.created_at
+                ? dayjs(selectedTask?.created_at).format(
+                    "DD MMMM YYYY HH:mm:ss"
+                  )
+                : "Not set"}
+            </span>
+          </div>
         </div>
         <div className="">
           <div className="w-full bg-gray-200/50 p-2 rounded-lg space-y-2">
@@ -55,6 +78,15 @@ const DetailWork = ({ selectedTask }) => {
                 {selectedTask?.ended_at
                   ? dayjs(selectedTask.ended_at).format("DD MMMM YYYY HH:mm:ss")
                   : "Not set"}
+              </span>
+            </div>
+            <div>
+              Duration: {""}
+              <span className="font-semibold ">
+                {formatDuration(
+                  selectedTask?.started_at,
+                  selectedTask?.ended_at
+                )}
               </span>
             </div>
           </div>

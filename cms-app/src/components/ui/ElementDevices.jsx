@@ -5,6 +5,11 @@ import {
   guest_presence_status,
   device_status,
   device_type,
+  rooms_request_status,
+  guestCheckStatusColor,
+  guestPresenceStatusColor,
+  roomsRequestStatusColor,
+  statusColor,
 } from "@/constant/common.js";
 import AirConCard from "@/components/devices/AirConCard";
 import AirQualityCard from "@/components/devices/AirQualityCard";
@@ -18,25 +23,30 @@ const ElementDevices = ({ room, sendWebSocketMessage }) => {
     devices,
     room_check_status,
     guest_status_id,
-    dnd_status,
-    mur_status,
+    request_status,
     ip_address,
     mac_address,
   } = room;
 
-  const statusColor = {
-    1: "bg-green-500",
-    0: "bg-gray-400",
+  const colorIs = (state, type) => {
+    switch (type) {
+      case "room_check_status":
+        return guestCheckStatusColor[state];
+      case "guest_status_id":
+        return guestPresenceStatusColor[state];
+      case "request_status":
+        return roomsRequestStatusColor[state];
+      default:
+        return statusColor[state];
+    }
   };
 
-  const deviceIndicator = (label, state) => (
+  const deviceIndicator = (label, state, type) => (
     <div className="flex items-center gap-2">
       <span
-        className={`w-3 h-3 rounded-full ${
-          statusColor[state] || "bg-gray-400"
-        }`}
+        className={`w-3 h-3 rounded-full ${colorIs(state, type) || "bg-black"}`}
       ></span>
-      <span className="text-sm">{label}</span>
+      <span className="text-xs xl:text-sm">{label}</span>
     </div>
   );
 
@@ -80,28 +90,39 @@ const ElementDevices = ({ room, sendWebSocketMessage }) => {
       <h3 className="font-semibold">Room Status</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 border-b border-gray-300 pb-2">
         {deviceIndicator(
-          room_check_status === guest_check_status.CHECK_IN
-            ? "Check-IN"
-            : room_check_status === guest_check_status.CHECK_OUT
-            ? "Check-OUT"
+          room_check_status == guest_check_status.CHECK_IN
+            ? "CHECK-IN"
+            : room_check_status == guest_check_status.CHECK_OUT
+            ? "CHECK-OUT"
+            : room_check_status == guest_check_status.OCCUPIED
+            ? "OCCUPIED"
+            : room_check_status == guest_check_status.VACANT
+            ? "VACANT"
             : "N/A",
-          room_check_status
+          room_check_status,
+          "room_check_status"
         )}
         {deviceIndicator(
-          guest_status_id == 0
-            ? "Guests-OUT"
-            : guest_status_id == 1 || guest_status_id == 2
-            ? "Guests-IN"
+          guest_status_id == guest_presence_status.GUEST_OUT
+            ? "GUEST-OUT"
+            : guest_status_id == guest_presence_status.GUEST_IN
+            ? "GUEST-IN"
+            : guest_status_id == guest_presence_status.NOT_CHECKIN
+            ? "NOT CHECKIN"
             : "N/A",
-          guest_status_id
+          guest_status_id,
+          "guest_status_id"
         )}
         {deviceIndicator(
-          dnd_status === 0 || dnd_status === 1 ? "DND" : "N/A",
-          dnd_status
-        )}
-        {deviceIndicator(
-          mur_status === 0 || mur_status === 1 ? "MUR" : "N/A",
-          mur_status
+          request_status == rooms_request_status.NO_REQ
+            ? "NO REQUEST"
+            : request_status == rooms_request_status.DND
+            ? "DND"
+            : request_status == rooms_request_status.MUR
+            ? "MUR"
+            : "N/A",
+          request_status,
+          "request_status"
         )}
       </div>{" "}
       <h3 className="font-semibold">Motion & Sensor</h3>

@@ -20,7 +20,7 @@ export default function MainLayout() {
   };
 
   return (
-    <div className="min-h-[calc(var(--vh)_*_100)] w-full bg-gray1 text-black relative">
+    <div className="min-h-[calc(var(--vh)_*_100)] w-full bg-gray1 text-black relative overflow-hidden">
       <div
         className={`fixed top-0 left-0 z-50 h-full w-[260px] bg-gray1 shadow-xl transform transition-transform duration-300 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"

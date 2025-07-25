@@ -30,6 +30,8 @@ const store = (set) => ({
   setBreadcrumb: (segments) => set({ breadcrumb: segments }),
   subscribeId: null,
   setSubscribeId: (id) => set({ subscribeId: id }),
+  activeSection: null,
+  setActiveSection: (type) => set({ activeSection: type }),
 });
 
 const usePersist = {

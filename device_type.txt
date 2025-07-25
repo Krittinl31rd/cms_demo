@@ -1,0 +1,13 @@
+device_type
+1 : AIR = status, fanspeed, temp
+3 : DIMMER = status, bright
+4 : LIGHTING = status
+7 : MOTION = status - PIR, DOOR
+10 : SCENE = status - MASTER
+12 : ACCESS = status - keycard, guest
+13 : DNDMUR = status - DND, MUR
+20 : POWER = …
+21 : AIR_Q = …
+22 : TEMPERATURE = value - temp, hum
+24 : CONFIG = …
+25 : CONFIG_SCENE = …

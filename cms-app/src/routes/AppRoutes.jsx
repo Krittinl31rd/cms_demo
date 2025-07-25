@@ -25,6 +25,8 @@ import Register from "@/pages/Register";
 import Test from "@/pages/Test";
 import ProtectRoute from "@/routes/ProtectRoute";
 import { member_role } from "@/constant/common";
+import Multiscreen from "../pages/technicianLead/Multiscreen";
+import Main from "../pages/technicianLead/Main";
 
 const router = createBrowserRouter([
   {
@@ -88,7 +90,19 @@ const router = createBrowserRouter([
       { path: "history", element: <History /> },
       { path: "config", element: <Setting /> },
       { path: "log", element: <RoomDevicesLog /> },
+      { path: "sence", element: <Multiscreen /> },
     ],
+  },
+  {
+    path: "/techlead",
+    element: (
+      <ProtectRoute
+        element={NoneSidebarLayout}
+        allowedRoles={[member_role.TECHNICIAN_LEAD]}
+        // requiredPermission="VIEW_TECH_PANEL"
+      />
+    ),
+    children: [{ path: "main", element: <Main /> }],
   },
   {
     path: "/tech",

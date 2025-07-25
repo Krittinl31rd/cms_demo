@@ -3,30 +3,40 @@ import {
   guest_check_status,
   guest_presence_status,
   device_status,
+  rooms_request_status,
+  guestCheckStatusColor,
+  guestPresenceStatusColor,
+  roomsRequestStatusColor,
+  statusColor,
 } from "@/constant/common.js";
-
-const statusColor = {
-  1: "bg-green-500",
-  0: "bg-gray-400",
-};
 
 const CardRoom = ({ room, onClick }) => {
   const {
-    dnd_status,
+    request_status,
     floor,
     room_check_status,
     guest_status_id,
-    mur_status,
     room_number,
     is_online,
   } = room;
 
-  const deviceIndicator = (label, state) => (
+  const colorIs = (state, type) => {
+    switch (type) {
+      case "room_check_status":
+        return guestCheckStatusColor[state];
+      case "guest_status_id":
+        return guestPresenceStatusColor[state];
+      case "request_status":
+        return roomsRequestStatusColor[state];
+      default:
+        return statusColor[state];
+    }
+  };
+
+  const deviceIndicator = (label, state, type) => (
     <div className="flex items-center gap-2">
       <span
-        className={`w-3 h-3 rounded-full ${
-          statusColor[state] || "bg-yellow-400"
-        }`}
+        className={`w-3 h-3 rounded-full ${colorIs(state, type) || "bg-black"}`}
       ></span>
       <span className="text-xs xl:text-sm">{label}</span>
     </div>
@@ -40,9 +50,9 @@ const CardRoom = ({ room, onClick }) => {
       <div className="flex justify-between items-center">
         <div className="-space-y-2">
           <h2 className="text-xl font-semibold">{room_number}</h2>
-          <span className="text-xs">
+          {/* <span className="text-xs">
             Floor <strong>{floor}</strong>
-          </span>
+          </span> */}
         </div>
 
         <span
@@ -57,11 +67,11 @@ const CardRoom = ({ room, onClick }) => {
           }`}
         >
           {is_online == device_status.OK
-            ? "Online"
+            ? "ONLINE"
             : // : is_online == device_status.FAULT
             // ? "Fault"
             is_online == device_status.OFFLINE
-            ? "Offline"
+            ? "OFFLINE"
             : "N/A"}
         </span>
       </div>
@@ -69,27 +79,38 @@ const CardRoom = ({ room, onClick }) => {
       <div className="flex-1 grid grid-cols-2 gap-2">
         {deviceIndicator(
           room_check_status == guest_check_status.CHECK_IN
-            ? "Check-IN"
+            ? "CHECK-IN"
             : room_check_status == guest_check_status.CHECK_OUT
-            ? "Check-OUT"
+            ? "CHECK-OUT"
+            : room_check_status == guest_check_status.OCCUPIED
+            ? "OCCUPIED"
+            : room_check_status == guest_check_status.VACANT
+            ? "VACANT"
             : "N/A",
-          room_check_status
+          room_check_status,
+          "room_check_status"
         )}
         {deviceIndicator(
-          guest_status_id == 0
-            ? "Guests-OUT"
-            : guest_status_id == 1 || guest_status_id == 2
-            ? "Guests-IN"
+          guest_status_id == guest_presence_status.GUEST_OUT
+            ? "GUEST-OUT"
+            : guest_status_id == guest_presence_status.GUEST_IN
+            ? "GUEST-IN"
+            : guest_status_id == guest_presence_status.NOT_CHECKIN
+            ? "NOT CHECKIN"
             : "N/A",
-          guest_status_id
+          guest_status_id,
+          "guest_status_id"
         )}
         {deviceIndicator(
-          dnd_status == 0 ? "DND" : dnd_status == 1 ? "DND" : "N/A",
-          dnd_status
-        )}
-        {deviceIndicator(
-          mur_status == 0 ? "MUR" : mur_status == 1 ? "MUR" : "N/A",
-          mur_status
+          request_status == rooms_request_status.NO_REQ
+            ? "NO REQUEST"
+            : request_status == rooms_request_status.DND
+            ? "DND"
+            : request_status == rooms_request_status.MUR
+            ? "MUR"
+            : "N/A",
+          request_status,
+          "request_status"
         )}
       </div>
     </div>

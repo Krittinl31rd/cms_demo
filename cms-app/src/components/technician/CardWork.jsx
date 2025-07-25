@@ -14,7 +14,7 @@ const CardWork = ({ task, onSelect, onView, onEdit, onDelete }) => {
       <div className="w-full flex items-start justify-center gap-2">
         <div className="flex-1 flex items-center gap-2">
           <span className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-semibold">
-            {task?.assigned_to_name.charAt(0)}
+            {task?.assigned_to_name?.charAt(0)}
           </span>
           <div className="flex-1">
             <h4 className="font-semibold">

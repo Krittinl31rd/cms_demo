@@ -11,6 +11,7 @@ export const technician_type = {
   RCU: 1,
   ELECTRICAL: 2,
   OTHER: 3,
+  TEMPERATURE: 4,
 };
 
 export const role_id_to_name = {
@@ -25,11 +26,47 @@ export const role_id_to_name = {
 export const guest_check_status = {
   CHECK_OUT: 0,
   CHECK_IN: 1,
+  OCCUPIED: 2,
+  VACANT: 4,
 };
 
 export const guest_presence_status = {
   GUEST_OUT: 0,
   GUEST_IN: 1,
+  NOT_CHECKIN: 2,
+};
+
+export const rooms_request_status = {
+  NO_REQ: 0,
+  DND: 1,
+  MUR: 2,
+};
+
+export const statusColor = {
+  1: "bg-green-500",
+  0: "bg-gray-400",
+};
+
+// Guest Check Status Colors
+export const guestCheckStatusColor = {
+  0: "bg-blue-500", // CHECK_OUT - Blue (departure)
+  1: "bg-green-500", // CHECK_IN - Green (arrival/active)
+  2: "bg-red-500", // OCCUPIED - Red (busy/unavailable)
+  4: "bg-gray-400", // VACANT - Gray (available/empty)
+};
+
+// Guest Presence Status Colors
+export const guestPresenceStatusColor = {
+  0: "bg-orange-500", // GUEST_OUT - Orange (away)
+  1: "bg-green-500", // GUEST_IN - Green (present)
+  2: "bg-gray-400", // NOT_CHECKIN - Gray (no guest)
+};
+
+// Room Request Status Colors
+export const roomsRequestStatusColor = {
+  0: "bg-gray-400", // NO_REQ - Gray (no requests)
+  1: "bg-purple-500", // DND - Purple (do not disturb)
+  2: "bg-yellow-500", // MUR - Yellow (maintenance/service needed)
 };
 
 export const cleaning_status = {
@@ -295,7 +332,7 @@ const logs_type = {
   RCU_Config_Updated: 9,
 };
 
-const notification_type = {
+export const notification_type = {
   ALERT: 1,
   CLEANING: 2,
   MAINTENANCE: 3,

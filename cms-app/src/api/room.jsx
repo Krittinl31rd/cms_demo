@@ -7,11 +7,12 @@ export const CreateRoom = async (token, form) =>
     },
   });
 
-export const GetRooms = async (token) =>
+export const GetRooms = async (token, query = {}) =>
   await axios.get(import.meta.env.VITE_API_URL + "/get-rooms", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    params: query,
   });
 
 export const UpadteRoom = async (token, id, form) =>

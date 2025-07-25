@@ -2,8 +2,8 @@ import React from "react";
 
 const NotFound = () => {
   return (
-    <div className="p-4">
-      Not Found :(
+    <div className=" w-full h-screen flex flex-col items-center justify-center p-4">
+      Page Not Found :(
       <p className="font-primary">
         Lorem ipsum dolor sit, amet consectetur adipisicing elit. Aut aliquid
         nesciunt reprehenderit quidem repellendus unde eveniet voluptatum quos
