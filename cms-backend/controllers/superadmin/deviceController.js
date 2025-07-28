@@ -136,10 +136,36 @@ exports.CreateDevice = async (req, res) => {
         { control_id: 30, name: "temp_set_esm05" },
         { control_id: 31, name: "time_delay_esm05" },
       ],
+      [device_type.CONFIG_SENCE]: (() => {
+        const template = [];
+        const baseConfig = [
+          "hour_start",
+          "min_start",
+          "hour_stop",
+          "min_stop",
+          "enabled",
+          "color_temp",
+        ];
+
+        let currentId = 1;
+
+        for (let sceneIndex = 0; sceneIndex < 5; sceneIndex++) {
+          baseConfig.forEach((key) => {
+            template.push({
+              control_id: currentId,
+              name: `${key}_${sceneIndex + 1}`,
+            });
+            currentId++;
+          });
+        }
+
+        return template;
+      })(),
     };
 
     // missing check type_id
     const staticControls = staticControlsMap[type_id] || [];
+
     for (const ctrl of staticControls) {
       controlList.push({
         room_id,

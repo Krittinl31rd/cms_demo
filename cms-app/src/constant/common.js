@@ -114,6 +114,7 @@ export const device_type = {
   LOSSNAY: 23,
   CONFIG: 24, //Config RCU
   OTHER: 25, //Other
+  CONFIG_SENCE: 26, //Multi sence
 };
 
 export const deviceTypeTemplates = {
@@ -292,6 +293,33 @@ export const deviceTypeTemplates = {
       addr: "",
     },
   ],
+  [device_type.CONFIG_SENCE]: (() => {
+    const template = [];
+    const baseConfig = [
+      "hour_start",
+      "min_start",
+      "hour_stop",
+      "min_stop",
+      "enabled",
+      "color_temp",
+    ];
+
+    let currentAddr = 101;
+
+    for (let sceneIndex = 0; sceneIndex < 5; sceneIndex++) {
+      baseConfig.forEach((key) => {
+        template.push({
+          id: currentAddr,
+          name: `${key}_${sceneIndex + 1}`,
+          addr: currentAddr,
+          modbus_funct: 30000
+        });
+        currentAddr++;
+      });
+    }
+
+    return template;
+  })(),
 };
 
 const deviceTypeColors = {

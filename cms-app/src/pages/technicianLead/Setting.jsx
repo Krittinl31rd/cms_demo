@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Plus, Copy, Save, Settings } from "lucide-react";
+import { Plus, Copy, Save, Settings, Check } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { GetRooms } from "@/api/room";
 import useStore from "@/store/store";
@@ -14,9 +14,11 @@ const Setting = () => {
   const { token } = useStore((state) => state);
   const [roomList, setRoomList] = useState([]);
   const [formConfig, setFormConfig] = useState([]);
-  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedRooms, setSelectedRooms] = useState([]);
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedFloor, setSelectedFloor] = useState("");
+  const uniqueFloors = [...new Set(roomList.map((room) => room.floor))];
 
   const fetchRoomList = async () => {
     try {
@@ -89,7 +91,7 @@ const Setting = () => {
     }));
   };
 
-  const handleSave = async (ip_address, deviceId) => {
+  const handleSave = async (room, deviceId) => {
     if (isSaving) return;
 
     try {
@@ -99,10 +101,8 @@ const Setting = () => {
       }, 20000);
 
       const configField = formConfig[deviceId] || {};
-      const devices = selectedRoom?.devices.find(
-        (d) => d.device_id == deviceId
-      );
-      if (!devices) return;
+      const device = room.devices.find((d) => d.device_id == deviceId);
+      if (!device) return;
 
       // extract datetime if present
       const datetime = configField.datetime;
@@ -118,12 +118,13 @@ const Setting = () => {
           25: date.getFullYear() % 100,
         };
       }
+
       for (const {
         fc,
         address,
         control_id,
         value: defaultValue,
-      } of devices.controls) {
+      } of device.controls) {
         let value;
 
         if ([13, 14, 28, 31].includes(control_id)) {
@@ -148,13 +149,11 @@ const Setting = () => {
           value = datetimeMap[control_id];
         } else {
           let rawValue = configField[control_id];
-
           if (rawValue === "" || rawValue === null || rawValue === undefined) {
             rawValue = defaultValue;
           }
 
           value = parseInt(rawValue);
-
           if (isNaN(value)) continue;
         }
 
@@ -166,20 +165,35 @@ const Setting = () => {
             address,
             value,
             slaveId: 1,
-            ip: ip_address,
+            ip: room.ip_address,
             fc: fc === 30000 ? 6 : fc === 10000 ? 5 : 0,
           },
         };
-
+        console.log(payload )
         sendWebSocketMessage(payload);
         await delay(50);
       }
     } catch (err) {
       console.error("Save error", err);
     }
-    // } finally {
-    //   setIsSaving(false);
-    // }
+  };
+
+  const handleBulkSave = async () => {
+    if (isSaving || selectedRooms.length === 0) return;
+    setIsSaving(true);
+    try {
+      for (const room of selectedRooms) {
+        for (const device of room.devices) {
+          await handleSave(room, device.device_id);
+        }
+      }
+      toast.success("Saved settings for selected rooms.");
+    } catch (err) {
+      toast.error("Error saving settings for some rooms.");
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const configField = (devices) => {
@@ -525,25 +539,57 @@ const Setting = () => {
   };
 
   useEffect(() => {
-    if (selectedRoom) {
+    if (selectedRooms) {
       const updatedRoom = roomList.find(
-        (room) => room.room_id == selectedRoom.room_id
+        (room) => room.room_id == selectedRooms.room_id
       );
       if (updatedRoom) {
-        setSelectedRoom(updatedRoom);
+        setSelectedRooms(updatedRoom);
       }
     }
   }, [roomList]);
 
-  // h-[calc(100vh-132px)]
+
   return (
-    <div className="flex flex-col lg:flex-row gap-2 h-full">
+    <div className="flex flex-col lg:flex-row gap-4 h-full">
       {/* Sidebar */}
       <div className="lg:w-1/3 w-full bg-white rounded-lg shadow-sm flex flex-col">
         <div className="p-4 border-b border-gray-300">
-          <h2 className="text-lg font-semibold mb-3">Room List</h2>
+          <h2 className="text-lg font-semibold mb-2">Room List</h2>
           <div className="space-y-2">
-            <input
+            <select
+              value={selectedFloor}
+              onChange={(e) => {
+                const floor = parseInt(e.target.value);
+                setSelectedFloor(e.target.value);
+                if (!isNaN(floor)) {
+                  const roomsOnFloor = roomList.filter(
+                    (room) => room.floor === floor
+                  );
+                  setSelectedRooms(roomsOnFloor);
+                }
+              }}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select floor</option>
+              {uniqueFloors.map((floor) => (
+                <option key={floor} value={floor}>
+                  ชั้น {floor}
+                </option>
+              ))}
+            </select>
+
+            {/* Clear Button */}
+            <button
+              onClick={() => {
+                setSelectedRooms([]);
+                setSelectedFloor("");
+              }}
+              className="w-full px-3 py-1 bg-gray-400 text-white rounded-md text-sm"
+            >
+              Clear
+            </button>
+            {/* <input
               type="text"
               placeholder="Search room..."
               className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -554,7 +600,7 @@ const Setting = () => {
               </option>
               <option value="Online">Online</option>
               <option value="Offline">Offline</option>
-            </select>
+            </select> */}
           </div>
         </div>
 
@@ -562,15 +608,18 @@ const Setting = () => {
           {roomList.map((room) => (
             <div
               key={room.room_id}
-              className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                selectedRoom?.room_id == room.room_id
-                  ? "bg-blue-50 border-l-4 border-l-blue-500"
-                  : ""
-              } border-b border-gray-200`}
+              className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-200`}
               onClick={() => {
-                setSelectedRoom(
-                  selectedRoom?.room_id == room.room_id ? null : room
-                );
+                setSelectedRooms((prev) => {
+                  const alreadySelected = prev.some(
+                    (r) => r.room_id === room.room_id
+                  );
+                  if (alreadySelected) {
+                    return prev.filter((r) => r.room_id !== room.room_id); // toggle off
+                  } else {
+                    return [...prev, room];
+                  }
+                });
               }}
             >
               <div className="flex justify-between items-start mb-1">
@@ -580,7 +629,12 @@ const Setting = () => {
                     Floor {room?.floor}
                   </span>
                 </h3>
-                <Settings className="h-4 w-4 text-gray-400" />
+                <div className="flex items-center gap-2">
+                  {selectedRooms.some((r) => r.room_id === room.room_id) && (
+                    <Check className="h-6 w-4 text-green-600" />
+                  )}
+                  <Settings className="h-4 w-4 text-gray-400" />
+                </div>
               </div>
               <div className="mb-1">
                 <span
@@ -609,85 +663,84 @@ const Setting = () => {
       </div>
 
       <div className="flex-1 bg-white rounded-lg shadow-sm flex flex-col">
-        {selectedRoom ? (
-          <>
-            <div className="p-4 border-b border-gray-300">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <h2 className="text-xl font-semibold">
-                  Config Room {selectedRoom?.room_number}
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-1" />{" "}
-                    <span className="text-xs">Use templates</span>
-                  </Button>
-                  <Button>
-                    <Copy className="h-4 w-4 mr-1" />
-                    <span className="text-xs">Copied room</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-            {/* config fields */}
-            <div className="flex-1 overflow-auto p-4 space-y-2">
-              {selectedRoom?.devices?.length > 0 ? (
-                <div className="grid grid-cols-1 gap-2">
-                  {configField(selectedRoom?.devices)}
-                </div>
-              ) : (
-                <p className="text-gray-500 italic">This room has no config.</p>
-              )}
-            </div>
+        {selectedRooms.length > 0 ? (
+          (() => {
+            const firstRoomWithDevices = selectedRooms.find(
+              (room) => room.devices && room.devices.length > 0
+            );
 
-            <div className="p-4 border-t border-gray-200 flex flex-col  gap-2">
-              <button
-                onClick={() =>
-                  handleSave(
-                    selectedRoom.ip_address,
-                    selectedRoom?.devices[0].device_id
-                  )
-                }
-                disabled={isSaving}
-                className={`px-4 py-2 rounded-md text-white font-semibold ${
-                  isSaving
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              >
-                {isSaving ? (
-                  <svg
-                    className="animate-spin h-4 w-4 text-white"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v8H4z"
-                    />
-                  </svg>
-                ) : (
-                  "Save"
-                )}
-              </button>
+            if (firstRoomWithDevices) {
+              return (
+                <>
+                  <div className="p-4 border-b border-gray-300">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 h-12 max-h-16 overflow-auto">
+                      <h2 className="text-xs font-semibold">
+                        Config Room:{" "}
+                        {selectedRooms
+                          .map((room) => room.room_number)
+                          .join(", ")}
+                      </h2>
+                    </div>
+                  </div>
 
-              <div className="flex gap-2 w-full sm:w-auto">
-                <input
-                  type="text"
-                  placeholder="Template name"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <Button>Save as template</Button>
-              </div>
-            </div>
-          </>
+                  <div className="flex-1 overflow-auto p-4 space-y-2">
+                    <div className="grid grid-cols-1 gap-2">
+                      {configField(firstRoomWithDevices.devices)}
+                    </div>
+                  </div>
+
+                  <div className="p-4 border-t border-gray-200 flex flex-col gap-2">
+                    <button
+                      onClick={
+                        () => handleBulkSave()
+                        // firstRoomWithDevices.ip_address,
+                        // firstRoomWithDevices.devices[0].device_id
+                      }
+                      disabled={isSaving}
+                      className={`px-4 py-2 rounded-md text-white font-semibold ${
+                        isSaving
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-primary hover:bg-primary/80"
+                      }`}
+                    >
+                      {isSaving ? (
+                        <svg
+                          className="animate-spin h-4 w-4 text-white"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8H4z"
+                          />
+                        </svg>
+                      ) : (
+                        "Save"
+                      )}
+                    </button>
+                  </div>
+                </>
+              );
+            } else {
+              return (
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-10 text-gray-500">
+                  <Settings className="h-12 w-12 text-gray-300 mb-2" />
+                  <p className="text-lg font-medium">
+                    This room has no config.
+                  </p>
+                  <p className="text-sm">Please select another room.</p>
+                </div>
+              );
+            }
+          })()
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-10 text-gray-500">
             <Settings className="h-12 w-12 text-gray-300 mb-2" />

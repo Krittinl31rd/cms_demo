@@ -71,6 +71,7 @@ const device_type = {
   LOSSNAY: 23,
   CONFIG: 24,
   OTHER: 25,
+  CONFIG_SENCE: 26,
 };
 
 const device_status = {

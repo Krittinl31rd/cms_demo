@@ -495,7 +495,7 @@ const RoomID = () => {
         const ctrlStatus = dev.controls?.find((c) => c.control_id == 1);
         const ctrlAddress = dev.controls?.find((c) => c.control_id == 101);
         const { name, address } = CheckFunctionModbus(ctrlAddress?.value);
-        const statusLabel = ctrlStatus?.value;
+        const statusLabel = ctrlStatus.value == null ? 'N/A' : ctrlStatus.value;
 
         return (
           <DeviceCardWrapper footerColor="bg-orange-400">
@@ -767,6 +767,33 @@ const RoomID = () => {
 
         return (
           <DeviceCardWrapper footerColor="bg-black">{rows}</DeviceCardWrapper>
+        );
+      }
+
+      case device_type.CONFIG_SENCE: {
+        const valueControls =
+          dev.controls?.filter((c) => c.control_id < 100) || [];
+        console.log(valueControls)
+        const rows = valueControls.map((ctrl) => {
+          const modbusCtrl = dev.controls?.find(
+            (c) => c.control_id === ctrl.control_id + 100
+          );
+          const modbus = CheckFunctionModbus(modbusCtrl?.value);
+
+          return (
+            <InfoRow
+              key={ctrl.control_id}
+              label={ctrl.name}
+              modbus={modbus}
+              value={ctrl.value != null ? `${ctrl.value}` : "N/A"}
+            />
+          );
+        });
+
+        return (
+          <DeviceCardWrapper footerColor="bg-indigo-800">
+            {rows}
+          </DeviceCardWrapper>
         );
       }
 
