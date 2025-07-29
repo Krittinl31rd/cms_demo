@@ -16,7 +16,11 @@ const {
   getTaskWithDetailsById,
   getUpdatedFields,
 } = require("../../utils/dbHelpers");
-const { maintenance_status, member_role } = require("../../constants/common");
+const {
+  maintenance_status,
+  member_role,
+  technician_type,
+} = require("../../constants/common");
 const {
   CheckTypeTechnician,
   doBoardcastNotification,
@@ -26,19 +30,32 @@ const { ws_cmd } = require("../../constants/wsCommand");
 
 exports.SummaryRoom = async (req, res) => {
   try {
+    const date = req.query.date || dayjs().format("YYYY-MM-DD");
+
     const [isOnline, isMaintenance, isTask, roomCount] = await Promise.all([
       sequelize.query(
         `SELECT is_online, COUNT(*) AS count FROM rooms GROUP BY is_online`,
         { type: sequelize.QueryTypes.SELECT }
       ),
       sequelize.query(
-        `SELECT status_id, COUNT(*) AS count FROM maintenance_tasks GROUP BY status_id`,
-        { type: sequelize.QueryTypes.SELECT }
+        `SELECT status_id, COUNT(*) AS count 
+         FROM maintenance_tasks 
+         WHERE DATE(created_at) = :date
+         GROUP BY status_id`,
+        {
+          replacements: { date },
+          type: sequelize.QueryTypes.SELECT,
+        }
       ),
-      sequelize.query(getMaintenanceTaskBaseQuery(), {
-        type: sequelize.QueryTypes.SELECT,
-      }),
-      sequelize.query(`SELECT  COUNT(*) AS count FROM rooms`, {
+      sequelize.query(
+        getMaintenanceTaskBaseQuery() +
+          ` WHERE DATE(maintenance_tasks.created_at) = :date`,
+        {
+          replacements: { date },
+          type: sequelize.QueryTypes.SELECT,
+        }
+      ),
+      sequelize.query(`SELECT COUNT(*) AS count FROM rooms`, {
         type: sequelize.QueryTypes.SELECT,
       }),
     ]);
@@ -55,20 +72,42 @@ exports.SummaryRoom = async (req, res) => {
 
     // is_online
     isOnline.forEach((item) => {
-      if (item.is_online === 1) statusCount.online = Number(item.count);
+      if (item.is_online == 1) statusCount.online = Number(item.count);
       else statusCount.offline = Number(item.count);
     });
 
-    // status task
+    // status task (filtered by date)
     isMaintenance.forEach((item) => {
-      if (item.status_id === 3) statusCount.wip = Number(item.count);
-      if (item.status_id === 4) statusCount.fixed = Number(item.count);
+      if (item.status_id == maintenance_status.IN_PROGRESS)
+        statusCount.wip = Number(item.count);
+      if (
+        item.status_id == maintenance_status.COMPLETED ||
+        item.status_id == maintenance_status.UNRESOLVED
+      )
+        statusCount.fixed = Number(item.count);
     });
 
-    // type task
+    // type task (filtered by date) with corrected condition
     isTask.forEach((task) => {
-      if (task.assigned_to_type === 1) statusCount.rcu_fault_alert++;
-      if (task.assigned_to_type === 4) statusCount.hi_temp_alarm++;
+      if (
+        task.assigned_to_type == technician_type.RCU &&
+        [
+          maintenance_status.ASSIGNED,
+          maintenance_status.PENDING,
+          maintenance_status.IN_PROGRESS,
+        ].includes(task.status_id)
+      )
+        statusCount.rcu_fault_alert++;
+
+      if (
+        [technician_type.TEMPERATURE].includes(task.assigned_to_type) ||
+        [
+          maintenance_status.ASSIGNED,
+          maintenance_status.PENDING,
+          maintenance_status.IN_PROGRESS,
+        ].includes(task.status_id)
+      )
+        statusCount.hi_temp_alarm++;
     });
 
     return res.status(200).json(statusCount);
@@ -81,6 +120,8 @@ exports.SummaryRoom = async (req, res) => {
 exports.GetNotifications = async (req, res) => {
   try {
     const { subscribe_id } = req.params;
+    const { date, started_at, ended_at } = req.query;
+
     const [is_sub] = await sequelize.query(
       `SELECT subscribe_id FROM onesignal WHERE user_id = :user_id AND subscribe_id = :subscribe_id`,
       {
@@ -94,16 +135,30 @@ exports.GetNotifications = async (req, res) => {
     if (!is_sub)
       return res.status(404).json({ message: "SubscribeId not found :)" });
 
+    const whereClauses = [`subscribe_id = :subscribe_id`];
+    const replacements = { subscribe_id };
+
+    if (date) {
+      whereClauses.push(`sent_at BETWEEN :started_at AND :ended_at`);
+      replacements.started_at = `${date} 00:00:00`;
+      replacements.ended_at = `${date} 23:59:59`;
+    }
+
+    const whereString = whereClauses.length
+      ? `WHERE ${whereClauses.join(" AND ")}`
+      : "";
+
     const result = await sequelize.query(
-      `SELECT * FROM notifications WHERE subscribe_id = :subscribe_id ORDER BY sent_at DESC`,
+      `SELECT * FROM notifications ${whereString} ORDER BY sent_at DESC`,
       {
-        replacements: { subscribe_id: is_sub.subscribe_id },
+        replacements,
         type: sequelize.QueryTypes.SELECT,
       }
     );
+
     res.status(200).json(result);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

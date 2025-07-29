@@ -12,7 +12,7 @@ const formatDuration = (start, end) => {
   const hours = String(Math.floor(diff.asHours())).padStart(2, "0");
   const minutes = String(diff.minutes()).padStart(2, "0");
   const seconds = String(diff.seconds()).padStart(2, "0");
-  return `${hours}:${minutes}`;
+  return `${hours}:${minutes}.${seconds}`;
 };
 
 const DetailWork = ({ selectedTask }) => {
@@ -83,10 +83,12 @@ const DetailWork = ({ selectedTask }) => {
             <div>
               Duration: {""}
               <span className="font-semibold ">
-                {formatDuration(
-                  selectedTask?.started_at,
-                  selectedTask?.ended_at
-                )}
+                {selectedTask?.started_at || selectedTask?.ended_at
+                  ? formatDuration(
+                      selectedTask?.started_at,
+                      selectedTask?.ended_at
+                    )
+                  : "Not set"}
               </span>
             </div>
           </div>

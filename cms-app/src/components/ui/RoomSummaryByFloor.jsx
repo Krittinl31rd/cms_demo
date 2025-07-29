@@ -18,7 +18,13 @@ import { DeleteTask } from "@/api/task";
 import { toast } from "react-toastify";
 import Button from "@/components/ui/Button";
 
-const RoomSummaryByFloor = ({ data, activeSection, groupBy = "floor" }) => {
+const RoomSummaryByFloor = ({
+  data,
+  activeSection,
+  groupBy = "floor",
+  selectedDate,
+  setSelectedDate,
+}) => {
   const { token } = useStore((state) => state);
   const [selectedFloor, setSelectedFloor] = useState("all");
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -128,9 +134,13 @@ const RoomSummaryByFloor = ({ data, activeSection, groupBy = "floor" }) => {
         activeSection.type == "hi_temp_alarm" ||
         activeSection.type == "wip" ||
         activeSection.type == "fixed" ? (
-        displayData.map(([floor, rooms]) => (
-          <Table key={floor} floor={floor} rooms={rooms} />
-        ))
+        displayData.length > 0 ? (
+          displayData.map(([floor, rooms]) => (
+            <Table key={floor} floor={floor} rooms={rooms} />
+          ))
+        ) : (
+          <p className="text-center">No result</p>
+        )
       ) : (
         // displayData.length > 0 ? (
         //   displayData.map(([floor, rooms]) => {

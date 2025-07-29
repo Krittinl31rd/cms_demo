@@ -1,20 +1,24 @@
-import React from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import { Pencil, Search, Trash } from "lucide-react";
-
+import DetailWork from "@/components/technician/DetailWork";
+import ModalPopup from "@/components/ui/ModalPopup";
 dayjs.extend(duration);
 
 const formatDuration = (start, end) => {
   const s = dayjs(start);
   const e = end ? dayjs(end) : dayjs();
   const diff = dayjs.duration(e.diff(s));
-  const hours = String(diff.hours()).padStart(2, "0");
+  const hours = String(Math.floor(diff.asHours())).padStart(2, "0");
   const minutes = String(diff.minutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
+  const seconds = String(diff.seconds()).padStart(2, "0");
+  return `${hours}:${minutes}.${seconds}`;
 };
 
 const Table = ({ floor, rooms }) => {
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [isViewTask, setViewTask] = useState(false);
   return (
     <div className="mb-4">
       <h3 className="text-xl font-semibold mb-2 bg-white px-4 py-2 rounded-lg shadow">
@@ -26,10 +30,11 @@ const Table = ({ floor, rooms }) => {
           <thead className="bg-gray-100 text-gray-700 text-left">
             <tr>
               <th className="px-4 py-2 w-[10%]">ROOM #</th>
+              <th className="px-4 py-2 w-[10%]">CREATED</th>
               <th className="px-4 py-2 w-[10%]">IN</th>
               <th className="px-4 py-2 w-[10%]">OUT</th>
               <th className="px-4 py-2 w-[10%]">DURATION</th>
-              <th className="px-4 py-2 w-[50%]">FAULT</th>
+              <th className="px-4 py-2 w-[40%]">FAULT</th>
               <th className="px-4 py-2 w-[10%]"></th>
             </tr>
           </thead>
@@ -41,6 +46,7 @@ const Table = ({ floor, rooms }) => {
                 created_at,
                 ended_at,
                 status_id,
+                started_at,
                 problem_description,
               } = room;
 
@@ -56,7 +62,10 @@ const Table = ({ floor, rooms }) => {
                 >
                   <td className="px-4 py-2">{room_number}</td>
                   <td className="px-4 py-2">
-                    {showTimeIn ? dayjs(created_at).format("HH:mm") : "-"}
+                    {created_at ? dayjs(created_at).format("HH:mm") : "-"}
+                  </td>
+                  <td className="px-4 py-2">
+                    {showTimeIn ? dayjs(started_at).format("HH:mm") : "-"}
                   </td>
                   <td className="px-4 py-2">
                     {showTimeOut && ended_at
@@ -66,7 +75,7 @@ const Table = ({ floor, rooms }) => {
                   <td className="px-4 py-2">
                     {showDuration
                       ? formatDuration(
-                          created_at,
+                          started_at,
                           showTimeOut ? ended_at : null
                         )
                       : "-"}
@@ -74,15 +83,15 @@ const Table = ({ floor, rooms }) => {
                   <td className="px-4 py-2">{problem_description}</td>
 
                   <td className="px-4 py-2 space-x-1">
-                    <button className="p-1 hover:bg-blue-200 rounded-full cursor-pointer">
+                    <button
+                      onClick={() => {
+                        setSelectedTask(room);
+                        setViewTask(true);
+                      }}
+                      className="p-1 hover:bg-blue-200 rounded-full cursor-pointer"
+                    >
                       <Search className="w-4 h-4 text-blue-500" />
                     </button>
-                    {/* <button className="p-1 hover:bg-yellow-200 rounded-full cursor-pointer">
-                      <Pencil className="w-4 h-4 text-yellow-500" />
-                    </button>
-                    <button className="p-1 hover:bg-red-200 rounded-full cursor-pointer">
-                      <Trash className="w-4 h-4 text-red-500" />
-                    </button> */}
                   </td>
                 </tr>
               );
@@ -90,6 +99,13 @@ const Table = ({ floor, rooms }) => {
           </tbody>
         </table>
       </div>
+      <ModalPopup
+        isOpen={isViewTask}
+        onClose={() => setViewTask(false)}
+        title={`Work Details Room ${selectedTask?.floor}${selectedTask?.room_number} #${selectedTask?.id} `}
+      >
+        <DetailWork selectedTask={selectedTask}></DetailWork>
+      </ModalPopup>
     </div>
   );
 };

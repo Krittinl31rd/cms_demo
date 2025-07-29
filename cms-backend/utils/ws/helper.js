@@ -119,7 +119,7 @@ const handleRoomStatusUpdate = async (ip, mappedData) => {
     }
 
     if (item.address == 75) {
-      status.guest_status_id = item.value >= 2 ? 1 : 0;
+      status.guest_status_id = item.value >= 1 ? 1 : 0;
     }
 
     if (item.address == 8) {

@@ -6,18 +6,31 @@ import Table from "@/components/ui/Table";
 import { ArrowLeft } from "lucide-react";
 import RoomSummaryByFloor from "@/components/ui/RoomSummaryByFloor";
 import { GetRooms } from "@/api/room";
-import { GetMaintenanceTask } from "@/api/task";
 import { technician_type } from "@/constant/common";
-import { maintenance_status } from "../../constant/common";
+import { device_type, maintenance_status } from "../../constant/common";
 import dayjs from "dayjs";
 import Summary from "@/components/ui/Summary";
+import SummaryNotification from "../../components/ui/SummaryNotification";
+import { GetNotifications } from "../../api/summary";
+import AssignWorkForm from "@/components/technician/AssignWorkForm";
+import {
+  GetMaintenanceTask,
+  GetTechnician,
+  GetRoomNumberFloor,
+} from "@/api/task";
+import { GetRoomDevicesLog } from "../../api/room";
+import Chart from "../../components/ui/Chart";
 
 const Main = () => {
-  const { token, activeSection, setActiveSection } = useStore();
-  // const [activeSection, setActiveSection] = useState(null);
+  const { token, activeSection, setActiveSection, subscribeId } = useStore();
+  const [selectedDate, setSelectedDate] = useState(
+    dayjs().format("YYYY-MM-DD")
+  );
   const [summary, setSummary] = useState({});
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [technicianList, setTechnicianList] = useState([]);
+  const [rooms, setRooms] = useState([]);
 
   const fetchSummary = async () => {
     try {
@@ -30,6 +43,32 @@ const Main = () => {
 
   useEffect(() => {
     fetchSummary();
+  }, [token]);
+
+  const fetchTechnicianList = async () => {
+    try {
+      const response = await GetTechnician(token);
+      setTechnicianList(response?.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTechnicianList();
+  }, [token]);
+
+  const fetchRooms = async () => {
+    try {
+      const response = await GetRoomNumberFloor(token);
+      setRooms(response?.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
   }, [token]);
 
   const handleClick = async (section) => {
@@ -62,6 +101,7 @@ const Main = () => {
         const query = {
           assigned_to_type: assignedTypes.join(","),
           status_id: statusIds.join(","),
+          started_at: selectedDate,
         };
         const response = await GetMaintenanceTask(token, query);
         setData(response.data);
@@ -75,6 +115,7 @@ const Main = () => {
         const query = {
           assigned_to_type: assignedTypes.join(","),
           status_id: statusIds.join(","),
+          started_at: selectedDate,
         };
         const response = await GetMaintenanceTask(token, query);
         setData(response.data);
@@ -82,22 +123,34 @@ const Main = () => {
         const statusIds = [maintenance_status.IN_PROGRESS];
         const query = {
           status_id: statusIds.join(","),
+          started_at: selectedDate,
         };
         const response = await GetMaintenanceTask(token, query);
         setData(response.data);
       } else if (section.type == "fixed") {
-        const statusIds = [maintenance_status.FIXED];
+        const statusIds = [
+          maintenance_status.FIXED,
+          maintenance_status.UNRESOLVED,
+        ];
         const query = {
           status_id: statusIds.join(","),
+          started_at: selectedDate,
         };
         const response = await GetMaintenanceTask(token, query);
         setData(response.data);
       } else if (section.type == "fault_sum") {
         const assignedTypes = [technician_type.RCU];
+        const statusIds = [
+          maintenance_status.ASSIGNED,
+          maintenance_status.PENDING,
+          maintenance_status.IN_PROGRESS,
+          maintenance_status.FIXED,
+          maintenance_status.UNRESOLVED,
+        ];
         const query = {
           assigned_to_type: assignedTypes.join(","),
-          // status_id: statusIds.join(","),
-          started_at: dayjs().format("YYYY-MM-DD"),
+          status_id: statusIds.join(","),
+          started_at: selectedDate,
         };
         const response = await GetMaintenanceTask(token, query);
         setData(response.data);
@@ -110,7 +163,7 @@ const Main = () => {
         const query = {
           assigned_to_type: assignedTypes.join(","),
           // status_id: statusIds.join(","),
-          started_at: dayjs().format("YYYY-MM-DD"),
+          started_at: selectedDate,
         };
         const response = await GetMaintenanceTask(token, query);
         setData(response.data);
@@ -118,7 +171,7 @@ const Main = () => {
         const statusIds = [maintenance_status.IN_PROGRESS];
         const query = {
           status_id: statusIds.join(","),
-          started_at: dayjs().format("YYYY-MM-DD"),
+          started_at: selectedDate,
         };
         const response = await GetMaintenanceTask(token, query);
         setData(response.data);
@@ -129,9 +182,22 @@ const Main = () => {
         ];
         const query = {
           status_id: statusIds.join(","),
-          started_at: dayjs().format("YYYY-MM-DD"),
+          started_at: selectedDate,
         };
         const response = await GetMaintenanceTask(token, query);
+        setData(response.data);
+      } else if (section.type == "notification_sum") {
+        const query = {
+          date: selectedDate,
+        };
+        const response = await GetNotifications(token, subscribeId, query);
+        setData(response.data);
+      } else if (section.type == "chart") {
+        const query = {
+          device_type_id: device_type.TEMPERATURE,
+          date: selectedDate,
+        };
+        const response = await GetRoomDevicesLog(token, query);
         setData(response.data);
       }
     } catch (err) {
@@ -145,7 +211,7 @@ const Main = () => {
     if (activeSection !== null) {
       handleClick(activeSection);
     }
-  }, [activeSection]);
+  }, [activeSection, selectedDate]);
 
   const cardFunct = (title, value, bg, text, onClick) => (
     <div
@@ -265,37 +331,95 @@ const Main = () => {
               () =>
                 handleClick({
                   type: "notification_sum",
-                  lable: "NOTIFICATION SUMMARY",
+                  lable: "DAILY NOTIFICATION SUMMARY",
                 })
+            )}
+            {cardFunct("ASSIGN TASK", null, "bg-orange-300", "text-black", () =>
+              handleClick({
+                type: "assign_task",
+                lable: "ASSIGN TASK",
+              })
+            )}
+            {cardFunct("CHART", null, "bg-orange-300", "text-black", () =>
+              handleClick({
+                type: "chart",
+                lable: "CHART",
+              })
             )}
           </div>
         </>
       ) : (
         <div className="w-full">
-          <button
-            onClick={() => {
-              setActiveSection(null);
-              setData([]);
-            }}
-            className="flex mb-2 px-4 py-2 bg-gray-200 text-black rounded hover:bg-gray-300"
-          >
-            <ArrowLeft /> Back
-          </button>
-
+          <div className="w-full flex items-center justify-between">
+            <button
+              onClick={() => {
+                setActiveSection(null);
+                setData([]);
+              }}
+              className="flex mb-2 px-4 py-2 bg-gray-200 text-black rounded hover:bg-gray-300"
+            >
+              <ArrowLeft /> Back
+            </button>
+            {[
+              "rcu_fault_alert",
+              "hi_temp_alarm",
+              "wip",
+              "fixed",
+              "fault_sum",
+              "alert_sum",
+              "wip_sum",
+              "done_sum",
+              "notification_sum",
+              "chart",
+            ].includes(activeSection?.type) && (
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className=" border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            )}
+          </div>
           {loading ? (
             <Spinner />
           ) : activeSection.type == "fault_sum" ||
             activeSection.type == "alert_sum" ||
             activeSection.type == "wip_sum" ||
             activeSection.type == "done_sum" ? (
-            <Summary data={data} activeSection={activeSection} />
+            <Summary
+              data={data}
+              activeSection={activeSection}
+              setSelectedDate={(i) => setSelectedDate(i)}
+            />
           ) : activeSection.type == "notification_sum" ? (
-            "k"
+            <SummaryNotification
+              data={data}
+              activeSection={activeSection}
+              setSelectedDate={(i) => setSelectedDate(i)}
+            />
+          ) : activeSection.type == "assign_task" ? (
+            <div className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md">
+              <h2 className="text-2xl font-bold">{activeSection.lable}</h2>
+              <AssignWorkForm
+                // fetchTaskList={fetchTaskList}
+                technicianList={technicianList}
+                rooms={rooms}
+              />
+            </div>
+          ) : activeSection.type == "chart" ? (
+            <Chart
+              data={data}
+              activeSection={activeSection}
+              selectedDate={selectedDate}
+              setSelectedDate={(i) => setSelectedDate(i)}
+            />
           ) : (
             <RoomSummaryByFloor
               data={data}
               activeSection={activeSection}
               groupBy="floor"
+              selectedDate={selectedDate}
+              setSelectedDate={(i) => setSelectedDate(i)}
             />
           )}
         </div>

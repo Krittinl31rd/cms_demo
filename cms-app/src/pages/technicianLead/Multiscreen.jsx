@@ -147,7 +147,7 @@ const Multiscreen = () => {
       const baseId = i * 6;
       // หา scene ที่มี id = i+1
       const scene = scenes[i];
-      console.log(scene);
+
       if (scene) {
         // scene มีอยู่ ส่งข้อมูลจริง
         const [hour, minute] = scene.time.split(":").map(Number);

@@ -10,8 +10,8 @@ import { CreateTask } from "@/api/task";
 import useStore from "@/store/store";
 
 export default function AssignWorkForm({
-  fetchTaskList,
-  onAssign,
+  // fetchTaskList,
+  onAssign = null,
   technicianList,
   rooms,
 }) {
@@ -52,7 +52,15 @@ export default function AssignWorkForm({
     try {
       const response = await CreateTask(formData, token);
       toast.success(response?.data?.message || "Work assigned successfully");
-      onAssign();
+      setFormData({
+        room_id: "",
+        problem_description: "",
+        assigned_to: "",
+        tech_name: "",
+        tech_type_id: "",
+      });
+      if (onAssign) return onAssign();
+
       // fetchTaskList();
     } catch (err) {
       console.log(err);
@@ -67,6 +75,7 @@ export default function AssignWorkForm({
           <label className="block text-sm font-semibold">Room</label>
           <select
             name="room_id"
+            // value={formData.room_id}
             onChange={handleChange}
             className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
@@ -81,14 +90,6 @@ export default function AssignWorkForm({
               </option>
             ))}
           </select>
-          {/* <input
-            type="text"
-            name="room_id"
-            // value={formData.room_id}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          /> */}
         </div>
 
         <div>
@@ -97,7 +98,7 @@ export default function AssignWorkForm({
           </label>
           <textarea
             name="problem_description"
-            // value={formData.problem_description}
+            value={formData.problem_description}
             onChange={handleChange}
             rows="3"
             className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -172,36 +173,6 @@ export default function AssignWorkForm({
           <Button>Aassign Work</Button>
         </div>
       </form>
-
-      {/* <ModalPopup
-        isOpen={isCancel}
-        onClose={() => setIsCancel(false)}
-        title={`Are you sure?`}
-      >
-        {selectCancel ? (
-          <div className="space-y-2 text-sm">
-            <p>
-              Cancle your work {selectCancel.id} | {selectCancel.roomName} |{" "}
-              {selectCancel.status}
-            </p>
-            <div className="w-full flex items-center justify-end gap-2">
-              <Button variant="gray" onClick={() => setIsCancel(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  alert(`Cancel success`);
-                  setIsCancel(false);
-                }}
-              >
-                Confirm
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <p>No data available</p>
-        )}
-      </ModalPopup> */}
     </>
   );
 }

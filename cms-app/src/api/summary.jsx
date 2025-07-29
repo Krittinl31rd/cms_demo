@@ -7,6 +7,17 @@ export const GetSummary = async (token) =>
     },
   });
 
+export const GetNotifications = async (token, subscribe_id, query = {}) =>
+  await axios.get(
+    import.meta.env.VITE_API_URL + `/get-notifications/${subscribe_id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: query,
+    }
+  );
+
 // export const GetTotalRCUs = async (token) =>
 //   await axios.get(import.meta.env.VITE_API_URL + "/get-total_rcu", {
 //     headers: {

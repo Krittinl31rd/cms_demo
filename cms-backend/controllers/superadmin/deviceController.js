@@ -348,7 +348,22 @@ exports.DeleteDevice = async (req, res) => {
 };
 
 exports.GetRoomDevicesLog = async (req, res) => {
+  const { device_type_id, date } = req.query;
   try {
+    let whereClause = "WHERE 1=1";
+    const replacements = {};
+
+    if (device_type_id) {
+      whereClause += " AND l.device_type_id = :device_type_id";
+      replacements.device_type_id = device_type_id;
+    }
+
+    if (date) {
+      whereClause += " AND l.created_at BETWEEN :started_at AND :ended_at";
+      replacements.started_at = `${date} 00:00:00`;
+      replacements.ended_at = `${date} 23:59:59`;
+    }
+
     const logs = await sequelize.query(
       `
       SELECT 
@@ -373,9 +388,11 @@ exports.GetRoomDevicesLog = async (req, res) => {
         ON l.action = dc.control_id 
         AND l.device_id = dc.device_id 
         AND l.room_id = dc.room_id
+      ${whereClause}
       ORDER BY l.created_at DESC
       `,
       {
+        replacements,
         type: sequelize.QueryTypes.SELECT,
       }
     );

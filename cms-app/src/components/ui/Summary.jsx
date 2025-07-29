@@ -1,193 +1,165 @@
 import React from "react";
-import { Building2, DoorClosed, Users, AlertCircle } from "lucide-react";
-import { taskStatusId, colorBadgeByLabel } from "@/utilities/helpers";
+import { Building2, DoorClosed, AlertCircle } from "lucide-react";
 import { maintenance_status } from "@/constant/common";
 
-const STATUS_ACTIVE = [
-  maintenance_status.PENDING,
-  maintenance_status.ASSIGNED,
-  maintenance_status.IN_PROGRESS,
-];
-const STATUS_DONE = [maintenance_status.FIXED, maintenance_status.UNRESOLVED];
+const STATUS_GROUPS = {
+  "Pending / Assigned": [
+    maintenance_status.PENDING,
+    maintenance_status.ASSIGNED,
+  ],
+  "In Progress": [maintenance_status.IN_PROGRESS],
+  "Fixed / Unresolved": [
+    maintenance_status.FIXED,
+    maintenance_status.UNRESOLVED,
+  ],
+};
 
-// Group helper
-const groupBy = (data, key) =>
+// Group by helper
+const groupByWithDetail = (data, key, extraKey) =>
   data.reduce((acc, item) => {
     const group = item[key];
-    acc[group] = (acc[group] || 0) + 1;
+    if (!acc[group]) acc[group] = { count: 0, names: new Set() };
+    acc[group].count += 1;
+    if (extraKey && item[extraKey]) acc[group].names.add(item[extraKey]);
     return acc;
   }, {});
 
-const formatLabel = (obj, prefix) =>
-  Object.fromEntries(
-    Object.entries(obj).map(([k, v]) => [`${prefix} ${k}`, v])
-  );
-
-const Summary = ({ data, activeSection }) => {
-  const total = data.length;
-  const activeData = data.filter((d) => STATUS_ACTIVE.includes(d.status_id));
-  const doneData = data.filter((d) => STATUS_DONE.includes(d.status_id));
-
-  // Summary Groupings
-  const groupings = {
-    active: {
-      floor: formatLabel(groupBy(activeData, "floor"), "Floor"),
-      room: formatLabel(groupBy(activeData, "room_number"), "Room"),
-      tech: groupBy(activeData, "assigned_to_name"),
-    },
-    done: {
-      floor: formatLabel(groupBy(doneData, "floor"), "Floor"),
-      room: formatLabel(groupBy(doneData, "room_number"), "Room"),
-      tech: groupBy(doneData, "assigned_to_name"),
-    },
-  };
-
-  // Reusable Cards
-  const ListCard = ({ title, data, icon: Icon, color }) => {
-    const isEmpty = !data || Object.keys(data).length === 0;
-
-    return (
-      <div className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md">
-        <div className="flex items-center gap-2 mb-2">
-          <div className={`p-2 rounded bg-${color}-50`}>
-            <Icon className={`h-5 w-5 text-${color}-600`} />
-          </div>
-          <h4 className="text-md font-semibold text-gray-900">{title}</h4>
+// ListCard with optional technician
+const ListCard = ({ title, data, icon: Icon, color, showTech = false }) => {
+  const isEmpty = !data || Object.keys(data).length === 0;
+  return (
+    <div className="bg-white rounded-2xl p-2 shadow-sm hover:shadow-md">
+      <div className="flex items-center gap-2 mb-2">
+        <div className={`p-2 rounded bg-${color}-50`}>
+          <Icon className={`h-5 w-5 text-${color}-600`} />
         </div>
-
-        <div className="space-y-2 max-h-64 overflow-auto">
-          {isEmpty ? (
-            <p className="text-sm text-gray-500 italic text-center">
-              No result found
-            </p>
-          ) : (
-            Object.entries(data).map(([label, count]) => (
-              <div
-                key={label}
-                className="flex items-center justify-between py-1 px-2 bg-gray-50 rounded"
-              >
-                <span className="text-sm text-gray-700">{label}</span>
-                <span className="text-sm font-bold text-gray-900">{count}</span>
-              </div>
-            ))
-          )}
-        </div>
+        <h4 className="text-md font-semibold text-gray-900">{title}</h4>
       </div>
-    );
-  };
 
-  //   const StatusCard = ({ data }) => (
-  //     <div className="bg-white rounded-2xl  p-4 shadow-sm hover:shadow-md">
-  //       <div className="flex items-center gap-2 mb-2">
-  //         <div className="p-2 rounded bg-purple-50">
-  //           <AlertCircle className="h-5 w-5 text-purple-600" />
-  //         </div>
-  //         <h4 className="text-md font-semibold text-gray-900">By Status</h4>
-  //       </div>
-  //       <div className="space-y-2 max-h-64 overflow-auto">
-  //         {Object.entries(data).map(([label, count]) => (
-  //           <div
-  //             key={label}
-  //             className="flex items-center justify-between py-1 px-2 bg-gray-50 rounded"
-  //           >
-  //             <span
-  //               className={`px-2 py-1 rounded-full text-xs font-medium ${
-  //                 colorBadgeByLabel[label] || "bg-gray-100 text-gray-800"
-  //               }`}
-  //             >
-  //               {label}
-  //             </span>
-  //             <span className="text-sm font-bold text-gray-900">{count}</span>
-  //           </div>
-  //         ))}
-  //       </div>
-  //     </div>
-  //   );
+      <div className="space-y-2 max-h-64 overflow-auto">
+        {isEmpty ? (
+          <p className="text-sm text-gray-500 italic text-center">
+            No result found
+          </p>
+        ) : (
+          Object.entries(data).map(([label, val]) => (
+            <div
+              key={label}
+              className="flex flex-col justify-between py-1 px-2 bg-gray-50 rounded"
+            >
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-700 font-semibold">
+                  {label}
+                </span>
+                <span className="text-sm font-bold text-gray-900">
+                  {val.count}
+                </span>
+              </div>
+              {showTech && val.names?.size > 0 && (
+                <span className="text-xs text-gray-500 italic">
+                  Technician: {[...val.names].join(", ")}
+                </span>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+const Summary = ({ data, activeSection, setSelectedDate }) => {
+  const total = data.length;
+
+  const grouped = Object.entries(STATUS_GROUPS).reduce(
+    (acc, [label, statuses]) => {
+      const shouldShow =
+        (activeSection.type === "wip_sum" && label === "In Progress") ||
+        (activeSection.type === "done_sum" && label === "Fixed / Unresolved") ||
+        !["wip_sum", "done_sum"].includes(activeSection.type); // default = show all
+
+      if (!shouldShow) return acc;
+
+      const filtered = data.filter((d) => statuses.includes(d.status_id));
+      acc[label] = {
+        total: filtered.length,
+        byFloor: groupByWithDetail(filtered, "floor"),
+        byRoom: groupByWithDetail(filtered, "room_number", "assigned_to_name"),
+      };
+      return acc;
+    },
+    {}
+  );
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold">{activeSection.lable}</h2>
+        <h2 className="text-2xl font-bold">{activeSection?.lable}</h2>
         <p className="text-gray-500 text-sm">
           Total items <strong>{total}</strong> list
         </p>
       </div>
 
-      {/* Summary Totals */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <ListCard
-          title="Active Tasks"
-          data={{ Total: activeData.length }}
-          icon={AlertCircle}
-          color="blue"
-        />
-        <ListCard
-          title="Done/Cancelled"
-          data={{ Total: doneData.length }}
-          icon={AlertCircle}
-          color="gray"
-        />
-        {/* <StatusCard data={groupings.status} /> */}
+      <div
+        className={
+          activeSection.type == "done_sum" || activeSection.type == "wip_sum"
+            ? "grid grid-cols-1 gap-4"
+            : "grid grid-cols-1 md:grid-cols-3 gap-4"
+        }
+      >
+        {Object.entries(grouped).map(([label, group]) => (
+          <ListCard
+            key={label}
+            title={label}
+            data={{ Total: { count: group.total } }}
+            icon={AlertCircle}
+            color="blue"
+          />
+        ))}
       </div>
 
-      {/* Detailed Split */}
+      {/* Tasks by Floor */}
       <div className="space-y-4">
-        {/* By Floor */}
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Tasks by Floor</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h3 className="text-lg font-semibold mb-2">Tasks by Floor</h3>
+        <div
+          className={
+            activeSection.type == "done_sum" || activeSection.type == "wip_sum"
+              ? "grid grid-cols-1 gap-4"
+              : "grid grid-cols-1 md:grid-cols-3 gap-4"
+          }
+        >
+          {Object.entries(grouped).map(([label, group]) => (
             <ListCard
-              title="Active"
-              data={groupings.active.floor}
+              key={label}
+              title={label}
+              data={group.byFloor}
               icon={Building2}
               color="blue"
             />
-            <ListCard
-              title="Done/Cancelled"
-              data={groupings.done.floor}
-              icon={Building2}
-              color="gray"
-            />
-          </div>
+          ))}
         </div>
+      </div>
 
-        {/* By Room */}
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Tasks by Room</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Tasks by Room with Technician */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold mb-2">Tasks by Room</h3>
+        <div
+          className={
+            activeSection.type == "done_sum" || activeSection.type == "wip_sum"
+              ? "grid grid-cols-1 gap-4"
+              : "grid grid-cols-1 md:grid-cols-3 gap-4"
+          }
+        >
+          {Object.entries(grouped).map(([label, group]) => (
             <ListCard
-              title="Active"
-              data={groupings.active.room}
+              key={label}
+              title={label}
+              data={group.byRoom}
               icon={DoorClosed}
               color="blue"
+              showTech
             />
-            <ListCard
-              title="Done/Cancelled"
-              data={groupings.done.room}
-              icon={DoorClosed}
-              color="gray"
-            />
-          </div>
-        </div>
-
-        {/* By Technician */}
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Tasks by Technician</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ListCard
-              title="Active"
-              data={groupings.active.tech}
-              icon={Users}
-              color="blue"
-            />
-            <ListCard
-              title="Done/Cancelled"
-              data={groupings.done.tech}
-              icon={Users}
-              color="gray"
-            />
-          </div>
+          ))}
         </div>
       </div>
     </div>

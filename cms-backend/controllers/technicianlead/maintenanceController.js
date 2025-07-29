@@ -110,10 +110,10 @@ exports.CreateMaintenanceTask = async (req, res) => {
           room_id: room_id,
           type_technician: tech_type_id,
           type_notification:
-            tech_type_id == technician_type.ELECTRICAL
+            tech_type_id == technician_type.RCU
               ? notification_type.MAINTENANCE
-              : tech_type_id == technician_type.RCU &&
-                notification_type.CLEANING,
+              : notification_type.ALERT,
+
           message: `${CheckTypeTechnician(
             tech_type_id
           )} - ${problem_description}`,

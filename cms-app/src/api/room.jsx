@@ -43,9 +43,10 @@ export const DeleteRoom = async (token, id) =>
     },
   });
 
-export const GetRoomDevicesLog = async (token) =>
+export const GetRoomDevicesLog = async (token, query = {}) =>
   await axios.get(import.meta.env.VITE_API_URL + `/get-room-logs`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    params: query,
   });
