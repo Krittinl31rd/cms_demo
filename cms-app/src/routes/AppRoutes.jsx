@@ -88,9 +88,6 @@ const router = createBrowserRouter([
       { path: "rooms", element: <Rooms /> },
       { path: "repair", element: <RepairWork /> },
       { path: "history", element: <History /> },
-      { path: "config", element: <Setting /> },
-      { path: "log", element: <RoomDevicesLog /> },
-      { path: "sence", element: <Multiscreen /> },
     ],
   },
   {
@@ -102,7 +99,12 @@ const router = createBrowserRouter([
         // requiredPermission="VIEW_TECH_PANEL"
       />
     ),
-    children: [{ path: "main", element: <Main /> }],
+    children: [
+      { path: "main", element: <Main /> },
+      { path: "sence", element: <Multiscreen /> },
+      { path: "log", element: <RoomDevicesLog /> },
+      { path: "config", element: <Setting /> },
+    ],
   },
   {
     path: "/tech",

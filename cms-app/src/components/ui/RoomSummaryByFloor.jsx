@@ -24,6 +24,7 @@ const RoomSummaryByFloor = ({
   groupBy = "floor",
   selectedDate,
   setSelectedDate,
+  sendWebSocketMessage,
 }) => {
   const { token } = useStore((state) => state);
   const [selectedFloor, setSelectedFloor] = useState("all");
@@ -95,6 +96,17 @@ const RoomSummaryByFloor = ({
     }
   };
 
+  useEffect(() => {
+    if (selectedRoom) {
+      const updatedRoom = data.find(
+        (room) => room.room_id == selectedRoom.room_id
+      );
+      if (updatedRoom) {
+        setSelectedRoom(updatedRoom);
+      }
+    }
+  }, [data]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -142,32 +154,6 @@ const RoomSummaryByFloor = ({
           <p className="text-center">No result</p>
         )
       ) : (
-        // displayData.length > 0 ? (
-        //   displayData.map(([floor, rooms]) => {
-        //     return (
-        //       <div key={floor}>
-        //         <h3 className="text-xl font-semibold mb-2 bg-white px-4 py-2 rounded-lg">
-        //           Floor {floor}
-        //         </h3>
-
-        //         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-        //           {rooms.map((room, index) => (
-        //             <CardWork
-        //               key={index}
-        //               task={room}
-        //               onSelect={(selected) => setSelectedTask(selected)}
-        //               onView={() => setViewTask(true)}
-        //               onEdit={() => setEditTask(true)}
-        //               onDelete={() => setDeleteTask(true)}
-        //             />
-        //           ))}
-        //         </div>
-        //       </div>
-        //     );
-        //   })
-        // ) : (
-        //   <p className="text-center">No result</p>
-        // )
         <p>No Data</p>
       )}
       <ModalPopup
@@ -177,7 +163,7 @@ const RoomSummaryByFloor = ({
       >
         <ElementDevices
           room={selectedRoom || {}}
-          // sendWebSocketMessage={sendWebSocketMessage}
+          sendWebSocketMessage={sendWebSocketMessage}
         />
       </ModalPopup>
       <ModalPopup

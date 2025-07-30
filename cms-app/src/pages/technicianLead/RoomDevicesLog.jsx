@@ -17,7 +17,9 @@ import {
   UserCheck,
   Bot,
   Clock,
+  ArrowLeft,
 } from "lucide-react";
+import { useNavigate, NavLink, useLocation, matchPath } from "react-router-dom";
 
 const RoomDevicesLog = () => {
   const { token } = useStore((state) => state);
@@ -25,6 +27,7 @@ const RoomDevicesLog = () => {
   const ws = useRef(null);
   const [logList, setLoglist] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState("all");
+  const navigate = useNavigate();
 
   const fetchLog = async () => {
     try {
@@ -408,6 +411,14 @@ const RoomDevicesLog = () => {
 
   return (
     <div className="flex flex-col gap-1">
+      <button
+        onClick={() => {
+          navigate("/techlead/main");
+        }}
+        className="flex mb-0 px-4 py-2 text-black rounded "
+      >
+        <ArrowLeft /> Back
+      </button>
       <div className="flex items-center gap-2 bg-white px-2 py-4 shadow-md rounded-lg">
         <label htmlFor="room-filter" className="text-sm text-gray-700">
           Filter by Room:
@@ -425,7 +436,6 @@ const RoomDevicesLog = () => {
           ))}
         </select>
       </div>
-
       <DataTable columns={columns} data={filteredLogs} enableSearch={true} />
     </div>
   );

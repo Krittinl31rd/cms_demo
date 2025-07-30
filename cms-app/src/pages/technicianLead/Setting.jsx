@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Plus, Copy, Save, Settings, Check } from "lucide-react";
+import { Plus, Copy, Save, Settings, Check, ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { GetRooms } from "@/api/room";
 import useStore from "@/store/store";
@@ -7,6 +7,7 @@ import { device_type } from "@/constant/common";
 import { CheckFunctionModbus } from "@/utilities/helpers";
 import { toast } from "react-toastify";
 import { client } from "@/constant/wsCommand";
+import { useNavigate, NavLink, useLocation, matchPath } from "react-router-dom";
 
 const Setting = () => {
   const [isWsReady, setIsWsReady] = useState(false);
@@ -19,6 +20,7 @@ const Setting = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState("");
   const uniqueFloors = [...new Set(roomList.map((room) => room.floor))];
+  const navigate = useNavigate();
 
   const fetchRoomList = async () => {
     try {
@@ -169,7 +171,7 @@ const Setting = () => {
             fc: fc === 30000 ? 6 : fc === 10000 ? 5 : 0,
           },
         };
-        console.log(payload )
+        console.log(payload);
         sendWebSocketMessage(payload);
         await delay(50);
       }
@@ -549,11 +551,18 @@ const Setting = () => {
     }
   }, [roomList]);
 
-
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
       {/* Sidebar */}
       <div className="lg:w-1/3 w-full bg-white rounded-lg shadow-sm flex flex-col">
+        <button
+          onClick={() => {
+            navigate("/techlead/main");
+          }}
+          className="flex mb-0 px-4 py-2 text-black rounded "
+        >
+          <ArrowLeft /> Back
+        </button>
         <div className="p-4 border-b border-gray-300">
           <h2 className="text-lg font-semibold mb-2">Room List</h2>
           <div className="space-y-2">

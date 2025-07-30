@@ -7,7 +7,7 @@ export function getRoleRedirectPath(role_id) {
     case member_role.FRONT_DESK:
       return "/frontdesk";
     case member_role.TECHNICIAN_LEAD:
-      return "/techlead";
+      return "/techlead/main";
     case member_role.TECHNICIAN:
       return "/tech";
     default:

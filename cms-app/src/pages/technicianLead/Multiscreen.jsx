@@ -15,7 +15,9 @@ import {
   Save,
   Copy,
   Check,
+  ArrowLeft,
 } from "lucide-react";
+import { useNavigate, NavLink, useLocation, matchPath } from "react-router-dom";
 
 const Multiscreen = () => {
   const [scenes, setScenes] = useState([]);
@@ -36,6 +38,7 @@ const Multiscreen = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState("");
   const uniqueFloors = [...new Set(roomList.map((room) => room.floor))];
+  const navigate = useNavigate();
 
   const fetchRoomList = async () => {
     try {
@@ -274,6 +277,14 @@ const Multiscreen = () => {
     <div className="flex flex-col lg:flex-row gap-2 h-full">
       {/* Sidebar */}
       <div className="lg:w-1/3 w-full bg-white rounded-lg shadow-sm flex flex-col">
+        <button
+          onClick={() => {
+            navigate("/techlead/main");
+          }}
+          className="flex mb-0 px-4 py-2 text-black rounded "
+        >
+          <ArrowLeft /> Back
+        </button>
         <div className="p-4 border-b border-gray-300">
           <h2 className="text-lg font-semibold mb-2">Room List</h2>
           <div className="space-y-2">

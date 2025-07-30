@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Spinner from "@/components/ui/Spinner";
 import { GetSummary } from "@/api/summary";
 import useStore from "@/store/store";
@@ -20,6 +20,9 @@ import {
 } from "@/api/task";
 import { GetRoomDevicesLog } from "../../api/room";
 import Chart from "../../components/ui/Chart";
+import Setting from "@/pages/technicianLead/Setting";
+import { useNavigate, NavLink, useLocation, matchPath } from "react-router-dom";
+import { client } from "@/constant/wsCommand";
 
 const Main = () => {
   const { token, activeSection, setActiveSection, subscribeId } = useStore();
@@ -31,11 +34,20 @@ const Main = () => {
   const [loading, setLoading] = useState(false);
   const [technicianList, setTechnicianList] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const navigate = useNavigate();
+  const [isWsReady, setIsWsReady] = useState(false);
+  const ws = useRef(null);
+  const activeSectionRef = useRef(activeSection);
+
+  useEffect(() => {
+    activeSectionRef.current = activeSection;
+  }, [activeSection]);
 
   const fetchSummary = async () => {
     try {
       const response = await GetSummary(token);
       setSummary(response.data);
+      // console.log(response.data);
     } catch (err) {
       console.error(err);
     }
@@ -213,6 +225,242 @@ const Main = () => {
     }
   }, [activeSection, selectedDate]);
 
+  useEffect(() => {
+    ws.current = new WebSocket(import.meta.env.VITE_WS_URL);
+
+    ws.current.onopen = () => {
+      console.log("WebSocket Connected");
+      setIsWsReady(true);
+    };
+
+    ws.current.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      handleCommand(msg, activeSectionRef.current);
+    };
+
+    ws.current.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+    };
+
+    ws.current.onclose = () => {
+      // console.log('WebSocket Disconnected');
+      setIsWsReady(false);
+    };
+
+    return () => {
+      ws.current.close();
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (isWsReady && token) {
+      sendWebSocketMessage({ cmd: client.LOGIN, param: { token } });
+    }
+  }, [isWsReady, token]);
+
+  const sendWebSocketMessage = (message) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(message));
+    } else {
+      // console.warn('WebSocket not open, retrying...');
+      setTimeout(() => sendWebSocketMessage(message), 500);
+    }
+  };
+
+  const handleCommand = async (msg, currentActiveSection) => {
+    const { cmd, param } = msg;
+
+    switch (cmd) {
+      case client.LOGIN:
+        if (param.status === "success") {
+          console.log("Login success");
+        }
+        break;
+
+      case client.MODBUS_STATUS: {
+        console.log(param);
+
+        if (currentActiveSection?.type == "total_rcu") {
+          const response = await GetRooms(token);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "online") {
+          const query = {
+            is_online: 1,
+          };
+          const response = await GetRooms(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "offline") {
+          const query = {
+            is_online: 0,
+          };
+          const response = await GetRooms(token, query);
+          setData(response.data);
+        }
+
+        // }
+
+        fetchSummary(token);
+        break;
+      }
+
+      case client.ROOM_STATUS_UPDATE: {
+        if (
+          ["total_rcu", "online", "offline"].includes(
+            currentActiveSection?.type
+          )
+        ) {
+          if (param.data) {
+            const roomStatus = param.data;
+            setData((prevRooms) =>
+              prevRooms.map((room) => {
+                if (room.ip_address == roomStatus.ip) {
+                  return {
+                    ...room,
+                    ...(roomStatus.guest_status_id != undefined && {
+                      guest_status_id: roomStatus.guest_status_id,
+                    }),
+                    ...(roomStatus.request_status != undefined && {
+                      request_status: roomStatus.request_status,
+                    }),
+                    ...(roomStatus.room_check_status != undefined && {
+                      room_check_status: roomStatus.room_check_status,
+                    }),
+                  };
+                }
+                return room;
+              })
+            );
+          }
+        }
+        break;
+      }
+
+      case client.FORWARD_UPDATE: {
+        if (
+          ["total_rcu", "online", "offline"].includes(
+            currentActiveSection?.type
+          )
+        ) {
+          const { data } = param;
+          if (!Array.isArray(data) || data.length === 0) return;
+
+          setData((prevRooms) => {
+            const newRooms = prevRooms.map((room) => {
+              const updatedDevices = room.devices.map((device) => {
+                let deviceChanged = false;
+                const newControls = device.controls.map((control) => {
+                  const updateItem = data.find(
+                    (item) =>
+                      item.room_id == room.room_id &&
+                      item.device_id == device.device_id &&
+                      item.control_id == control.control_id
+                  );
+                  if (updateItem) {
+                    deviceChanged = true;
+                    return {
+                      ...control,
+                      value: updateItem.value,
+                      // last_update: new Date().toISOString(),
+                    };
+                  }
+                  return control;
+                });
+
+                if (deviceChanged) {
+                  return { ...device, controls: newControls };
+                }
+                return device;
+              });
+
+              return { ...room, devices: updatedDevices };
+            });
+
+            return newRooms;
+          });
+        }
+
+        break;
+      }
+
+      case client.NEW_TASK:
+        if (
+          [
+            "rcu_fault_alert",
+            "hi_temp_alarm",
+            "fixed",
+            "fault_sum",
+            "alert_sum",
+            "wip_sum",
+            "done_sum",
+          ].includes(currentActiveSection?.type)
+        ) {
+          if (param) {
+            const newTask = param?.task;
+            setData((prev) => {
+              const exists = prev.find((t) => t.id === newTask.id);
+              if (exists) return prev;
+              return [newTask, ...prev];
+            });
+          }
+        }
+        fetchSummary();
+        break;
+
+      case client.UPDATE_TASK:
+        if (
+          [
+            "rcu_fault_alert",
+            "hi_temp_alarm",
+            "fixed",
+            "fault_sum",
+            "alert_sum",
+            "wip_sum",
+            "done_sum",
+          ].includes(currentActiveSection?.type)
+        ) {
+          if (param) {
+            const newTask = param?.task;
+            const taskId = param?.task?.id;
+            setData((prev) =>
+              prev.map((task) =>
+                task.id == taskId
+                  ? {
+                      ...task,
+                      ...newTask,
+                    }
+                  : task
+              )
+            );
+          }
+        }
+        fetchSummary();
+        break;
+
+      case client.DELETE_TASK:
+        if (
+          [
+            "rcu_fault_alert",
+            "hi_temp_alarm",
+            "fixed",
+            "fault_sum",
+            "alert_sum",
+            "wip_sum",
+            "done_sum",
+          ].includes(currentActiveSection?.type)
+        ) {
+          if (param) {
+            const taskId = Number(param?.task_id);
+            setData((prev) => prev.filter((task) => task.id !== taskId));
+          }
+        }
+        fetchSummary();
+        break;
+
+      default:
+        break;
+    }
+  };
+
   const cardFunct = (title, value, bg, text, onClick) => (
     <div
       onClick={onClick}
@@ -346,6 +594,27 @@ const Main = () => {
                 lable: "CHART",
               })
             )}
+            {cardFunct(
+              "ROOM CONFIG ESM",
+              null,
+              "bg-orange-300",
+              "text-black",
+              () => navigate("/techlead/config")
+            )}
+            {cardFunct(
+              "ROOM CONFIG SENCE",
+              null,
+              "bg-orange-300",
+              "text-black",
+              () => navigate("/techlead/sence")
+            )}
+            {cardFunct(
+              "ROOM DEVICES LOGS",
+              null,
+              "bg-orange-300",
+              "text-black",
+              () => navigate("/techlead/log")
+            )}
           </div>
         </>
       ) : (
@@ -420,6 +689,7 @@ const Main = () => {
               groupBy="floor"
               selectedDate={selectedDate}
               setSelectedDate={(i) => setSelectedDate(i)}
+              sendWebSocketMessage={sendWebSocketMessage}
             />
           )}
         </div>

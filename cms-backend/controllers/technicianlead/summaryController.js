@@ -32,33 +32,64 @@ exports.SummaryRoom = async (req, res) => {
   try {
     const date = req.query.date || dayjs().format("YYYY-MM-DD");
 
-    const [isOnline, isMaintenance, isTask, roomCount] = await Promise.all([
+    const [isOnline, roomCount] = await Promise.all([
       sequelize.query(
         `SELECT is_online, COUNT(*) AS count FROM rooms GROUP BY is_online`,
         { type: sequelize.QueryTypes.SELECT }
-      ),
-      sequelize.query(
-        `SELECT status_id, COUNT(*) AS count 
-         FROM maintenance_tasks 
-         WHERE DATE(created_at) = :date
-         GROUP BY status_id`,
-        {
-          replacements: { date },
-          type: sequelize.QueryTypes.SELECT,
-        }
-      ),
-      sequelize.query(
-        getMaintenanceTaskBaseQuery() +
-          ` WHERE DATE(maintenance_tasks.created_at) = :date`,
-        {
-          replacements: { date },
-          type: sequelize.QueryTypes.SELECT,
-        }
       ),
       sequelize.query(`SELECT COUNT(*) AS count FROM rooms`, {
         type: sequelize.QueryTypes.SELECT,
       }),
     ]);
+
+    const [pendingAssignedTasks, inProgressTasks, doneTasks] =
+      await Promise.all([
+        sequelize.query(
+          getMaintenanceTaskBaseQuery() +
+            ` WHERE maintenance_tasks.status_id IN (:status)
+            AND DATE(maintenance_tasks.created_at) = :date`,
+          {
+            replacements: {
+              status: [maintenance_status.PENDING, maintenance_status.ASSIGNED],
+              date,
+            },
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+        sequelize.query(
+          getMaintenanceTaskBaseQuery() +
+            ` WHERE maintenance_tasks.status_id = :status
+            AND DATE(maintenance_tasks.started_at) = :date`,
+          {
+            replacements: {
+              status: maintenance_status.IN_PROGRESS,
+              date,
+            },
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+        sequelize.query(
+          getMaintenanceTaskBaseQuery() +
+            ` WHERE maintenance_tasks.status_id IN (:status)
+            AND DATE(maintenance_tasks.ended_at) = :date`,
+          {
+            replacements: {
+              status: [
+                maintenance_status.COMPLETED,
+                maintenance_status.UNRESOLVED,
+              ],
+              date,
+            },
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+      ]);
+
+    const allTasks = [
+      ...pendingAssignedTasks,
+      ...inProgressTasks,
+      ...doneTasks,
+    ];
 
     let statusCount = {
       total_rcu: roomCount[0]?.count || 0,
@@ -66,48 +97,39 @@ exports.SummaryRoom = async (req, res) => {
       offline: 0,
       rcu_fault_alert: 0,
       hi_temp_alarm: 0,
-      wip: 0,
-      fixed: 0,
+      wip: inProgressTasks.length,
+      fixed: doneTasks.length,
     };
 
-    // is_online
     isOnline.forEach((item) => {
       if (item.is_online == 1) statusCount.online = Number(item.count);
       else statusCount.offline = Number(item.count);
     });
 
-    // status task (filtered by date)
-    isMaintenance.forEach((item) => {
-      if (item.status_id == maintenance_status.IN_PROGRESS)
-        statusCount.wip = Number(item.count);
-      if (
-        item.status_id == maintenance_status.COMPLETED ||
-        item.status_id == maintenance_status.UNRESOLVED
-      )
-        statusCount.fixed = Number(item.count);
-    });
-
-    // type task (filtered by date) with corrected condition
-    isTask.forEach((task) => {
+    allTasks.forEach((task) => {
+      // RCU FAULT ALERT
       if (
         task.assigned_to_type == technician_type.RCU &&
         [
-          maintenance_status.ASSIGNED,
           maintenance_status.PENDING,
+          maintenance_status.ASSIGNED,
           maintenance_status.IN_PROGRESS,
         ].includes(task.status_id)
-      )
+      ) {
         statusCount.rcu_fault_alert++;
+      }
 
+      // HI TEMP ALARM
       if (
-        [technician_type.TEMPERATURE].includes(task.assigned_to_type) ||
+        [technician_type.TEMPERATURE].includes(task.assigned_to_type) &&
         [
-          maintenance_status.ASSIGNED,
           maintenance_status.PENDING,
+          maintenance_status.ASSIGNED,
           maintenance_status.IN_PROGRESS,
         ].includes(task.status_id)
-      )
+      ) {
         statusCount.hi_temp_alarm++;
+      }
     });
 
     return res.status(200).json(statusCount);
