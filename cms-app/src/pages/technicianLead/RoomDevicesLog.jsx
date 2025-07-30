@@ -105,6 +105,7 @@ const RoomDevicesLog = () => {
 
     switch (cmd) {
       case client.LOG_UPDATE:
+        console.log(param);
         if (param && param.data) {
           const newLog = param.data;
           console.log("New log received:", newLog);

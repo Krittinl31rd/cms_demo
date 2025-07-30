@@ -128,19 +128,12 @@ const insertToDB = async (data, source) => {
             );
 
             const latestLog = logs?.[0];
+            console.log(latestLog);
             if (latestLog) {
-              const wsModbusClient = getWsClients().find(
-                (client) => client.user.role != "gateway"
-              );
-              // console.log({ param: { data: latestLog } });
-              if (wsModbusClient) {
-                wsModbusClient.socket.send(
-                  JSON.stringify({
-                    cmd: ws_cmd.LOG_UPDATE,
-                    param: { data: latestLog },
-                  })
-                );
-              }
+              sendWsMessageToAll({
+                cmd: ws_cmd.LOG_UPDATE,
+                param: { data: latestLog },
+              });
             }
           }
         }
