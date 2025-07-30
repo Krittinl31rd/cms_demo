@@ -30,11 +30,11 @@ const Table = ({ floor, rooms }) => {
           <thead className="bg-gray-100 text-gray-700 text-left">
             <tr>
               <th className="px-4 py-2 w-[10%]">ROOM #</th>
-              <th className="px-4 py-2 w-[10%]">CREATED</th>
+              <th className="px-4 py-2 w-[15%]">CREATED</th>
               <th className="px-4 py-2 w-[10%]">IN</th>
               <th className="px-4 py-2 w-[10%]">OUT</th>
               <th className="px-4 py-2 w-[10%]">DURATION</th>
-              <th className="px-4 py-2 w-[40%]">FAULT</th>
+              <th className="px-4 py-2 w-[35%]">FAULT</th>
               <th className="px-4 py-2 w-[10%]"></th>
             </tr>
           </thead>
@@ -62,7 +62,9 @@ const Table = ({ floor, rooms }) => {
                 >
                   <td className="px-4 py-2">{room_number}</td>
                   <td className="px-4 py-2">
-                    {created_at ? dayjs(created_at).format("HH:mm") : "-"}
+                    {created_at
+                      ? dayjs(created_at).format("DD/MM/YY HH:mm")
+                      : "-"}
                   </td>
                   <td className="px-4 py-2">
                     {showTimeIn ? dayjs(started_at).format("HH:mm") : "-"}

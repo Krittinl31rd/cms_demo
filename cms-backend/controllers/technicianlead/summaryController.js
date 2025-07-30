@@ -139,26 +139,73 @@ exports.SummaryRoom = async (req, res) => {
   }
 };
 
+// exports.GetNotifications = async (req, res) => {
+//   try {
+//     const { subscribe_id } = req.params;
+//     const { date, started_at, ended_at } = req.query;
+
+//     const [is_sub] = await sequelize.query(
+//       `SELECT subscribe_id FROM onesignal WHERE user_id = :user_id AND subscribe_id = :subscribe_id`,
+//       {
+//         replacements: {
+//           user_id: req.user.id,
+//           // subscribe_id,
+//         },
+//         type: sequelize.QueryTypes.SELECT,
+//       }
+//     );
+//     if (!is_sub)
+//       return res.status(404).json({ message: "SubscribeId not found :)" });
+
+//     const whereClauses = [`subscribe_id = :subscribe_id`];
+//     const replacements = { subscribe_id };
+
+//     if (date) {
+//       whereClauses.push(`sent_at BETWEEN :started_at AND :ended_at`);
+//       replacements.started_at = `${date} 00:00:00`;
+//       replacements.ended_at = `${date} 23:59:59`;
+//     }
+
+//     const whereString = whereClauses.length
+//       ? `WHERE ${whereClauses.join(" AND ")}`
+//       : "";
+
+//     const result = await sequelize.query(
+//       `SELECT * FROM notifications ${whereString} ORDER BY sent_at DESC`,
+//       {
+//         replacements,
+//         type: sequelize.QueryTypes.SELECT,
+//       }
+//     );
+
+//     res.status(200).json(result);
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 exports.GetNotifications = async (req, res) => {
   try {
-    const { subscribe_id } = req.params;
-    const { date, started_at, ended_at } = req.query;
+    const { date } = req.query;
 
     const [is_sub] = await sequelize.query(
-      `SELECT subscribe_id FROM onesignal WHERE user_id = :user_id AND subscribe_id = :subscribe_id`,
+      `SELECT subscribe_id FROM onesignal WHERE user_id = :user_id LIMIT 1`,
       {
         replacements: {
           user_id: req.user.id,
-          subscribe_id,
         },
         type: sequelize.QueryTypes.SELECT,
       }
     );
-    if (!is_sub)
-      return res.status(404).json({ message: "SubscribeId not found :)" });
 
-    const whereClauses = [`subscribe_id = :subscribe_id`];
-    const replacements = { subscribe_id };
+    if (!is_sub)
+      return res
+        .status(404)
+        .json({ message: "No subscription found for user" });
+
+    const whereClauses = [`user_id = :user_id`];
+    const replacements = { user_id: req.user.id };
 
     if (date) {
       whereClauses.push(`sent_at BETWEEN :started_at AND :ended_at`);

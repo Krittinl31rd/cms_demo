@@ -383,75 +383,201 @@ const Main = () => {
       }
 
       case client.NEW_TASK:
-        if (
-          [
-            "rcu_fault_alert",
-            "hi_temp_alarm",
-            "fixed",
-            "fault_sum",
-            "alert_sum",
-            "wip_sum",
-            "done_sum",
-          ].includes(currentActiveSection?.type)
-        ) {
-          if (param) {
-            const newTask = param?.task;
-            setData((prev) => {
-              const exists = prev.find((t) => t.id === newTask.id);
-              if (exists) return prev;
-              return [newTask, ...prev];
-            });
-          }
+        if (currentActiveSection?.type == "rcu_fault_alert") {
+          const statusIds = [
+            maintenance_status.ASSIGNED,
+            maintenance_status.PENDING,
+            maintenance_status.IN_PROGRESS,
+          ];
+          const assignedTypes = [technician_type.RCU];
+          const query = {
+            assigned_to_type: assignedTypes.join(","),
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "hi_temp_alarm") {
+          const statusIds = [
+            maintenance_status.ASSIGNED,
+            maintenance_status.PENDING,
+            maintenance_status.IN_PROGRESS,
+          ];
+          const assignedTypes = [technician_type.TEMPERATURE];
+          const query = {
+            assigned_to_type: assignedTypes.join(","),
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "wip") {
+          const statusIds = [maintenance_status.IN_PROGRESS];
+          const query = {
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "fixed") {
+          const statusIds = [
+            maintenance_status.FIXED,
+            maintenance_status.UNRESOLVED,
+          ];
+          const query = {
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "fault_sum") {
+          const assignedTypes = [technician_type.RCU];
+          const statusIds = [
+            maintenance_status.ASSIGNED,
+            maintenance_status.PENDING,
+            maintenance_status.IN_PROGRESS,
+            maintenance_status.FIXED,
+            maintenance_status.UNRESOLVED,
+          ];
+          const query = {
+            assigned_to_type: assignedTypes.join(","),
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "alert_sum") {
+          const assignedTypes = [
+            technician_type.ELECTRICAL,
+            technician_type.TEMPERATURE,
+            technician_type.OTHER,
+          ];
+          const query = {
+            assigned_to_type: assignedTypes.join(","),
+            // status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "wip_sum") {
+          const statusIds = [maintenance_status.IN_PROGRESS];
+          const query = {
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "done_sum") {
+          const statusIds = [
+            maintenance_status.FIXED,
+            maintenance_status.UNRESOLVED,
+          ];
+          const query = {
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
         }
         fetchSummary();
         break;
 
       case client.UPDATE_TASK:
-        if (
-          [
-            "rcu_fault_alert",
-            "hi_temp_alarm",
-            "fixed",
-            "fault_sum",
-            "alert_sum",
-            "wip_sum",
-            "done_sum",
-          ].includes(currentActiveSection?.type)
-        ) {
-          if (param) {
-            const newTask = param?.task;
-            const taskId = param?.task?.id;
-            setData((prev) =>
-              prev.map((task) =>
-                task.id == taskId
-                  ? {
-                      ...task,
-                      ...newTask,
-                    }
-                  : task
-              )
-            );
-          }
-        }
-        fetchSummary();
-        break;
-
-      case client.DELETE_TASK:
-        if (
-          [
-            "rcu_fault_alert",
-            "hi_temp_alarm",
-            "fixed",
-            "fault_sum",
-            "alert_sum",
-            "wip_sum",
-            "done_sum",
-          ].includes(currentActiveSection?.type)
-        ) {
-          if (param) {
-            const taskId = Number(param?.task_id);
-            setData((prev) => prev.filter((task) => task.id !== taskId));
-          }
+        if (currentActiveSection?.type == "rcu_fault_alert") {
+          const statusIds = [
+            maintenance_status.ASSIGNED,
+            maintenance_status.PENDING,
+            maintenance_status.IN_PROGRESS,
+          ];
+          const assignedTypes = [technician_type.RCU];
+          const query = {
+            assigned_to_type: assignedTypes.join(","),
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "hi_temp_alarm") {
+          const statusIds = [
+            maintenance_status.ASSIGNED,
+            maintenance_status.PENDING,
+            maintenance_status.IN_PROGRESS,
+          ];
+          const assignedTypes = [technician_type.TEMPERATURE];
+          const query = {
+            assigned_to_type: assignedTypes.join(","),
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "wip") {
+          const statusIds = [maintenance_status.IN_PROGRESS];
+          const query = {
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "fixed") {
+          const statusIds = [
+            maintenance_status.FIXED,
+            maintenance_status.UNRESOLVED,
+          ];
+          const query = {
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "fault_sum") {
+          const assignedTypes = [technician_type.RCU];
+          const statusIds = [
+            maintenance_status.ASSIGNED,
+            maintenance_status.PENDING,
+            maintenance_status.IN_PROGRESS,
+            maintenance_status.FIXED,
+            maintenance_status.UNRESOLVED,
+          ];
+          const query = {
+            assigned_to_type: assignedTypes.join(","),
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "alert_sum") {
+          const assignedTypes = [
+            technician_type.ELECTRICAL,
+            technician_type.TEMPERATURE,
+            technician_type.OTHER,
+          ];
+          const query = {
+            assigned_to_type: assignedTypes.join(","),
+            // status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "wip_sum") {
+          const statusIds = [maintenance_status.IN_PROGRESS];
+          const query = {
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
+        } else if (currentActiveSection?.type == "done_sum") {
+          const statusIds = [
+            maintenance_status.FIXED,
+            maintenance_status.UNRESOLVED,
+          ];
+          const query = {
+            status_id: statusIds.join(","),
+            started_at: selectedDate,
+          };
+          const response = await GetMaintenanceTask(token, query);
+          setData(response.data);
         }
         fetchSummary();
         break;
@@ -460,6 +586,10 @@ const Main = () => {
         break;
     }
   };
+
+  useEffect(() => {
+    console.log("Updated data:", data);
+  }, [data]);
 
   const cardFunct = (title, value, bg, text, onClick) => (
     <div

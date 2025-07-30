@@ -23,7 +23,7 @@ const {
 } = require("../controllers/technicianlead/summaryController");
 
 router.get(
-  "/get-notifications/:subscribe_id",
+  "/get-notifications",
   AuthCheck,
   RoleCheck([
     member_role.SUPER_ADMIN,
