@@ -95,12 +95,11 @@ const Setting = () => {
 
   const handleSave = async (room, deviceId) => {
     if (isSaving) return;
-
+    setIsSaving(true);
     try {
-      setIsSaving(true);
-      setTimeout(() => {
-        setIsSaving(false);
-      }, 20000);
+      // setTimeout(() => {
+      //   setIsSaving(false);
+      // }, 20000);
 
       const configField = formConfig[deviceId] || {};
       const device = room.devices.find((d) => d.device_id == deviceId);
@@ -161,6 +160,10 @@ const Setting = () => {
 
         if (value === undefined || value === null || isNaN(value)) continue;
 
+        if (address == 49) {
+          value = 1;
+        }
+
         const payload = {
           cmd: client.WRITE_REGISTER,
           param: {
@@ -177,12 +180,13 @@ const Setting = () => {
       }
     } catch (err) {
       console.error("Save error", err);
+    } finally {
+      setTimeout(() => setIsSaving(false), 20000);
     }
   };
 
   const handleBulkSave = async () => {
     if (isSaving || selectedRooms.length === 0) return;
-    setIsSaving(true);
     try {
       for (const room of selectedRooms) {
         for (const device of room.devices) {
@@ -193,8 +197,6 @@ const Setting = () => {
     } catch (err) {
       toast.error("Error saving settings for some rooms.");
       console.error(err);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -583,7 +585,7 @@ const Setting = () => {
               <option value="">Select floor</option>
               {uniqueFloors.map((floor) => (
                 <option key={floor} value={floor}>
-                  ชั้น {floor}
+                  Floor {floor}
                 </option>
               ))}
             </select>

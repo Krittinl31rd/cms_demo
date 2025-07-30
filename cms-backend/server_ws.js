@@ -178,6 +178,7 @@ wss.on("connection", (ws) => {
         await updatedToDB(mappedData);
         const roomStatus = await handleRoomStatusUpdate(ip, mappedData);
         if (roomStatus != undefined || roomStatus != null) {
+          console.log(roomStatus);
           await updateRoomStatusInDB(roomStatus);
           await insertGuestPersenceLogs(roomStatus);
           broadcastToLoggedInClients(

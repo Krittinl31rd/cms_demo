@@ -162,7 +162,23 @@ const handleRoomStatusUpdate = async (ip, mappedData) => {
   if (!updated) return null;
 
   status.request_status = newRequestStatus;
+  status.room_id = await checkRoomByIP(ip);
   return status;
+};
+
+const checkRoomByIP = async (ip) => {
+  try {
+    const query = `SELECT id FROM rooms WHERE ip_address = :ip_address`;
+
+    const [result] = await sequelize.query(query, {
+      replacements: { ip_address: ip },
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    return result.id;
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 module.exports = {

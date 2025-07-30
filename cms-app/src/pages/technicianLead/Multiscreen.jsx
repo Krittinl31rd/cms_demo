@@ -305,7 +305,7 @@ const Multiscreen = () => {
               <option value="">Select floor</option>
               {uniqueFloors.map((floor) => (
                 <option key={floor} value={floor}>
-                  ชั้น {floor}
+                  Floor {floor}
                 </option>
               ))}
             </select>

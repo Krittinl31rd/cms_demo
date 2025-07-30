@@ -128,7 +128,7 @@ const insertToDB = async (data, source) => {
             );
 
             const latestLog = logs?.[0];
-            console.log(latestLog);
+            console.log("LOG_UPDATE");
             if (latestLog) {
               sendWsMessageToAll({
                 cmd: ws_cmd.LOG_UPDATE,

@@ -199,10 +199,10 @@ const Main = () => {
         const response = await GetMaintenanceTask(token, query);
         setData(response.data);
       } else if (section.type == "notification_sum") {
-        const query = {
-          date: selectedDate,
-        };
-        const response = await GetNotifications(token, subscribeId, query);
+        // const query = {
+        //   date: selectedDate,
+        // };
+        const response = await GetNotifications(token);
         setData(response.data);
       } else if (section.type == "chart") {
         const query = {
@@ -587,9 +587,9 @@ const Main = () => {
     }
   };
 
-  useEffect(() => {
-    console.log("Updated data:", data);
-  }, [data]);
+  // useEffect(() => {
+  //   console.log("Updated data:", data);
+  // }, [data]);
 
   const cardFunct = (title, value, bg, text, onClick) => (
     <div
