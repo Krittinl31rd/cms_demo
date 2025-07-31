@@ -27,6 +27,16 @@ import ProtectRoute from "@/routes/ProtectRoute";
 import { member_role } from "@/constant/common";
 import Multiscreen from "../pages/technicianLead/Multiscreen";
 import Main from "../pages/technicianLead/Main";
+import LayoutV3 from "../layouts/LayoutV3";
+import AllRcus from "../pages/technicianLead/v3/AllRcus";
+import Fault from "../pages/technicianLead/v3/Fault";
+import HiTemp from "../pages/technicianLead/v3/HiTemp";
+import WIP from "../pages/technicianLead/v3/WIP";
+import Fixed from "../pages/technicianLead/v3/Fixed";
+import FaultSum from "../pages/technicianLead/v3/FaultSum";
+import AlertSum from "../pages/technicianLead/v3/AlertSum";
+import WIPSum from "../pages/technicianLead/v3/WIPSum";
+import DoneSum from "../pages/technicianLead/v3/DoneSum";
 
 const router = createBrowserRouter([
   {
@@ -84,7 +94,7 @@ const router = createBrowserRouter([
       />
     ),
     children: [
-      { index: true, element: <DashboardTechLead /> },
+      // { index: true, element: <DashboardTechLead /> },
       { path: "rooms", element: <Rooms /> },
       { path: "repair", element: <RepairWork /> },
       { path: "history", element: <History /> },
@@ -94,16 +104,27 @@ const router = createBrowserRouter([
     path: "/techlead",
     element: (
       <ProtectRoute
-        element={NoneSidebarLayout}
+        element={LayoutV3}
         allowedRoles={[member_role.TECHNICIAN_LEAD]}
         // requiredPermission="VIEW_TECH_PANEL"
       />
     ),
     children: [
-      { path: "main", element: <Main /> },
-      { path: "sence", element: <Multiscreen /> },
-      { path: "log", element: <RoomDevicesLog /> },
-      { path: "config", element: <Setting /> },
+      { index: true, element: <AllRcus /> },
+      { path: "fault", element: <Fault /> },
+      { path: "hitemp", element: <HiTemp /> },
+      { path: "wip", element: <WIP /> },
+      { path: "fixed", element: <Fixed /> },
+      { path: "faultsum", element: <FaultSum /> },
+      { path: "alertsum", element: <AlertSum /> },
+      { path: "wipsum", element: <WIPSum /> },
+      { path: "donesum", element: <DoneSum /> },
+      { path: "notisum", element: <Main /> },
+      { path: "assign", element: <Main /> },
+      { path: "chart", element: <Main /> },
+      { path: "configesm", element: <Setting /> },
+      { path: "configsence", element: <Main /> },
+      { path: "deviceslogs", element: <RoomDevicesLog /> },
     ],
   },
   {

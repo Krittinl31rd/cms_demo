@@ -125,12 +125,12 @@ const ElementDevices = ({ room, sendWebSocketMessage }) => {
           "request_status"
         )}
         {(() => {
-          // type_id 25, device_name ESM, control[0]: value
           const device_esm = devices.find(
             (i) => i.type_id == 25 && i.device_name == "ESM"
           );
-          const ctrl_esm = device_esm.controls[0];
-          return <span>ESM {ctrl_esm.value}</span>;
+          const ctrl_esm = device_esm?.controls?.[0];
+
+          return <span>ESM {ctrl_esm ? ctrl_esm.value : "N/A"}</span>;
         })()}
       </div>{" "}
       <h3 className="font-semibold">Motion & Sensor</h3>

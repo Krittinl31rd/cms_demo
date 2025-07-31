@@ -412,14 +412,14 @@ const RoomDevicesLog = () => {
 
   return (
     <div className="flex flex-col gap-1">
-      <button
+      {/* <button
         onClick={() => {
           navigate("/techlead/main");
         }}
         className="flex mb-0 px-4 py-2 text-black rounded "
       >
         <ArrowLeft /> Back
-      </button>
+      </button> */}
       <div className="flex items-center gap-2 bg-white px-2 py-4 shadow-md rounded-lg">
         <label htmlFor="room-filter" className="text-sm text-gray-700">
           Filter by Room:
