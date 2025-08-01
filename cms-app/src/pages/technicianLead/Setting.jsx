@@ -12,7 +12,7 @@ import { useNavigate, NavLink, useLocation, matchPath } from "react-router-dom";
 const Setting = () => {
   const [isWsReady, setIsWsReady] = useState(false);
   const ws = useRef(null);
-  const { token } = useStore((state) => state);
+  const { token, getSummary } = useStore((state) => state);
   const [roomList, setRoomList] = useState([]);
   const [formConfig, setFormConfig] = useState([]);
   const [selectedRooms, setSelectedRooms] = useState([]);
@@ -520,22 +520,16 @@ const Setting = () => {
           return newRooms;
         });
 
-        // const isSave = param.data.find(
-        //   (item) => item.type_id == device_type.CONFIG && item.control_id == 19
-        // );
-        // console.log(param.data);
-        // if (isSave !== undefined) {
-        //   if (isSave.value == 2) {
-        //     toast.success(`Save config for ${param.ip} Successfully :)`);
-        //   } else if (isSave.value == 3) {
-        //     toast.error(`Save config for ${param.ip} Failed :(`);
-        //   } else {
-        //     return;
-        //   }
-        // }
-
         break;
       }
+
+      case client.NEW_TASK:
+        getSummary(token);
+        break;
+
+      case client.UPDATE_TASK:
+        getSummary(token);
+        break;
 
       default:
         break;
@@ -557,14 +551,6 @@ const Setting = () => {
     <div className="flex flex-col lg:flex-row gap-4 h-full">
       {/* Sidebar */}
       <div className="lg:w-1/3 w-full bg-white rounded-lg shadow-sm flex flex-col">
-        <button
-          onClick={() => {
-            navigate("/techlead/main");
-          }}
-          className="flex mb-0 px-4 py-2 text-black rounded "
-        >
-          <ArrowLeft /> Back
-        </button>
         <div className="p-4 border-b border-gray-300">
           <h2 className="text-lg font-semibold mb-2">Room List</h2>
           <div className="space-y-2">

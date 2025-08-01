@@ -30,7 +30,7 @@ const Multiscreen = () => {
   });
   const [isWsReady, setIsWsReady] = useState(false);
   const ws = useRef(null);
-  const { token } = useStore((state) => state);
+  const { token, getSummary } = useStore((state) => state);
   const [roomList, setRoomList] = useState([]);
   const [formConfig, setFormConfig] = useState([]);
   const [selectedRooms, setSelectedRooms] = useState([]);
@@ -273,18 +273,75 @@ const Multiscreen = () => {
     setSettings((prev) => ({ ...prev, [field]: value }));
   };
 
+  useEffect(() => {
+    ws.current = new WebSocket(import.meta.env.VITE_WS_URL);
+
+    ws.current.onopen = () => {
+      console.log("WebSocket Connected");
+      setIsWsReady(true);
+    };
+
+    ws.current.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      handleCommand(msg);
+    };
+
+    ws.current.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+    };
+
+    ws.current.onclose = () => {
+      // console.log('WebSocket Disconnected');
+      setIsWsReady(false);
+    };
+
+    return () => {
+      ws.current.close();
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (isWsReady && token) {
+      sendWebSocketMessage({ cmd: client.LOGIN, param: { token } });
+    }
+  }, [isWsReady, token]);
+
+  const sendWebSocketMessage = (message) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(message));
+    } else {
+      // console.warn('WebSocket not open, retrying...');
+      setTimeout(() => sendWebSocketMessage(message), 500);
+    }
+  };
+
+  const handleCommand = async (msg, currentActiveSection) => {
+    const { cmd, param } = msg;
+
+    switch (cmd) {
+      case client.LOGIN:
+        if (param.status === "success") {
+          console.log("Login success");
+        }
+        break;
+
+      case client.NEW_TASK:
+        getSummary(token);
+        break;
+
+      case client.UPDATE_TASK:
+        getSummary(token);
+        break;
+
+      default:
+        break;
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-2 h-full">
       {/* Sidebar */}
       <div className="lg:w-1/3 w-full bg-white rounded-lg shadow-sm flex flex-col">
-        <button
-          onClick={() => {
-            navigate("/techlead/main");
-          }}
-          className="flex mb-0 px-4 py-2 text-black rounded "
-        >
-          <ArrowLeft /> Back
-        </button>
         <div className="p-4 border-b border-gray-300">
           <h2 className="text-lg font-semibold mb-2">Room List</h2>
           <div className="space-y-2">

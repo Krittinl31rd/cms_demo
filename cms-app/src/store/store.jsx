@@ -1,6 +1,7 @@
 import axios from "axios";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { GetSummary } from "@/api/summary";
 
 const store = (set) => ({
   user: null,
@@ -32,10 +33,21 @@ const store = (set) => ({
   setSubscribeId: (id) => set({ subscribeId: id }),
   activeSection: null,
   setActiveSection: (type) => set({ activeSection: type }),
+  summaryData: [],
+  getSummary: async (token) => {
+    try {
+      const response = await GetSummary(token);
+      set({ summaryData: response.data });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching summary:", error);
+      throw error;
+    }
+  },
 });
 
 const usePersist = {
-  name: "store",
+  name: "userPayload",
   storage: createJSONStorage(() => localStorage),
 };
 

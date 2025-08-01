@@ -22,7 +22,7 @@ export default function LayoutV3() {
       <TopMenuBar user={user} />
 
       {/* Main layout area (Leftbar, Main Content, Rightbar) */}
-      <div className="flex pt-16 h-[calc(var(--vh)_*_100-4rem)]">
+      <div className="flex pt-16 h-[calc(var(--vh)_*_100-0rem)]">
         {/* Leftbar */}
         <LeftBar />
 
@@ -42,9 +42,9 @@ export default function LayoutV3() {
         <RightBar />
       </div>
       {/* Bottombar */}
-      <footer className="w-full h-16 bg-white  fixed bottom-0 left-0 right-0 flex items-center justify-center text-sm z-40 border-t border-gray-200">
+      {/* <footer className="w-full h-16 bg-white  fixed bottom-0 left-0 right-0 flex items-center justify-center text-sm z-40 border-t border-gray-200">
         © 2025 Archi-tronic :)
-      </footer>
+      </footer> */}
     </div>
   );
 }

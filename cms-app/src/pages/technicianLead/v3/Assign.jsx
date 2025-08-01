@@ -3,35 +3,43 @@ import useStore from "@/store/store";
 import { client } from "@/constant/wsCommand";
 import Spinner from "@/components/ui/Spinner";
 import dayjs from "dayjs";
-import { GetNotifications } from "@/api/summary";
-import SummaryNotification from "@/components/ui/SummaryNotification";
+import { GetTechnician, GetRoomNumberFloor } from "@/api/task";
+import AssignWorkForm from "@/components/technician/AssignWorkForm";
 
-const NotiSum = () => {
+const Assgin = () => {
   const { token, getSummary } = useStore((state) => state);
-  const [loading, setLoading] = useState(true);
-  const [taskList, setTaskList] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [technicianList, setTechnicianList] = useState([]);
   const [isWsReady, setIsWsReady] = useState(false);
   const ws = useRef(null);
-  const [selectedDate, setSelectedDate] = useState(
-    dayjs().format("YYYY-MM-DD")
-  );
-  const activeSection = { lable: "Notification", type: "notification_sum" };
 
-  const fetchTaskList = async () => {
-    setLoading(true);
+  const activeSection = { lable: "Assigned", type: "assign_task" };
+
+  const fetchTechnicianList = async () => {
     try {
-      const response = await GetNotifications(token);
-      setTaskList(response.data);
+      const response = await GetTechnician(token);
+      setTechnicianList(response?.data || []);
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTaskList();
-  }, [selectedDate]);
+    fetchTechnicianList();
+  }, [token]);
+
+  const fetchRooms = async () => {
+    try {
+      const response = await GetRoomNumberFloor(token);
+      setRooms(response?.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
+  }, [token]);
 
   useEffect(() => {
     ws.current = new WebSocket(import.meta.env.VITE_WS_URL);
@@ -86,12 +94,10 @@ const NotiSum = () => {
         break;
 
       case client.NEW_TASK:
-        fetchTaskList();
         getSummary(token);
         break;
 
       case client.UPDATE_TASK:
-        fetchTaskList();
         getSummary(token);
         break;
 
@@ -102,20 +108,12 @@ const NotiSum = () => {
 
   return (
     <>
-      {loading ? (
-        <div className="w-full flex flex-col items-center justify-center">
-          <Spinner />
-          Loading rooms....
-        </div>
-      ) : (
-        <SummaryNotification
-          data={taskList}
-          activeSection={activeSection}
-          setSelectedDate={(i) => setSelectedDate(i)}
-        />
-      )}
+      <h2 className="text-2xl font-bold mb-2">{activeSection.lable}</h2>
+      <div className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md">
+        <AssignWorkForm technicianList={technicianList} rooms={rooms} />
+      </div>
     </>
   );
 };
 
-export default NotiSum;
+export default Assgin;

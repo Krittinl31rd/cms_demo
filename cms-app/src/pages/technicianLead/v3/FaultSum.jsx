@@ -14,7 +14,7 @@ import Table from "@/components/ui/Table";
 import Summary from "@/components/ui/Summary";
 
 const FaultSum = () => {
-  const { token } = useStore((state) => state);
+  const { token, getSummary } = useStore((state) => state);
   const [loading, setLoading] = useState(true);
   const [taskList, setTaskList] = useState([]);
   const [isWsReady, setIsWsReady] = useState(false);
@@ -53,31 +53,6 @@ const FaultSum = () => {
   useEffect(() => {
     fetchTaskList();
   }, [selectedDate]);
-
-  const filteredRooms = useMemo(() => {
-    return taskList.filter((room) => {
-      const matchFloor =
-        filterFloor === "all" || room.floor?.toString() == filterFloor;
-      return matchFloor;
-    });
-  }, [taskList, filterFloor]);
-
-  const groupedRoomsByFloor = useMemo(() => {
-    const grouped = {};
-
-    filteredRooms.forEach((room) => {
-      const floor = room.floor ?? "Unknown";
-      if (!grouped[floor]) grouped[floor] = [];
-      grouped[floor].push(room);
-    });
-
-    return Object.entries(grouped)
-      .sort((a, b) => Number(a[0]) - Number(b[0]))
-      .reduce((obj, [floor, rooms]) => {
-        obj[floor] = rooms;
-        return obj;
-      }, {});
-  }, [filteredRooms]);
 
   const uniqueFloors = useMemo(() => {
     const floors = [...new Set(taskList.map((room) => room.floor))];
@@ -140,10 +115,12 @@ const FaultSum = () => {
 
       case client.NEW_TASK:
         fetchTaskList();
+        getSummary(token);
         break;
 
       case client.UPDATE_TASK:
         fetchTaskList();
+        getSummary(token);
         break;
 
       default:

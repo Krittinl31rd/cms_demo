@@ -132,7 +132,15 @@ exports.SummaryRoom = async (req, res) => {
       }
     });
 
-    return res.status(200).json(statusCount);
+    return res.status(200).json([
+      { label: "Total", value: statusCount.total_rcu },
+      { label: "Online", value: statusCount.online },
+      { label: "Offline", value: statusCount.offline },
+      { label: "Fault", value: statusCount.rcu_fault_alert },
+      { label: "HI-Temp", value: statusCount.hi_temp_alarm },
+      { label: "WIP", value: statusCount.wip },
+      { label: "Fixed", value: statusCount.fixed },
+    ]);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });

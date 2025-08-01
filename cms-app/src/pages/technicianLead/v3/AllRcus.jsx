@@ -8,7 +8,7 @@ import { client } from "@/constant/wsCommand";
 import Spinner from "@/components/ui/Spinner";
 
 const AllRcus = () => {
-  const { token } = useStore((state) => state);
+  const { token, getSummary } = useStore((state) => state);
   const [loading, setLoading] = useState(true);
   const [roomList, setRoomList] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -140,7 +140,7 @@ const AllRcus = () => {
             )
           );
         }
-
+        getSummary(token);
         break;
       }
 
@@ -167,6 +167,7 @@ const AllRcus = () => {
             })
           );
         }
+        getSummary(token);
         break;
       }
 
@@ -210,6 +211,14 @@ const AllRcus = () => {
 
         break;
       }
+
+      case client.NEW_TASK:
+        getSummary(token);
+        break;
+
+      case client.UPDATE_TASK:
+        getSummary(token);
+        break;
 
       default:
         break;

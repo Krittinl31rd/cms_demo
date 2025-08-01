@@ -22,7 +22,7 @@ import {
 import { useNavigate, NavLink, useLocation, matchPath } from "react-router-dom";
 
 const RoomDevicesLog = () => {
-  const { token } = useStore((state) => state);
+  const { token, getSummary } = useStore((state) => state);
   const [isWsReady, setIsWsReady] = useState(false);
   const ws = useRef(null);
   const [logList, setLoglist] = useState([]);
@@ -121,6 +121,14 @@ const RoomDevicesLog = () => {
         } else {
           console.error("Received invalid log data:", param);
         }
+        break;
+
+      case client.NEW_TASK:
+        getSummary(token);
+        break;
+
+      case client.UPDATE_TASK:
+        getSummary(token);
         break;
     }
   };

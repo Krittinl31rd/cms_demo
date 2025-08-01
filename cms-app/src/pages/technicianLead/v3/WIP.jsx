@@ -13,7 +13,7 @@ import { GetMaintenanceTask } from "@/api/task";
 import Table from "@/components/ui/Table";
 
 const WIP = () => {
-  const { token } = useStore((state) => state);
+  const { token, getSummary } = useStore((state) => state);
   const [loading, setLoading] = useState(true);
   const [taskList, setTaskList] = useState([]);
   const [isWsReady, setIsWsReady] = useState(false);
@@ -130,10 +130,12 @@ const WIP = () => {
 
       case client.NEW_TASK:
         fetchTaskList();
+        getSummary(token);
         break;
 
       case client.UPDATE_TASK:
         fetchTaskList();
+        getSummary(token);
         break;
 
       default:

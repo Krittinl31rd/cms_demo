@@ -9,12 +9,21 @@ import { role_id_to_name } from "@/constant/common";
 import useStore from "@/store/store";
 import { useNavigate, NavLink, useLocation, matchPath } from "react-router-dom";
 import dayjs from "dayjs";
+import { use } from "react";
 
 const TopMenuBar = ({ user }) => {
   const navigate = useNavigate();
   const { actionLogout, subscribeId } = useStore((state) => state);
   const [isOpenProfile, setIsOpenProfile] = useState(false);
   const dropdownRef = useRef(null);
+  const [now, setNow] = useState(dayjs().format("DD/MM/YYYY HH:mm"));
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(dayjs().format("DD/MM/YYYY HH:mm"));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -34,9 +43,7 @@ const TopMenuBar = ({ user }) => {
     <header className="w-full h-16 bg-white fixed top-0 left-0 right-0 z-50 flex items-center px-4 border-b border-gray-200">
       <div className="flex-1 flex flex-row items-center justify-between gap-4 ">
         <div className="flex-1 flex flex-col justify-center ">
-          <h1 className="text-xl  font-semibold">
-            {dayjs().format("DD/MM/YYYY HH:mm")}
-          </h1>
+          <h1 className="text-xl  font-semibold">{now}</h1>
         </div>
 
         <div className="relative inline-block text-left" ref={dropdownRef}>

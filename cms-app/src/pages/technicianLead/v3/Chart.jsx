@@ -1,18 +1,14 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import CardRoom from "@/components/ui/CardRoom";
-import ModalPopup from "@/components/ui/ModalPopup";
-import ElementDevices from "@/components/ui/ElementDevices";
-import { GetRooms } from "@/api/room";
 import useStore from "@/store/store";
 import { client } from "@/constant/wsCommand";
 import Spinner from "@/components/ui/Spinner";
 import { device_type, maintenance_status } from "@/constant/common";
 import dayjs from "dayjs";
-import { technician_type } from "@/constant/common";
-import { GetMaintenanceTask } from "@/api/task";
-import Table from "@/components/ui/Table";
+import Summary from "@/components/ui/Summary";
+import { GetRoomDevicesLog } from "@/api/room";
+import ChartElement from "@/components/ui/Chart";
 
-const Fixed = () => {
+const Chart = () => {
   const { token, getSummary } = useStore((state) => state);
   const [loading, setLoading] = useState(true);
   const [taskList, setTaskList] = useState([]);
@@ -22,19 +18,16 @@ const Fixed = () => {
   const [selectedDate, setSelectedDate] = useState(
     dayjs().format("YYYY-MM-DD")
   );
+  const activeSection = { lable: "Daily Chart", type: "chart" };
 
   const fetchTaskList = async () => {
     setLoading(true);
     try {
-      const statusIds = [
-        maintenance_status.FIXED,
-        maintenance_status.UNRESOLVED,
-      ];
       const query = {
-        status_id: statusIds.join(","),
-        started_at: selectedDate,
+        device_type_id: device_type.TEMPERATURE,
+        date: selectedDate,
       };
-      const response = await GetMaintenanceTask(token, query);
+      const response = await GetRoomDevicesLog(token, query);
       setTaskList(response.data);
     } catch (err) {
       console.error(err);
@@ -150,21 +143,7 @@ const Fixed = () => {
     <>
       <div className="flex justify-end items-center gap-2 mb-2">
         {/* Filter by Floor */}
-        <div className="flex gap-2 items-center">
-          <label className="text-sm">Floor:</label>
-          <select
-            value={filterFloor}
-            onChange={(e) => setFilterFloor(e.target.value)}
-            className=" border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="all">All</option>
-            {uniqueFloors.map((floor) => (
-              <option key={floor} value={floor}>
-                Floor {floor}
-              </option>
-            ))}
-          </select>
-        </div>
+
         <input
           type="date"
           value={selectedDate}
@@ -177,14 +156,13 @@ const Fixed = () => {
           <Spinner />
           Loading rooms....
         </div>
-      ) : filteredRooms.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          {Object.entries(groupedRoomsByFloor).map(([floor, rooms]) => (
-            <Table key={floor} floor={floor} rooms={rooms} />
-          ))}
-        </div>
       ) : (
-        <p className="text-center text-gray-500">No room found.</p>
+        <ChartElement
+          data={taskList}
+          activeSection={activeSection}
+          selectedDate={selectedDate}
+          setSelectedDate={(i) => setSelectedDate(i)}
+        />
       )}
     </>
   );
@@ -192,4 +170,4 @@ const Fixed = () => {
 {
   /* <Table key={floor} floor={floor} rooms={rooms} /> */
 }
-export default Fixed;
+export default Chart;

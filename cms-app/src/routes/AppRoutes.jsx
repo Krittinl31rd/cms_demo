@@ -37,6 +37,11 @@ import FaultSum from "../pages/technicianLead/v3/FaultSum";
 import AlertSum from "../pages/technicianLead/v3/AlertSum";
 import WIPSum from "../pages/technicianLead/v3/WIPSum";
 import DoneSum from "../pages/technicianLead/v3/DoneSum";
+import NotiSum from "../pages/technicianLead/v3/NotiSum";
+import Assign from "../pages/technicianLead/v3/Assign";
+import Chart from "../pages/technicianLead/v3/Chart";
+import MasterSetting from "../pages/technicianLead/v3/MasterSetting";
+import FloorStatusSummary from "../pages/technicianLead/v3/FloorStatusSummary";
 
 const router = createBrowserRouter([
   {
@@ -110,7 +115,8 @@ const router = createBrowserRouter([
       />
     ),
     children: [
-      { index: true, element: <AllRcus /> },
+      { index: true, element: <FloorStatusSummary /> },
+      { path: "allrcu", element: <AllRcus /> },
       { path: "fault", element: <Fault /> },
       { path: "hitemp", element: <HiTemp /> },
       { path: "wip", element: <WIP /> },
@@ -119,12 +125,13 @@ const router = createBrowserRouter([
       { path: "alertsum", element: <AlertSum /> },
       { path: "wipsum", element: <WIPSum /> },
       { path: "donesum", element: <DoneSum /> },
-      { path: "notisum", element: <Main /> },
-      { path: "assign", element: <Main /> },
-      { path: "chart", element: <Main /> },
+      { path: "notisum", element: <NotiSum /> },
+      { path: "assign", element: <Assign /> },
+      { path: "chart", element: <Chart /> },
       { path: "configesm", element: <Setting /> },
-      { path: "configsence", element: <Main /> },
+      { path: "configsence", element: <Multiscreen /> },
       { path: "deviceslogs", element: <RoomDevicesLog /> },
+      { path: "configmaster", element: <MasterSetting /> },
     ],
   },
   {

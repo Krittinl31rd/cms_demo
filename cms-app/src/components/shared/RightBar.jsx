@@ -18,11 +18,14 @@ import {
   Sliders,
   FileCode,
   House,
+  SettingsIcon,
+  LayoutDashboard,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const rightBarItems = [
-  { label: "All RCU", path: "/techlead", icon: House },
+  { label: "Floor Sum", path: "/techlead", icon: LayoutDashboard },
+  { label: "All RCU", path: "/techlead/allrcu", icon: House },
   { label: "Fault", path: "/techlead/fault", icon: AlertCircle },
   { label: "Hi-Temp", path: "/techlead/hitemp", icon: Thermometer },
   { label: "WIP", path: "/techlead/wip", icon: Wrench },
@@ -36,6 +39,11 @@ const rightBarItems = [
   { label: "Chart", path: "/techlead/chart", icon: BarChart2 },
   { label: "ESM Config", path: "/techlead/configesm", icon: Settings },
   { label: "Scene Config", path: "/techlead/configsence", icon: Sliders },
+  {
+    label: "Master Config",
+    path: "/techlead/configmaster",
+    icon: SettingsIcon,
+  },
   { label: "Devices Logs", path: "/techlead/deviceslogs", icon: FileCode },
 ];
 

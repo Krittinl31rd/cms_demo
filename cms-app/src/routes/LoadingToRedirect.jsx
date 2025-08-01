@@ -28,7 +28,8 @@ const LoadingToRedirect = () => {
         const path = getRoleRedirectPath(user.role_id);
         navigate(path);
       } else {
-        navigate("/login");
+        // navigate("/login");
+        window.location.href = "http://192.168.1.147:3000/Login";
       }
     }
   }, [redirect, user, navigate]);
