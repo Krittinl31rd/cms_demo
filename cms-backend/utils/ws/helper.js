@@ -161,13 +161,14 @@ const handleRoomStatusUpdate = async (ip, mappedData) => {
   }
 
   if (!updated) return null;
-
   const { id, floor } = await checkRoomByIP(ip);
+  if (id && floor) {
+    status.request_status = newRequestStatus;
+    status.room_id = id;
+    status.floor = floor;
 
-  status.request_status = newRequestStatus;
-  status.room_id = id;
-  status.floor = floor;
-  return status;
+    return status;
+  }
 };
 
 const checkRoomByIP = async (ip) => {
@@ -179,7 +180,7 @@ const checkRoomByIP = async (ip) => {
       type: sequelize.QueryTypes.SELECT,
     });
 
-    return result ? result : null;
+    return result ? result : {};
   } catch (err) {
     console.log(err);
   }

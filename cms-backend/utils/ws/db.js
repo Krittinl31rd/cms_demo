@@ -54,7 +54,7 @@ const insertToDB = async (data, source) => {
           let isSystem;
 
           if ([20, 21, 22].includes(type_id)) {
-            shouldInsert = shouldLog(room_id, device_id, control_id, 6000);
+            shouldInsert = shouldLog(room_id, device_id, control_id, 1800);
             isActor = null;
             isSystem = 0;
           } else {
@@ -175,7 +175,7 @@ const updateRoomStatusInDB = async (roomStatus) => {
       type: sequelize.QueryTypes.UPDATE,
     });
 
-    console.log("Room status updated:", roomStatus);
+    // console.log("Room status updated:", roomStatus);
   } catch (err) {
     console.error("Failed to update room status:", err);
   }
