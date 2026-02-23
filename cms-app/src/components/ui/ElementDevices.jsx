@@ -16,6 +16,7 @@ import AirQualityCard from "@/components/devices/AirQualityCard";
 import DimmerCard from "@/components/devices/DimmerCard";
 import LightingCard from "@/components/devices/LightingCard";
 import PowerCard from "@/components/devices/PowerCard";
+import CircleChart from "@/components/ui/CircleChart ";
 
 const ElementDevices = ({ room, sendWebSocketMessage }) => {
   const {
@@ -166,7 +167,7 @@ const ElementDevices = ({ room, sendWebSocketMessage }) => {
           return <p>No motion sensor device in room.</p>;
         })()}
       </div>
-      <h3 className="font-semibold">Room weather</h3>
+      <h3 className="font-semibold">Room Environment</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 border-b border-gray-300 pb-2">
         {(() => {
           const weatherDevices = devices.filter(
@@ -193,10 +194,10 @@ const ElementDevices = ({ room, sendWebSocketMessage }) => {
             });
           }
 
-          return <p>No weather device in room.</p>;
+          // return <p>No weather device in room.</p>;
         })()}
       </div>
-      <h3 className="font-semibold">Room Environment</h3>
+      {/* <h3 className="font-semibold">Room Environment</h3> */}
       <div className="grid grid-cols-2 gap-2 border-b border-gray-300 pb-2">
         {/* type 20 = POWER, type 21 = AIR_QAULITY */}
         {(() => {
@@ -223,6 +224,18 @@ const ElementDevices = ({ room, sendWebSocketMessage }) => {
           return <p>No device environment in room.</p>;
         })()}
       </div>
+      {(() => {
+        const dimmerDevices = devices.filter(
+          (dev) => dev.type_id === device_type.DIMMER
+        );
+        if (dimmerDevices.length > 0) {
+          return (
+            <div className="border-b border-gray-300 pb-2">
+              <CircleChart />
+            </div>
+          );
+        }
+      })()}
       <h3 className="font-semibold">Devices</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 items-center justify-center border-b border-gray-300 pb-2">
         {/* Devices */}

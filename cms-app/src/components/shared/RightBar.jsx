@@ -39,11 +39,11 @@ const rightBarItems = [
   { label: "Chart", path: "/techlead/chart", icon: BarChart2 },
   { label: "ESM Config", path: "/techlead/configesm", icon: Settings },
   { label: "Scene Config", path: "/techlead/configsence", icon: Sliders },
-  {
-    label: "Master Config",
-    path: "/techlead/configmaster",
-    icon: SettingsIcon,
-  },
+  // {
+  //   label: "Master Config",
+  //   path: "/techlead/configmaster",
+  //   icon: SettingsIcon,
+  // },
   { label: "Devices Logs", path: "/techlead/deviceslogs", icon: FileCode },
 ];
 

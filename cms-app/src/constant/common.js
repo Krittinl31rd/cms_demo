@@ -253,39 +253,95 @@ export const deviceTypeTemplates = {
       addr: "",
     },
   ],
+  //CHECK  OUT / ROOM  UNOCCUPIED
+  // CHECK IN  /  ROOM  OCUUPIED / GUEST  IN
+  // WELCOME FAST COOL / RFRESH
+  // GUEST  OUT
+  // GUEST  RETURN /  GUEST  IN
+  // SLEEP  MODE
+  // ENERGY  SAVING  MODES
   [device_type.CONFIG]: [
-    { id: 101, name: "sleep_start_hour", addr: 21 },
-    { id: 102, name: "sleep_start_min", addr: 22 },
-    { id: 103, name: "energysaving_time", addr: 23 },
-    { id: 104, name: "sleep_max_temp", addr: 24 },
-    { id: 105, name: "sleep_reverse_hour", addr: 25 },
-    { id: 106, name: "sleep_reverse_min", addr: 26 },
-    { id: 107, name: "fan_set_checkin", addr: 37 },
-    { id: 108, name: "temp_set_checkin", addr: 38 },
-    { id: 109, name: "fan_set_checkout", addr: 39 },
-    { id: 110, name: "temp_set_checkout", addr: 40 },
-    { id: 111, name: "fan_set_esm03", addr: 41 },
-    { id: 112, name: "temp_set_esm03", addr: 42 },
-    { id: 113, name: "timedelay_esm03", addr: 43 },
-    { id: 114, name: "timeset_keycard", addr: 44 },
-    { id: 115, name: "fanset_on_keycard", addr: 45 },
-    { id: 116, name: "tempset_on_keycard", addr: 46 },
-    { id: 117, name: "fan_set_off_keycard", addr: 47 },
-    { id: 118, name: "temp_set_off_keycard", addr: 48 },
+    { id: 101, name: "SLEEP  MODE - START HOUR", addr: 21 }, // SLEEP  MODE - START
+    { id: 102, name: "SLEEP  MODE - START MIN", addr: 22 }, // SLEEP  MODE - START
+    { id: 103, name: "SLEEP  MODE - ESM DELAY", addr: 23 }, // SLEEP  MODE - ESM DELAY
+    { id: 104, name: "SLEEP  MODE - MAXIMUM TEMP", addr: 24 }, // SLEEP  MODE - MAXIMUM TEMPERATURE
+    { id: 105, name: "SLEEP  MODE - END HOUR", addr: 25 }, // SLEEP  MODE - END
+    { id: 106, name: "SLEEP  MODE - END MIN", addr: 26 }, // SLEEP  MODE - END
+    { id: 107, name: "CHECK IN  / GUEST IN - FAN SPEED", addr: 37 }, // CHECK IN  / GUEST IN - FAN SPEED
+    { id: 108, name: "CHECK IN  / GUEST IN - DEFAULT TEMP", addr: 38 }, // CHECK IN  / GUEST IN - DEFAULT TEMP
+    { id: 109, name: "CHECK  OUT - FAN SPEED", addr: 39 }, //CHECK  OUT - FAN SPEED
+    { id: 110, name: "CHECK  OUT - DEFAULT TEMP", addr: 40 }, //CHECK  OUT - DEFAULT TEMP
+    { id: 111, name: "GUEST  OUT - FAN SPEED", addr: 41 }, // GUEST  OUT - FAN SPEED
+    { id: 112, name: "GUEST  OUT - DEFAULT TEMP", addr: 42 }, // GUEST  OUT - DEFAULT TEMP
+    { id: 113, name: "GUEST  OUT - ESM DELAY", addr: 43 }, // GUEST  OUT - ESM DELAY
+    { id: 114, name: "CHECK IN  / GUEST IN - KEYCARD DELAY", addr: 44 }, // CHECK IN  / GUEST IN - KEYCARD DELAY
+    {
+      id: 115,
+      name: "CHECK IN  / GUEST IN - FAN SPEED INSERT KEYCARD",
+      addr: 45,
+    }, // CHECK IN  / GUEST IN - FAN SPEED INSERT KEYCARD
+    {
+      id: 116,
+      name: "CHECK IN  / GUEST IN - DEFAULT TEMP INSERT KEYCARD",
+      addr: 46,
+    }, // CHECK IN  / GUEST IN - DEFAULT TEMP INSERT KEYCARD
+    {
+      id: 117,
+      name: "CHECK IN  / GUEST IN - FAN SPEED REMOVE KEYCARD",
+      addr: 47,
+    }, // CHECK IN  / GUEST IN - FAN SPEED REMOVE KEYCARD
+    {
+      id: 118,
+      name: "CHECK IN  / GUEST IN - DEFAULT TEMP REMOVE KEYCARD",
+      addr: 48,
+    }, // CHECK IN  / GUEST IN - DEFAULT TEMP REMOVE KEYCARD
     { id: 119, name: "recheck_config_op", addr: 49 },
-    { id: 120, name: "hour", addr: 50 },
-    { id: 121, name: "min", addr: 51 },
-    { id: 122, name: "sec", addr: 52 },
-    { id: 123, name: "date", addr: 53 },
-    { id: 124, name: "month", addr: 54 },
-    { id: 125, name: "year", addr: 55 },
-    { id: 126, name: "fan_set_esm04", addr: 81 },
-    { id: 127, name: "temp_set_esm04", addr: 82 },
-    { id: 128, name: "time_delay_esm04", addr: 83 },
-    { id: 129, name: "fan_set_esm05", addr: 84 },
-    { id: 130, name: "temp_set_esm05", addr: 85 },
-    { id: 131, name: "time_delay_esm05", addr: 86 },
+    { id: 120, name: "DATE TIME - HOUR", addr: 50 }, // DATE TIME - HOUR
+    { id: 121, name: "DATE TIME - MIN", addr: 51 }, // DATE TIME - MIN
+    { id: 122, name: "DATE TIME - SEC", addr: 52 }, // DATE TIME - SEC
+    { id: 123, name: "DATE TIME - DATE", addr: 53 }, // DATE TIME - DATE
+    { id: 124, name: "DATE TIME - MONTH", addr: 54 }, // DATE TIME - MONTH
+    { id: 125, name: "DATE TIME - YEAR", addr: 55 }, // DATE TIME - YEAR
+    { id: 126, name: "GUEST  OUT - FAN SPEED +60mins", addr: 81 }, // GUEST  OUT - FAN SPEED +60mins
+    { id: 127, name: "GUEST  OUT - DEFAULT TEMP +60mins", addr: 82 }, // GUEST  OUT - DEFAULT TEMP +60mins
+    { id: 128, name: "GUEST  OUT - ESM DELAY +60mins", addr: 83 }, // GUEST  OUT - ESM DELAY +60mins
+    { id: 129, name: "GUEST  OUT - FAN SPEED +120mins", addr: 84 }, // GUEST  OUT - FAN SPEED +120mins
+    { id: 130, name: "GUEST  OUT - DEFAULT TEMP +120mins", addr: 85 }, // GUEST  OUT - DEFAULT TEMP +120mins
+    { id: 131, name: "GUEST  OUT - ESM DELAY +120mins", addr: 86 }, //GUEST  OUT - ESM DELAY +120mins
   ],
+  // [device_type.CONFIG]: [
+  //   { id: 101, name: "sleep_start_hour", addr: 21 }, // SLEEP  MODE
+  //   { id: 102, name: "sleep_start_min", addr: 22 }, // SLEEP  MODE
+  //   { id: 103, name: "energysaving_time", addr: 23 }, // ENERGY  SAVING  MODES
+  //   { id: 104, name: "sleep_max_temp", addr: 24 }, // SLEEP  MODE
+  //   { id: 105, name: "sleep_reverse_hour", addr: 25 }, // SLEEP  MODE
+  //   { id: 106, name: "sleep_reverse_min", addr: 26 }, // SLEEP  MODE
+  //   { id: 107, name: "fan_set_checkin", addr: 37 }, // CHECK IN  /  ROOM  OCUUPIED
+  //   { id: 108, name: "temp_set_checkin", addr: 38 }, // CHECK IN  /  ROOM  OCUUPIED
+  //   { id: 109, name: "fan_set_checkout", addr: 39 }, //CHECK  OUT / ROOM  UNOCCUPIED
+  //   { id: 110, name: "temp_set_checkout", addr: 40 }, //CHECK  OUT / ROOM  UNOCCUPIED
+  //   { id: 111, name: "fan_set_esm03", addr: 41 },  // GUEST  OUT
+  //   { id: 112, name: "temp_set_esm03", addr: 42 },  // GUEST  OUT
+  //   { id: 113, name: "timedelay_esm03", addr: 43 },  // GUEST  OUT
+  //   { id: 114, name: "timeset_keycard", addr: 44 }, // CHECK IN  /  ROOM  OCUUPIED
+  //   { id: 115, name: "fanset_on_keycard", addr: 45 }, // CHECK IN  /  ROOM  OCUUPIED
+  //   { id: 116, name: "tempset_on_keycard", addr: 46 }, // CHECK IN  /  ROOM  OCUUPIED
+  //   { id: 117, name: "fan_set_off_keycard", addr: 47 },  // CHECK IN  /  ROOM  OCUUPIED
+  //   { id: 118, name: "temp_set_off_keycard", addr: 48 }, // CHECK IN  /  ROOM  OCUUPIED
+  //   { id: 119, name: "recheck_config_op", addr: 49 },
+  //   { id: 120, name: "hour", addr: 50 }, // DATE TIME
+  //   { id: 121, name: "min", addr: 51 }, // DATE TIME
+  //   { id: 122, name: "sec", addr: 52 }, // DATE TIME
+  //   { id: 123, name: "date", addr: 53 }, // DATE TIME
+  //   { id: 124, name: "month", addr: 54 }, // DATE TIME
+  //   { id: 125, name: "year", addr: 55 }, // DATE TIME
+  //   { id: 126, name: "fan_set_esm04", addr: 81 }, // GUEST  OUT +60
+  //   { id: 127, name: "temp_set_esm04", addr: 82 }, // GUEST  OUT +60
+  //   { id: 128, name: "time_delay_esm04", addr: 83 }, // GUEST  OUT +60
+  //   { id: 129, name: "fan_set_esm05", addr: 84 }, // GUEST  OUT +120
+  //   { id: 130, name: "temp_set_esm05", addr: 85 }, // GUEST  OUT +120
+  //   { id: 131, name: "time_delay_esm05", addr: 86 }, // GUEST  OUT +120
+  // ],
   [device_type.OTHER]: [
     {
       id: 101,
@@ -312,7 +368,7 @@ export const deviceTypeTemplates = {
           id: currentAddr,
           name: `${key}_${sceneIndex + 1}`,
           addr: currentAddr,
-          modbus_funct: 30000
+          modbus_funct: 30000,
         });
         currentAddr++;
       });

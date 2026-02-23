@@ -42,123 +42,158 @@ import Assign from "../pages/technicianLead/v3/Assign";
 import Chart from "../pages/technicianLead/v3/Chart";
 import MasterSetting from "../pages/technicianLead/v3/MasterSetting";
 import FloorStatusSummary from "../pages/technicianLead/v3/FloorStatusSummary";
+import Simmulate from "../pages/technicianLead/v3/Simmulate";
+import SettingV2 from "../pages/technicianLead/SettingV2";
 
-const router = createBrowserRouter([
+const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      element: <Login />,
+    },
+    {
+      path: "/login",
+      element: <Login />,
+    },
+    {
+      path: "/register/:token",
+      element: <Register />,
+    },
+    {
+      path: "/thank-you",
+      element: (
+        <div className="text-center mt-10 text-2xl">
+          Thank you for applying!
+        </div>
+      ),
+    },
+    {
+      path: "/admin",
+      element: (
+        <ProtectRoute
+          element={MainLayout}
+          allowedRoles={[member_role.SUPER_ADMIN]}
+        />
+      ),
+      children: [
+        { index: true, element: <DashboardAdmin /> },
+        { path: "user", element: <UserAdmin /> },
+        { path: "room", element: <RoomAdmin /> },
+        { path: "room/:room_id", element: <RoomIDAdmin /> },
+        { path: "log", element: <RoomDevicesLog /> },
+      ],
+    },
+    {
+      path: "/frontdesk",
+      element: (
+        <ProtectRoute
+          element={NoneSidebarLayout}
+          allowedRoles={[member_role.FRONT_DESK]}
+          // requiredPermission="VIEW_TECH_PANEL"
+        />
+      ),
+      children: [{ index: true, element: <DashboardFrontDesk /> }],
+    },
+    {
+      path: "/techlead",
+      element: (
+        <ProtectRoute
+          element={MainLayout}
+          allowedRoles={[member_role.TECHNICIAN_LEAD]}
+          // requiredPermission="VIEW_TECH_PANEL"
+        />
+      ),
+      children: [
+        // { index: true, element: <DashboardTechLead /> },
+        { path: "rooms", element: <Rooms /> },
+        { path: "repair", element: <RepairWork /> },
+        { path: "history", element: <History /> },
+      ],
+    },
+    {
+      path: "/techlead",
+      element: (
+        <ProtectRoute
+          element={NoneSidebarLayout}
+          allowedRoles={[member_role.TECHNICIAN_LEAD]}
+          // requiredPermission="VIEW_TECH_PANEL"
+        />
+      ),
+      children: [
+        // { index: true, element: <DashboardTechLead /> },
+        { path: "setting", element: <SettingV2 /> },
+      ],
+    },
+    {
+      path: "/techlead",
+      element: (
+        <ProtectRoute
+          element={LayoutV3}
+          allowedRoles={[member_role.TECHNICIAN_LEAD]}
+          // requiredPermission="VIEW_TECH_PANEL"
+        />
+      ),
+      children: [
+        { index: true, element: <FloorStatusSummary /> },
+        { path: "allrcu", element: <AllRcus /> },
+        { path: "fault", element: <Fault /> },
+        { path: "hitemp", element: <HiTemp /> },
+        { path: "wip", element: <WIP /> },
+        { path: "fixed", element: <Fixed /> },
+        { path: "faultsum", element: <FaultSum /> },
+        { path: "alertsum", element: <AlertSum /> },
+        { path: "wipsum", element: <WIPSum /> },
+        { path: "donesum", element: <DoneSum /> },
+        { path: "notisum", element: <NotiSum /> },
+        { path: "assign", element: <Assign /> },
+        { path: "chart", element: <Chart /> },
+        { path: "configesm", element: <SettingV2 /> },
+        { path: "setting", element: <SettingV2 /> },
+        { path: "configsence", element: <Multiscreen /> },
+        { path: "deviceslogs", element: <RoomDevicesLog /> },
+        { path: "configmaster", element: <MasterSetting /> },
+      ],
+    },
+
+    {
+      path: "/tech",
+      element: (
+        <ProtectRoute
+          element={MainLayout}
+          allowedRoles={[member_role.TECHNICIAN]}
+          // requiredPermission="VIEW_TECH_PANEL"
+        />
+      ),
+      children: [
+        { index: true, element: <DashboardTech /> },
+        { path: "task", element: <Task /> },
+        { path: "task-history", element: <TaskHistoryTech /> },
+        { path: "room", element: <Rooms /> },
+      ],
+    },
+    {
+      path: "/simmulate",
+      // element: (
+      //   <ProtectRoute
+      //     element={NoneSidebarLayout}
+      //   />
+      // ),
+      children: [{ index: true, element: <Simmulate /> }],
+    },
+
+    {
+      path: "/test",
+      element: <Test />,
+    },
+    {
+      path: "*",
+      element: <NotFound />,
+    },
+  ],
   {
-    path: "/",
-    element: <Login />,
+    basename: "/cms-app/",
   },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/register/:token",
-    element: <Register />,
-  },
-  {
-    path: "/thank-you",
-    element: (
-      <div className="text-center mt-10 text-2xl">Thank you for applying!</div>
-    ),
-  },
-  {
-    path: "/admin",
-    element: (
-      <ProtectRoute
-        element={MainLayout}
-        allowedRoles={[member_role.SUPER_ADMIN]}
-      />
-    ),
-    children: [
-      { index: true, element: <DashboardAdmin /> },
-      { path: "user", element: <UserAdmin /> },
-      { path: "room", element: <RoomAdmin /> },
-      { path: "room/:room_id", element: <RoomIDAdmin /> },
-      { path: "log", element: <RoomDevicesLog /> },
-    ],
-  },
-  {
-    path: "/frontdesk",
-    element: (
-      <ProtectRoute
-        element={NoneSidebarLayout}
-        allowedRoles={[member_role.FRONT_DESK]}
-        // requiredPermission="VIEW_TECH_PANEL"
-      />
-    ),
-    children: [{ index: true, element: <DashboardFrontDesk /> }],
-  },
-  {
-    path: "/techlead",
-    element: (
-      <ProtectRoute
-        element={MainLayout}
-        allowedRoles={[member_role.TECHNICIAN_LEAD]}
-        // requiredPermission="VIEW_TECH_PANEL"
-      />
-    ),
-    children: [
-      // { index: true, element: <DashboardTechLead /> },
-      { path: "rooms", element: <Rooms /> },
-      { path: "repair", element: <RepairWork /> },
-      { path: "history", element: <History /> },
-    ],
-  },
-  {
-    path: "/techlead",
-    element: (
-      <ProtectRoute
-        element={LayoutV3}
-        allowedRoles={[member_role.TECHNICIAN_LEAD]}
-        // requiredPermission="VIEW_TECH_PANEL"
-      />
-    ),
-    children: [
-      { index: true, element: <FloorStatusSummary /> },
-      { path: "allrcu", element: <AllRcus /> },
-      { path: "fault", element: <Fault /> },
-      { path: "hitemp", element: <HiTemp /> },
-      { path: "wip", element: <WIP /> },
-      { path: "fixed", element: <Fixed /> },
-      { path: "faultsum", element: <FaultSum /> },
-      { path: "alertsum", element: <AlertSum /> },
-      { path: "wipsum", element: <WIPSum /> },
-      { path: "donesum", element: <DoneSum /> },
-      { path: "notisum", element: <NotiSum /> },
-      { path: "assign", element: <Assign /> },
-      { path: "chart", element: <Chart /> },
-      { path: "configesm", element: <Setting /> },
-      { path: "configsence", element: <Multiscreen /> },
-      { path: "deviceslogs", element: <RoomDevicesLog /> },
-      { path: "configmaster", element: <MasterSetting /> },
-    ],
-  },
-  {
-    path: "/tech",
-    element: (
-      <ProtectRoute
-        element={MainLayout}
-        allowedRoles={[member_role.TECHNICIAN]}
-        // requiredPermission="VIEW_TECH_PANEL"
-      />
-    ),
-    children: [
-      { index: true, element: <DashboardTech /> },
-      { path: "task", element: <Task /> },
-      { path: "task-history", element: <TaskHistoryTech /> },
-      { path: "room", element: <Rooms /> },
-    ],
-  },
-  {
-    path: "/test",
-    element: <Test />,
-  },
-  {
-    path: "*",
-    element: <NotFound />,
-  },
-]);
+);
 
 const AppRoutes = () => {
   return (

@@ -92,8 +92,8 @@ const Dashboard = () => {
       roomList.length > 0 ? ((count / roomList.length) * 100).toFixed(0) : "0"
     );
 
-    const dndCount = roomList.filter((r) => r.dnd_status == 1).length;
-    const murCount = roomList.filter((r) => r.mur_status == 1).length;
+    const dndCount = roomList.filter((r) => r.request_status == 1).length;
+    const murCount = roomList.filter((r) => r.request_status == 2).length;
     const dndPercent =
       roomList.length > 0
         ? ((dndCount / roomList.length) * 100).toFixed(0)
@@ -216,11 +216,11 @@ const Dashboard = () => {
                   ...(roomStatus.guest_status_id != undefined && {
                     guest_status_id: roomStatus.guest_status_id,
                   }),
-                  ...(roomStatus.dnd_status != undefined && {
-                    dnd_status: roomStatus.dnd_status,
-                  }),
-                  ...(roomStatus.mur_status != undefined && {
-                    mur_status: roomStatus.mur_status,
+                  // ...(roomStatus.dnd_status != undefined && {
+                  //   dnd_status: roomStatus.dnd_status,
+                  // }),
+                  ...(roomStatus.request_status != undefined && {
+                    request_status: roomStatus.request_status,
                   }),
                   ...(roomStatus.room_check_status != undefined && {
                     room_check_status: roomStatus.room_check_status,
@@ -467,9 +467,9 @@ const Dashboard = () => {
                   key={item.room_id}
                   onClick={() => toggleRoom(item.room_id)}
                   className={`h-[125px] rounded-xl flex flex-col cursor-pointer ${
-                    item.dnd_status == 1
+                    item.request_status == 1
                       ? "bg-dnd/20"
-                      : item.mur_status == 1
+                      : item.request_status == 2
                       ? "bg-mur/20"
                       : "bg-gray-50"
                   } ${
@@ -506,14 +506,14 @@ const Dashboard = () => {
                         {String(item.room_number).padStart(2, "0")}
                       </span>
                     </div>
-                    <div className="flex gap-1">
+                    {/* <div className="flex gap-1">
                       <button
                         onClick={() => {
                           sendWebSocketMessage({
                             cmd: client.WRITE_REGISTER,
                             param: {
                               address: 6,
-                              value: item.dnd_status == 0 ? 1 : 0,
+                              value: item.request_status == 0 ? 1 : 0,
                               slaveId: 1,
                               ip: item.ip_address,
                               fc: 6,
@@ -530,7 +530,7 @@ const Dashboard = () => {
                             cmd: client.WRITE_REGISTER,
                             param: {
                               address: 5,
-                              value: item.mur_status == 0 ? 1 : 0,
+                              value: item.request_status == 0 ? 2 : 0,
                               slaveId: 1,
                               ip: item.ip_address,
                               fc: 6,
@@ -541,7 +541,7 @@ const Dashboard = () => {
                       >
                         MUR
                       </button>
-                    </div>
+                    </div> */}
                   </div>
                   <div className="flex-1 overflow-auto px-2 py-1 max-h-[125px]">
                     <div className="w-full flex items-start gap-1">

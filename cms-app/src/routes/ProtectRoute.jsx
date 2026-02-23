@@ -37,8 +37,8 @@ const ProtectRoute = ({
         .catch((err) => {
           if (err.response?.status === 401) {
             actionLogout2();
-            // navigate("/login");
-            window.location.href = "http://192.168.1.147:3000/Login";
+            navigate("/login");
+            // window.location.href = "http://192.168.1.147:3000/Login";
           }
           setStatus(false);
         })
@@ -51,9 +51,9 @@ const ProtectRoute = ({
 
   if (checking) return <LoadingToRedirect />;
 
-  // if (!status) return <Navigate to="/login" />;
-  if (!status)
-    return (window.location.href = "http://192.168.1.147:3000/Login");
+  if (!status) return <Navigate to="/login" />;
+  // if (!status)
+  //   return (window.location.href = "http://192.168.1.147:3000/Login");
 
   return (
     <Element>

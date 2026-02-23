@@ -38,7 +38,7 @@ const CardRoom = ({ room, onClick }) => {
       <span
         className={`w-3 h-3 rounded-full ${colorIs(state, type) || "bg-black"}`}
       ></span>
-      <span className="text-xs xl:text-sm">{label}</span>
+      <span className="text-xs">{label}</span>
     </div>
   );
 

@@ -7,7 +7,7 @@ export const initOneSignal = async () => {
   await OneSignal.init({
     appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
     notifyButton: {
-      enable: true,
+      enable: false,
       position: "bottom-left",
     },
     allowLocalhostAsSecureOrigin: true,

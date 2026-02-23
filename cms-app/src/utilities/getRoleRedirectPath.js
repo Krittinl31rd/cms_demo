@@ -11,7 +11,7 @@ export function getRoleRedirectPath(role_id) {
     case member_role.TECHNICIAN:
       return "/tech";
     default:
-      // return "/login";
-      window.location.href = "http://192.168.1.147:3000/Login";
+      return "/login";
+    // window.location.href = "http://192.168.1.147:3000/Login";
   }
 }
