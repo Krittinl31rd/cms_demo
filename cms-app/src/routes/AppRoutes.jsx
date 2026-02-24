@@ -191,7 +191,7 @@ const router = createBrowserRouter(
     },
   ],
   {
-    basename: "/cms-app/",
+    basename: "/cms/",
   },
 );
 
