@@ -2,12 +2,12 @@ import React from "react";
 import { Lightbulb, AirVent } from "lucide-react";
 
 const controlMap = [
-  { id: 1, unit: "µg/m³", name: "PM2.5" },
-  { id: 2, unit: "ppm", name: "CO2" },
-  { id: 3, unit: "ppb", name: "TVOC" },
-  { id: 4, unit: "ppb", name: "HCHO" },
-  { id: 5, unit: "℃", name: "Temperature" },
-  { id: 6, unit: "%", name: "Humudity" },
+  { id: 1, unit: "µg/m³", name: "PM2.5", scale: 1 },
+  { id: 2, unit: "ppm", name: "CO2", scale: 1 },
+  { id: 3, unit: "ppb", name: "TVOC", scale: 1 },
+  { id: 4, unit: "ppb", name: "HCHO", scale: 1 },
+  { id: 5, unit: "℃", name: "Temperature", scale: 10 },
+  { id: 6, unit: "%", name: "Humudity", scale: 1 },
 ];
 
 const AirQualityCard = ({ devices = [] }) => {
