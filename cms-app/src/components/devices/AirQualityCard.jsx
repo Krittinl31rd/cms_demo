@@ -5,7 +5,7 @@ const controlMap = [
   { id: 1, unit: "µg/m³", name: "PM2.5", scale: 1 },
   { id: 2, unit: "ppm", name: "CO2", scale: 1 },
   { id: 3, unit: "ppb", name: "TVOC", scale: 1 },
-  { id: 4, unit: "ppb", name: "HCHO", scale: 1 },
+  { id: 4, unit: "mg/m³", name: "HCHO", scale: 100 },
   { id: 5, unit: "℃", name: "Temperature", scale: 10 },
   { id: 6, unit: "%", name: "Humudity", scale: 1 },
 ];
